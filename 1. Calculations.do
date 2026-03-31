@@ -28,7 +28,7 @@ _-------------------------------------------------------------------------------
 	local income ymp yn yd yc yf 
 	local concs `tax' `indtax' `transfer' `inkind' `income' `Subsidies'
 
-	
+*Modifi	
 *Macros at per-capita values 
 	foreach x in tax indtax inkind transfer income concs Subsidies {
 		local `x'_pc
