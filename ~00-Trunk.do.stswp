@@ -1,0 +1,87 @@
+/*============================================================================*\
+ Project: Fiscal Equity Hub 
+ Authors: Juan Manuel Monroy and Daniel Valderrama
+ Start Date: February 2025
+ Update Date: April 2026
+ Version: 0.1
+\*============================================================================*/
+
+
+if "`c(username)'"=="wb419055" {
+	global root     	"C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\Workspace\Data Hub"	
+}
+
+
+*Input folders: Country economists will share either the microdata or the core indicators, if both are shared, the code should validate the consistency between them.	
+
+global microdata   	"${root}/01-Data/01-02-FIA_Microdata"			
+global template    	"${root}/01-Data/01-03-FIA_Core Indicators"
+
+global tempsim		"${root}/01-Data/3_temp_sim"
+global fia-data		"${root}/04-Products\00-FIA-Database/AFW_Sim_tool_Output.csv"
+
+
+*============================================================================*
+//	1. Detecting microdata 
+*============================================================================*
+
+*This code explore all subfolders available within each folder and search foll all dta files in there
+*It create asserts that the dta files have the same naming structure namely 
+
+
+*First level countries
+local current_dirs : dir "${microdata}" dirs "*"
+
+	foreach subf of local current_dirs {
+		*2nd level : 
+		local cty_path `"${microdata}/`subf'"'
+		local current_dirs2nd : dir "`cty_path'" dirs "*"
+			foreach subf of local current_dirs2nd {
+				local cty_proj_path "`cty_path'/`subf'"
+				
+				*Search dta files in the 2nd level
+				local dta_subf: dir "`cty_proj_path'" files "*.dta"
+				*Only one file per folder 
+				local ndta : word count `dta_subf'
+				capture noisily assert `ndta' == 1
+				if _rc {
+					di as err "[rc=`rc'] Folder [`cty_proj_path'] has [`ndta'] .dta file(s): [`dta_subf']"
+				}
+				*nAme of folder same as name of data file
+				capture noisily assert "`dta_subf'" == "`subf'.dta"
+				if _rc {
+					di as err "[rc=`rc'] Name mismatch in [`cty_proj_path']: expected [`subf'.dta], found [`dta_subf']"
+					
+				}
+			}
+	}
+
+*dis `"`file_list'"'
+
+
+*============================================================================*
+//	2. Policy dimensions
+*============================================================================*
+
+
+* Policies (This set of )
+local dirtax		"PIT BIT PropertyTax FinancialTax"
+local ssc			"sscontribs_total"
+local dirtra		"am_prog_1 am_prog_2 am_prog_3 am_prog_other"
+local subs			"subsidy_elec_direct subsidy_elec_indirect subsidy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect subsidy_agric"
+local indtax 		"CD_direct excise_taxes VAT_direct VAT_indirect"
+local inktra 		"education_inKind am_health" 
+*local misscellaneuos "hhweight deciles_pc hhsize"
+
+exit
+
+	* Example:
+	* global all_subfolders ""
+	* collect_subfolders, root("${data_out}")
+	* di "$all_subfolders"
+
+*/
+ 
+global var_dtr 	 "`dirtax' `ssc' `dirtra' `subs' `indtax' `inktra'" // `misscellaneuos'"  // Choose policies
+
+
