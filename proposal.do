@@ -54,9 +54,7 @@ if "`c(username)'"=="wb527706" {
 	local income ymp yn yd yc yf 
 	local concs `tax' `indtax' `transfer' `inkind' `income' `Subsidies'
 	
-
-
-*Modifi	
+	
 *---> B.2 Macros at per-capita values 
 	foreach x in tax indtax inkind transfer income concs Subsidies {
 		local `x'_pc
@@ -75,147 +73,76 @@ if "`c(username)'"=="wb527706" {
 	gl GMB_source "IHS-2020-2020-D01-P01-M01"
 	gl MRT_source "ECPV-2019-2019-D01-P01-M01"
 
+*---> B.4
+
 	foreach c of local countries {
     use "$microdata/`c'/`c'-${`c'_source}/`c'-${`c'_source}.dta", clear
+	
+	cap drop *deciles_pc *centile_pc
+	
+	foreach y in ymp yd { 
+	xtile `y'_deciles_pc = `y'_pc  [aw=pondih], nq(10) 
+	xtile `y'_centile_pc =`y'_pc  [aw=pondih], nq(100) 
+	} 
 	
 	tempfile output
 	
 	save `output'
 
 	gl sheetname `c'
+
 *===============================================================================
-*---> C. Save Scenario
+*---> C. Netcash Position for ymp and yd.
+*        Generating relative incidence by 
 *===============================================================================
 
 
-/*
-global save_scenario 1
-if $save_scenario == 1 {
-	global c:all globals
-	macro list c
+foreach y in ymp yd {
+	
+	u `output', clear	
+	keep hhid `concs_pc' pondih *_centile_pc *_deciles_pc 
 
-	clear
-	gen globalname = ""
-	gen globalcontent = ""
-	local n = 1
-	foreach glob of global c{
-		dis `"`glob' = ${`glob'}"'
-		set obs `n'
-		replace globalname = "`glob'" in `n'
-		replace globalcontent = `"${`glob'}"' in `n'
-		local ++n
+foreach x in `tax' `indtax'  {
+	gen share_`x'_pc= -`x'_pc/ `y'_pc
+	}		
+	
+	foreach x in `transfer' `inkind' `Subsidies' {
+		gen share_`x'_pc= `x'_pc/ `y'_pc
 	}
+		
+	keep *_deciles_pc share* pondih	
+		
+	groupfunction [aw=pondih], mean (share*) by(`y'_deciles_pc) norestore
+	
+	reshape long share_, i(`y'_deciles_pc) j(variable) string
+		gen measure = "netcash_`y'" 
+		rename share_ value
+	ren `y'_deciles_pc deciles_pc
+	tempfile netcash_`y'
+	save `netcash_`y''
 
-	foreach gloname in c thedo_pre theado thedo xls_sn data_out tempsim presim data_dev data_sn path S_4 S_3 S_level S_ADO S_StataSE S_FLAVOR S_OS S_OSDTL S_MACH save_scenario load_scenario devmode asserts_ref2018 {
-		cap drop if globalname == "`gloname'"
-	}
-
-	
-	
-	
-	export excel "$xls_out", sheet("p_${scenario_name_save}") sheetreplace first(variable)
-	noi dis "{opt All the parameters of scenario ${scenario_name_save} have been saved to Excel.}"
-	
-	*Add saved scenario to list of saved scenarios
-	import excel "$xls_out", sheet("legend") first clear cellrange(AH1)
-	drop if Scenario_list == ""
-	expand 2 in -1
-	replace Scenario_list = "${scenario_name_save}" in -1
-	duplicates drop
-	gen ord = 2
-	replace ord = 1 if Scenario_list == "Ref_2018"
-	replace ord = 3 if Scenario_list == "User_def_sce"
-	sort ord, stable
-	drop ord
-	
-	export excel "$xls_out", sheet("legend", modify) cell(AH2)
 }
-
-*/
+	
 *===============================================================================
-*---> C. Netcash Position
-*===============================================================================
-
-{
-* net cash ymp
-*NOTE, ASK FOR THE NEED TO CREATE DECILES. UNIQUE DEFINITION (STANDARIZED) 
-
-*	use "$data_out/output", clear
-u `output', clear
-
-	
-	keep hhid `concs_pc' pondih *_centile_pc deciles_pc 
-	
-	foreach x in `tax' `indtax'  {
-		gen share_`x'_pc= -`x'_pc/ymp_pc
-	}		
-	
-	foreach x in `transfer' `inkind' `Subsidies' {
-		gen share_`x'_pc= `x'_pc/ymp_pc
-	}
-		
-	keep deciles_pc share* pondih	
-		
-	groupfunction [aw=pondih], mean (share*) by(deciles_pc) norestore
-	
-	reshape long share_, i(deciles_pc) j(variable) string
-		gen measure = "netcash" 
-		rename share_ value
-	
-	tempfile netcash_ymp
-	save `netcash_ymp'
-
-* net cash yd 	
-	
-*	use "$data_out/output", clear
-
-u `output', clear
-	
-	foreach x in `tax' `indtax'  {
-		gen share_`x'_pc= -`x'_pc/yd_pc
-	}		
-	
-	foreach x in `transfer' `inkind' `Subsidies' {
-		gen share_`x'_pc= `x'_pc/yd_pc
-	}
-	
-	*replace share_snit_hh_ae = - share_snit_hh_ae
-	keep yd_deciles_pc share* pondih	
-		
-	groupfunction [aw=pondih], mean (share*) by(yd_deciles_pc) norestore
-	
-	reshape long share_, i(yd_deciles_pc) j(variable) string
-		gen measure = "netcash" 
-		rename share_ value
-	
-	tempfile netcash_yd
-	save `netcash_yd'
-}		
-
-
-
-*===============================================================================
-		*Distributional indicators Gini, Theil, and FGT measures
+*---> D. Distributional indicators Gini, Theil, and FGT measures
 		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
-
-*run "$theado\sp_groupfunction.ado"
 
 u `output', clear
 		
 
 *List of all new marginal contributinos store in income
-local income2 ""
+    local income2 ""
 
-local aux1 `tax' `indtax'
+	local aux1 `tax' `indtax'
 foreach var of local aux1{
 	replace `var' = -`var'
 	replace `var'_pc = -`var'_pc
 }
 
-local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
+	local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
 foreach inc in ymp yn yd yc {   //(AGV) I'm excluding final income because it does not make sense contributing to that
-	foreach var of local aux2 {
+   foreach var of local aux2 {
 		gen `inc'_inc_`var'=`inc'_pc+`var'_pc
 		local income2 `income2' `inc'_inc_`var'   // Store incomes to marignal contribution calculation
 	}
@@ -231,26 +158,41 @@ tempfile poverty
 save `poverty'
 
 *===============================================================================
-		*SP Indicators 
+*---> E.  benefits, coverage beneficiaries
 *===============================================================================
-
-	
-	* All 
-* benefits, coverage beneficiaries by all	
-	*use "$data_out/output",  clear	
+ 
+*---> E.1 benefits, coverage beneficiaries by all	
 u `output', clear
+
 
 	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(all)
 	gen deciles_pc=0
 	tempfile theall
 	save `theall'
 
-* benefits, coverage beneficiaries by deciles (ymp)	
-*	use "$data_out/output",  clear
+*---> E.2 benefits, coverage beneficiaries by deciles (ymp)	
+u `output', clear
+
+	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(ymp_deciles_pc)
+	ren ymp_deciles_pc deciles_pc
+
+	tempfile theall_ymp
+	save `theall_ymp'
+	
+	
+*---> E.3 benefits, coverage beneficiaries by yd
 u `output', clear
 	
-	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(deciles_pc)
-*adding previous ones 	
+	
+	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(yd_deciles_pc)
+	
+	tempfile theall_yd
+	save `theall_yd'
+	
+	
+*---> adding previous ones and generating aux output 
+
+    u `theall_ymp', clear
 	append using `poverty'
 	append using `netcash_ymp'
 	append using `theall'	
@@ -261,22 +203,16 @@ u `output', clear
 	tempfile aux1
 	save `aux1'
 	
-* benefits, coverage beneficiaries by yd
-*	use "$data_out/output",  clear	
-u `output', clear
 	
-	
-	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(yd_deciles_pc)
-	
-	
+	u `theall_yd', clear 
 	append using `netcash_yd'
 	
 	gen concat = variable +"_"+ measure+"_"+"_yd_"+string(yd_deciles_pc)
 	order concat, first
 	
 	append using `aux1'
-	*append using `trans'
 	
+
 	
 	export excel "$dataout", sheet("all${sheetname}") sheetreplace first(variable)
 
@@ -284,3 +220,113 @@ u `output', clear
 
 timer off 1
 timer list 1
+
+
+*/* Mata version 
+
+mata:
+    microdata = st_global("microdata")
+    dirs1 = dir(microdata, "dirs", "*")
+    dataset_list = J(0, 1, "")
+
+    for (i = 1; i <= rows(dirs1); i++) {
+        cty_path = microdata + "/" + dirs1[i]
+        dirs2 = dir(cty_path, "dirs", "*")
+
+        for (j = 1; j <= rows(dirs2); j++) {
+            cty_proj_path = cty_path + "/" + dirs2[j]
+
+            // Always check for .dta at 2nd level (GMB, MRT)
+            files = dir(cty_proj_path, "files", "*.dta")
+            for (f = 1; f <= rows(files); f++) {
+                dataset_list = dataset_list \ files[f]
+            }
+
+            // Also go one level deeper (SEN)
+            dirs3 = dir(cty_proj_path, "dirs", "*")
+            for (k = 1; k <= rows(dirs3); k++) {
+                cty_final_path = cty_proj_path + "/" + dirs3[k]
+                files = dir(cty_final_path, "files", "*.dta")
+                for (f = 1; f <= rows(files); f++) {
+                    dataset_list = dataset_list \ files[f]
+                }
+            }
+        }
+    }
+
+    st_global("dataset_list", invtokens(dataset_list'))
+end
+
+di "${dataset_list}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+global dataset_list ""
+
+local dirs1 : dir `"${microdata}"' dirs "*"
+
+foreach subf of local dirs1 {
+    local cty_path `"${microdata}/`subf'"'
+    local dirs2 : dir `"`cty_path'"' dirs "*"
+
+    foreach subf2 of local dirs2 {
+        local cty_proj_path `"`cty_path'/`subf2'"'
+
+        * 2nd level: GMB/MRT-type
+        local files2 : dir `"`cty_proj_path'"' files "*.dta"
+        foreach f of local files2 {
+            local f_upper = strupper("`f'")
+            global dataset_list `"${dataset_list} "`cty_proj_path'/`f_upper'""'
+        }
+
+        * 3rd level: SEN-type
+        local dirs3 : dir `"`cty_proj_path'"' dirs "*"
+        foreach subf3 of local dirs3 {
+            local cty_final_path `"`cty_proj_path'/`subf3'"'
+            local files3 : dir `"`cty_final_path'"' files "*.dta"
+            foreach f of local files3 {
+                local f_upper = strupper("`f'")
+                global dataset_list `"${dataset_list} "`cty_final_path'/`f_upper'""'
+            }
+        }
+    }
+}
+
+* Loop over each dataset
+foreach dta of global dataset_list {
+    
+    di "Processing: `dta'"
+    use `"`dta'"', clear
+    
+    cap drop *deciles_pc *centile_pc
+	
+	foreach y in ymp yd { 
+	xtile `y'_deciles_pc = `y'_pc  [aw=pondih], nq(10) 
+	xtile `y'_centile_pc =`y'_pc  [aw=pondih], nq(100) 
+	} 
+	
+	tempfile output
+	
+	save `output'
+
+	gl sheetname `c'
+
+}
