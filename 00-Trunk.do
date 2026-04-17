@@ -14,11 +14,13 @@ if "`c(username)'"=="wb419055" {
 
 *Input folders: Country economists will share either the microdata or the core indicators, if both are shared, the code should validate the consistency between them.	
 
-global microdata   	"${root}/01-Data/01-02-FIA_Microdata"			
-global template    	"${root}/01-Data/01-03-FIA_Core Indicators"
+global microdata   		"${root}/01-Data/01-02-FIA_Microdata"			
+global template    		"${root}/01-Data/01-03-FIA_Core Indicators"
 
-global tempsim		"${root}/01-Data/3_temp_sim"
-global fia-data		"${root}/04-Products\00-FIA-Database/AFW_Sim_tool_Output.csv"
+global tempsim			"${root}/01-Data/3_temp_sim"
+global fia-data			"${root}/04-Products\00-FIA-Database/AFW_Sim_tool_Output.csv"
+
+global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 *============================================================================*
@@ -73,15 +75,24 @@ local indtax 		"CD_direct excise_taxes VAT_direct VAT_indirect"
 local inktra 		"education_inKind am_health" 
 *local misscellaneuos "hhweight deciles_pc hhsize"
 
+
+*============================================================================*
+//	3. Calculations of relative incidences and concentration indices
+*============================================================================*
+
+foreach x in `dirtax' `ssc' `dirtra' `subs' `indtax' `inktra' { // all countries 
+	local x_total
+	foreach y of local x { // all policies
+		local x_total `x_total' `y'
+
+		foreach z in pc { // all indicators 
+			local y_`z' = `y' / hhsize
+			local x_total_`z' = `x_total' / hhsize
+		}
+	}
+	local `x'_total `x_total'
+
+
 exit
 
-	* Example:
-	* global all_subfolders ""
-	* collect_subfolders, root("${data_out}")
-	* di "$all_subfolders"
-
-*/
- 
-global var_dtr 	 "`dirtax' `ssc' `dirtra' `subs' `indtax' `inktra'" // `misscellaneuos'"  // Choose policies
-
-
+	
