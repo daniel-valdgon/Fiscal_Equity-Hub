@@ -197,23 +197,23 @@ r(199);
   6.         }
 (3 vars, 5 obs)
 (0 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000001.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000001.tmp saved as .dta
     format
 (3 vars, 71 obs)
 (64 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000002.tmp saved as .dta
     format
 (4 vars, 76 obs)
 (66 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000003.tmp saved as .dta
     format
 (3 vars, 6 obs)
 (1 observation deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000004.tmp saved as .dta
     format
 (3 vars, 14 obs)
 (10 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000005.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000005.tmp saved as .dta
     format
 
 . 
@@ -371,7 +371,7 @@ Using dataset 2: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB G
 . tempfile output
 
 . save `output'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000006.tmp saved as .dta
     format
 
 . 
@@ -470,7 +470,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000007.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -488,7 +488,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000008.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000008.tmp saved as .dta
     format
 
 . 
@@ -500,7 +500,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000008.tmp saved as .dta
 . tempfile ind_3_02
 
 . save `ind_3_02'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000009.tmp saved as .dta
     format
 
 . 
@@ -635,7 +635,7 @@ variable income was str5 now str6
 . tempfile ind_3_03
 
 . save `ind_3_03'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000a.tmp saved as .dta
     format
 
 . 
@@ -762,7 +762,7 @@ variable income was str5 now str6
 . tempfile ind_3_04
 
 . save `ind_3_04'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000b.tmp saved as .dta
     format
 
 . 
@@ -1010,30 +1010,47 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000b.tmp saved as .dta
 . g context   = "equity"
 
 . 
-. * For now, save the raw components needed for marginal contributions
-. tempfile ind_3_05
+. *---> Compute marginal contributions by differencing
+. * MC_gini(Y, X) = Gini(Y) - Gini(Y_inc_X)
+. * MC_fgt0(Y, X) = FGT0(Y) - FGT0(Y_inc_X)
+. 
+. tempfile mc_raw
 
-. save `ind_3_05'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000c.tmp saved as .dta
+. save `mc_raw'
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000c.tmp saved as .dta
     format
 
 . 
-. di as text "Note: 3-05 saves raw Gini/FGT for base and counterfactual incomes
-> ."
-Note: 3-05 saves raw Gini/FGT for base and counterfactual incomes.
+. * --- MC to Inequality (id=45): Gini(Y) - Gini(Y_inc_X) ---
+. preserve
 
-. di as text "      Marginal contributions = indicator(Y) - indicator(Y_inc_X).
-> "
-      Marginal contributions = indicator(Y) - indicator(Y_inc_X).
+.         keep if indicator == "gini"
+(1,548 observations deleted)
 
-. di as text "      Full differencing logic to be added in next iteration."
-      Full differencing logic to be added in next iteration.
+.         
+.         * Separate base incomes from counterfactual
+.         gen is_base = 0
 
-. 
+.         foreach inc in ymp_pc yn_pc yd_pc yc_pc {
+  2.                 replace is_base = 1 if variable == "`inc'"
+  3.         }
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+.         
+.         * Base Gini values
+.         tempfile gini_base
+
+.         preserve
+already preserved
+r(621);
+
 . if _rc di as error "3-05 FAILED with rc = `=_rc'"
+3-05 FAILED with rc = 621
 
 . else   di as text  "3-05 OK"
-3-05 OK
 
 . 
 . di as text _n "=== 3-06: Coverage ==="
@@ -1138,7 +1155,7 @@ variable income was str5 now str6
 . tempfile ind_3_06
 
 . save `ind_3_06'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000d.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000f.tmp saved as .dta
     format
 
 . 
@@ -1240,7 +1257,7 @@ variable income was str5 now str6
 . tempfile ind_3_07
 
 . save `ind_3_07'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000e.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000g.tmp saved as .dta
     format
 
 . 
@@ -1342,7 +1359,7 @@ variable income was str5 now str6
 . tempfile ind_3_08
 
 . save `ind_3_08'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000f.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000h.tmp saved as .dta
     format
 
 . 
@@ -1428,7 +1445,7 @@ Note: 3-08 saves concentration shares (benefits by decile).
 . tempfile gini_wide
 
 . save `gini_wide'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000g.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000i.tmp saved as .dta
     format
 
 . 
@@ -1441,307 +1458,11 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000g.tmp saved as .dta
 . 
 . * Redistributive impact: Gini(ymp_pc) - Gini(Y_pc) for Y in {yn, yd, yc, yf}
 . preserve
-
-.         keep if inc_var == "ymp_pc"
-(4 observations deleted)
-
-.         local gini_ymp = gini_val[1]
-
-. restore
-
-. 
-. local ri_n = 0
-
-. tempname ri_mat
-
-. mat `ri_mat' = J(4, 1, .)
-
-. local ri_names ""
-
-. 
-. foreach y in yn_pc yd_pc yc_pc yf_pc {
-  2.         preserve
-  3.                 keep if inc_var == "`y'"
-  4.                 if _N > 0 {
-  5.                         local gini_y = gini_val[1]
-  6.                         local ++ri_n
-  7.                         mat `ri_mat'[`ri_n', 1] = `gini_ymp' - `gini_y'
-  8.                         local ri_names `ri_names' `y'
-  9.                 }
- 10.         restore
- 11. }
-(4 observations deleted)
-(4 observations deleted)
-(4 observations deleted)
-(4 observations deleted)
-
-. 
-. * Build output dataset
-. clear
-
-. local true_n = `ri_n'
-
-. if `true_n' == 0 local true_n = 1
-
-. set obs `true_n'
-Number of observations (_N) was 0, now 4.
-
-. gen variable = ""
-(4 missing values generated)
-
-. gen value = .
-(4 missing values generated)
-
-. gen measure = "redistributive_impact"
-
-. gen indicator = "redistributive_impact"
-
-. gen income = ""
-(4 missing values generated)
-
-. gen context = "equity"
-
-. gen deciles_pc = .
-(4 missing values generated)
-
-. 
-. forvalues k = 1/`ri_n' {
-  2.         local vname : word `k' of `ri_names'
-  3.         replace variable = "`vname'" in `k'
-  4.         replace income   = "`vname'" in `k'
-  5.         replace value    = `ri_mat'[`k', 1] in `k'
-  6. }
-variable variable was str1 now str5
-(1 real change made)
-variable income was str1 now str5
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-
-. 
-. drop if variable == ""
-(0 observations deleted)
-
-. 
-. tempfile redist_impact
-
-. save `redist_impact'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000m.tmp saved as .dta
-    format
-
-. 
-. *============================================================================
-> ===
-. *---> B. 90-10 Ratio (id=67)
-. *     Ratio of income at 90th percentile to 10th percentile
-. *============================================================================
-> ===
-. 
-. u `output', clear
-
-. 
-. foreach y of global income {
-  2.         qui _pctile `y'_pc [aw=pondih], p(10 90)
-  3.         local p10_`y' = r(r1)
-  4.         local p90_`y' = r(r2)
-  5. }
-
-. 
-. clear
-
-. local n_inc : word count ${income}
-
-. set obs `n_inc'
-Number of observations (_N) was 0, now 5.
-
-. gen variable = ""
-(5 missing values generated)
-
-. gen value = .
-(5 missing values generated)
-
-. gen measure = "p90_p10_ratio"
-
-. gen indicator = "p90_p10_ratio"
-
-. gen income = ""
-(5 missing values generated)
-
-. gen context = "equity"
-
-. gen deciles_pc = .
-(5 missing values generated)
-
-. 
-. local k 0
-
-. foreach y of global income {
-  2.         local ++k
-  3.         replace variable = "`y'_pc" in `k'
-  4.         replace income   = "`y'_pc" in `k'
-  5.         if `p10_`y'' != 0 {
-  6.                 replace value = `p90_`y'' / `p10_`y'' in `k'
-  7.         }
-  8. }
-variable variable was str1 now str6
-(1 real change made)
-variable income was str1 now str6
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-
-. 
-. tempfile ratio_9010
-
-. save `ratio_9010'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000n.tmp saved as .dta
-    format
-
-. 
-. *============================================================================
-> ===
-. *---> C. Absolute Gini (id=68)
-. *     Absolute Gini = Gini(Y) * mean(Y)
-. *============================================================================
-> ===
-. 
-. u `output', clear
-
-. 
-. foreach y of global income {
-  2.         qui sum `y'_pc [aw=pondih], meanonly
-  3.         local mean_`y' = r(mean)
-  4. }
-
-. 
-. u `gini_wide', clear
-
-. 
-. gen abs_gini = .
-(5 missing values generated)
-
-. foreach y of global income {
-  2.         replace abs_gini = gini_val * `mean_`y'' if inc_var == "`y'_pc"
-  3. }
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-
-. 
-. rename inc_var variable
-
-. rename abs_gini value
-
-. drop gini_val
-
-. gen measure    = "absolute_gini"
-
-. gen indicator  = "absolute_gini"
-
-. gen income     = variable
-
-. gen context    = "equity"
-
-. gen deciles_pc = .
-(5 missing values generated)
-
-. 
-. tempfile abs_gini
-
-. save `abs_gini'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000o.tmp saved as .dta
-    format
-
-. 
-. *============================================================================
-> ===
-. *---> D. Total Poverty Impact (id=47)
-. *     FGT0(ymp) - FGT0(yd) for each poverty line
-. *============================================================================
-> ===
-. 
-. u `ind_3_04', clear
-
-. keep if indicator == "fgt0"
-(20 observations deleted)
-
-. 
-. * This requires pairing pre-fiscal vs post-fiscal poverty
-. * For now, save FGT0 values — differencing across income concepts
-. * is done by comparing variable (income) within each reference (poverty line)
-. 
-. tempfile pov_impact_raw
-
-. save `pov_impact_raw'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000p.tmp saved as .dta
-    format
-
-. 
-. * Compute differences: FGT0(ymp) - FGT0(Y) for each poverty line
-. preserve
-
-.         keep if variable == "ymp_pc"
-(16 observations deleted)
-
-.         rename value fgt0_ymp
-
-.         keep reference fgt0_ymp
-
-.         tempfile fgt0_base
-
-.         save `fgt0_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000r.tmp saved as .dta
-    format
-
-. restore
-
-. 
-. preserve
-
-.         keep if variable != "ymp_pc"
-(4 observations deleted)
-
-.         merge m:1 reference using `fgt0_base', nogen
-
-    Result                      Number of obs
-    -----------------------------------------
-    Not matched                             0
-    Matched                                16  
-    -----------------------------------------
-
-.         gen value_diff = fgt0_ymp - value
-
-.         drop value fgt0_ymp
-
-.         rename value_diff value
-
-.         gen measure   = "poverty_impact"
-variable measure already defined
-r(110);
+already preserved
+r(621);
 
 . if _rc di as error "3-11 FAILED with rc = `=_rc'"
-3-11 FAILED with rc = 110
+3-11 FAILED with rc = 621
 
 . else   di as text  "3-11 OK"
 
@@ -1840,7 +1561,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000t.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000j.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -1858,7 +1579,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000u.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000k.tmp saved as .dta
     format
 
 . 
@@ -1869,7 +1590,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000u.tmp saved as .dta
 . tempfile ind_3_12
 
 . save `ind_3_12'
-file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000v.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000l.tmp saved as .dta
     format
 
 . 
@@ -1988,7 +1709,7 @@ r(621);
 . timer off 1
 
 . timer list 1
-   1:     60.76 /        1 =      60.7600
+   1:     60.47 /        1 =      60.4700
 
 . 
 . di as text _n "=== TEST COMPLETE ==="

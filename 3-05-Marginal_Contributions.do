@@ -63,10 +63,106 @@ sp_groupfunction [aw=pondih], gini(${income_pc} `income2') ///
 g indicator = measure
 g context   = "equity"
 
-* For now, save the raw components needed for marginal contributions
+*---> Compute marginal contributions by differencing
+* MC_gini(Y, X) = Gini(Y) - Gini(Y_inc_X)
+* MC_fgt0(Y, X) = FGT0(Y) - FGT0(Y_inc_X)
+
+tempfile mc_raw
+save `mc_raw'
+
+* --- MC to Inequality (id=45): Gini(Y) - Gini(Y_inc_X) ---
+preserve
+	keep if indicator == "gini"
+	
+	* Separate base incomes from counterfactual
+	gen is_base = 0
+	foreach inc in ymp_pc yn_pc yd_pc yc_pc {
+		replace is_base = 1 if variable == "`inc'"
+	}
+	
+	* Base Gini values
+	tempfile gini_base
+	preserve
+		keep if is_base == 1
+		rename value gini_base
+		rename variable base_inc
+		keep base_inc gini_base
+		save `gini_base'
+	restore
+	
+	* Counterfactual Gini values — parse income and instrument from variable name
+	keep if is_base == 0
+	* variable format: inc_inc_instrument (e.g. ymp_inc_PIT)
+	gen base_inc = ""
+	gen mc_instrument = ""
+	foreach inc in ymp yn yd yc {
+		replace base_inc = "`inc'_pc" if strpos(variable, "`inc'_inc_") == 1
+		replace mc_instrument = subinstr(variable, "`inc'_inc_", "", 1) if base_inc == "`inc'_pc"
+	}
+	
+	merge m:1 base_inc using `gini_base', nogen keep(match)
+	gen mc_value = gini_base - value
+	
+	keep base_inc mc_instrument mc_value
+	rename base_inc income
+	rename mc_instrument variable
+	rename mc_value value
+	gen measure   = "mc_gini"
+	gen indicator = "mc_gini"
+	gen context   = "equity"
+	gen deciles_pc = .
+	gen instrument = variable
+	
+	tempfile mc_gini
+	save `mc_gini'
+restore
+
+* --- MC to Poverty (id=44): FGT0(Y) - FGT0(Y_inc_X) ---
+preserve
+	keep if indicator == "fgt0"
+	
+	gen is_base = 0
+	foreach inc in ymp_pc yn_pc yd_pc yc_pc {
+		replace is_base = 1 if variable == "`inc'"
+	}
+	
+	tempfile fgt_base
+	preserve
+		keep if is_base == 1
+		rename value fgt_base
+		rename variable base_inc
+		keep base_inc fgt_base reference
+		save `fgt_base'
+	restore
+	
+	keep if is_base == 0
+	gen base_inc = ""
+	gen mc_instrument = ""
+	foreach inc in ymp yn yd yc {
+		replace base_inc = "`inc'_pc" if strpos(variable, "`inc'_inc_") == 1
+		replace mc_instrument = subinstr(variable, "`inc'_inc_", "", 1) if base_inc == "`inc'_pc"
+	}
+	
+	merge m:1 base_inc reference using `fgt_base', nogen keep(match)
+	gen mc_value = fgt_base - value
+	
+	keep base_inc mc_instrument mc_value reference
+	rename base_inc income
+	rename mc_instrument variable
+	rename mc_value value
+	gen measure   = "mc_fgt0"
+	gen indicator = "mc_fgt0"
+	gen context   = "equity"
+	gen deciles_pc = .
+	gen instrument = variable
+	
+	tempfile mc_fgt0
+	save `mc_fgt0'
+restore
+
+* --- Append MC results ---
+u `mc_gini', clear
+append using `mc_fgt0'
+
 tempfile ind_3_05
 save `ind_3_05'
-
-di as text "Note: 3-05 saves raw Gini/FGT for base and counterfactual incomes."
-di as text "      Marginal contributions = indicator(Y) - indicator(Y_inc_X)."
-di as text "      Full differencing logic to be added in next iteration."

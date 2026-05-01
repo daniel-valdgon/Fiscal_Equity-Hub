@@ -193,9 +193,13 @@ preserve
 	gen value_diff = fgt0_ymp - value
 	drop value fgt0_ymp
 	rename value_diff value
+	cap drop measure
 	gen measure   = "poverty_impact"
+	cap drop indicator
 	gen indicator = "poverty_impact"
+	cap drop context
 	gen context   = "equity"
+	cap drop deciles_pc
 	gen deciles_pc = .
 	rename variable income
 	gen variable = income

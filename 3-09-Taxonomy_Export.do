@@ -23,6 +23,9 @@
 	cap append using `ind_3_06'            // Coverage
 	cap append using `ind_3_07'            // Mean income
 	cap append using `ind_3_08'            // Concentration / Kakwani
+	cap append using `ind_3_11'            // Redistributive impact, 90-10, abs Gini, poverty impact
+	cap append using `ind_3_12'            // Conditional incidence
+	cap append using `ind_3_13'            // Concentration shares, CC, Kakwani
 
 	* Ensure context is set
 	cap replace context = "equity" if context == ""
