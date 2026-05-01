@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------------
 *--------------------------------------------------------------------------------
 * Program: GSG3 Fiscal Equity Hub - Core Database Outputs
-* Author: 	Daniel VAlderrama 
+* Author: 	Daniel VAlderrama & JM Monroy
 * Date: 	Feb 2026
 * Title: 	Generate outputs for the GSG3 Core Database
 *--------------------------------------------------------------------------------
@@ -444,13 +444,3 @@ forvalues i = 2/$n_datasets {
 	*Create System for statistic of indocator coverage 
 timer off 1
 timer list 1
-
-
-
-
-
-
-
-
-
-

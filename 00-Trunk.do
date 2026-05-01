@@ -14,83 +14,37 @@ if "`c(username)'"=="wb419055" {
 
 *Input folders: Country economists will share either the microdata or the core indicators, if both are shared, the code should validate the consistency between them.	
 
-global microdata   		"${root}/01-Data/01-02-FIA_Microdata"			
-global template    		"${root}/01-Data/01-03-FIA_Core Indicators"
+global rawdata    		"${root}/01-Data/01-01-FRP" // includes .do and raw data: Upcoming replication packages MML
+global microdata   		"${root}/01-Data/01-02-FIA_Microdata" // save the FMD files here, with the same naming structure, when FRP is not shared
+global template    		"${root}/01-Data/01-03-FIA_Core Indicators" // FCI Save the core indicators when FMD is not shared
 
-global tempsim			"${root}/01-Data/3_temp_sim"
+*Temporary data pipeline 
+global tempsim			"${root}/01-Data/3_temp_sim" // 2 folders
+
+
+*Bronze database  
 global fia-data			"${root}/04-Products\00-FIA-Database/AFW_Sim_tool_Output.csv"
 
 global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 *============================================================================*
-//	1. Detecting microdata 
+//	1. Data infrastructure
 *============================================================================*
 
-*This code explore all subfolders available within each folder and search foll all dta files in there
-*It create asserts that the dta files have the same naming structure namely 
+* A. Data file 
+* It create a dataset with information available in the datalab and save it
+* It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
+* Name of files should adapt to the ID shared by Pechi (Now)
 
-
-*First level countries
-local current_dirs : dir "${microdata}" dirs "*"
-
-	foreach subf of local current_dirs {
-		*2nd level : 
-		local cty_path `"${microdata}/`subf'"'
-		local current_dirs2nd : dir "`cty_path'" dirs "*"
-			foreach subf of local current_dirs2nd {
-				local cty_proj_path "`cty_path'/`subf'"
-				
-				*Search dta files in the 2nd level
-				local dta_subf: dir "`cty_proj_path'" files "*.dta"
-				*Only one file per folder 
-				local ndta : word count `dta_subf'
-				capture noisily assert `ndta' == 1
-				if _rc {
-					di as err "[rc=`rc'] Folder [`cty_proj_path'] has [`ndta'] .dta file(s): [`dta_subf']"
-				}
-				*nAme of folder same as name of data file
-				capture noisily assert "`dta_subf'" == "`subf'.dta"
-				if _rc {
-					di as err "[rc=`rc'] Name mismatch in [`cty_proj_path']: expected [`subf'.dta], found [`dta_subf']"
-					
-				}
-			}
-	}
-
+qui: include "${root}/02-Scripts/wb419055/1-01-Inventory.do"
 *dis `"`file_list'"'
 
-
-*============================================================================*
-//	2. Policy dimensions
-*============================================================================*
-
-
-* Policies (This set of )
-local dirtax		"PIT BIT PropertyTax FinancialTax"
-local ssc			"sscontribs_total"
-local dirtra		"am_prog_1 am_prog_2 am_prog_3 am_prog_other"
-local subs			"subsidy_elec_direct subsidy_elec_indirect subsidy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect subsidy_agric"
-local indtax 		"CD_direct excise_taxes VAT_direct VAT_indirect"
-local inktra 		"education_inKind am_health" 
+* B. Policy List  
+/*Loading list of policies*/ include "${root}/02-Scripts/wb419055/0-01-aux_policy_list.do"
 *local misscellaneuos "hhweight deciles_pc hhsize"
 
 
-*============================================================================*
-//	3. Calculations of relative incidences and concentration indices
-*============================================================================*
-
-foreach x in `dirtax' `ssc' `dirtra' `subs' `indtax' `inktra' { // all countries 
-	local x_total
-	foreach y of local x { // all policies
-		local x_total `x_total' `y'
-
-		foreach z in pc { // all indicators 
-			local y_`z' = `y' / hhsize
-			local x_total_`z' = `x_total' / hhsize
-		}
-	}
-	local `x'_total `x_total'
 
 
 exit
