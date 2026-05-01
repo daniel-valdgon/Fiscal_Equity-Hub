@@ -33,7 +33,7 @@
 u `output', clear
 
 * Concentration shares via benefits
-sp_groupfunction [aw=pondih], benefits(`concs_pc') by(ymp_deciles_pc)
+sp_groupfunction [aw=pondih], benefits(${concs_pc}) by(ymp_deciles_pc)
 ren ymp_deciles_pc deciles_pc
 
 g indicator = "benefits"
@@ -43,7 +43,7 @@ g context   = "equity"
 g instrument = variable
 
 * Filter: only instrument-level benefits (not income concepts)
-global codes "yd_pc yf_pc ymp_pc yc_pc yn_pc"
+* codes defined in 3-00-Setup.do as global
 
 gen income = ""
 forvalues k = 1/5 {

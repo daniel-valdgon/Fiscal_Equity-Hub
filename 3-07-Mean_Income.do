@@ -13,23 +13,36 @@
 * Deciles:      1-10 (pre-fiscal ymp)
 *--------------------------------------------------------------------------------
 * Requires: 3-00-Setup.do to be included first.
+*--------------------------------------------------------------------------------
+* Method A (default): sp_groupfunction — mean option
+* Method B (native):  collapse (mean) — simplest possible Stata, no ado needed.
 *--------------------------------------------------------------------------------*/
 
 *===============================================================================
 *---> Mean income by decile
-*     Uses sp_groupfunction with mean() option
 *===============================================================================
 
 u `output', clear
 
-sp_groupfunction [aw=pondih], mean(`concs_pc') by(ymp_deciles_pc)
+*--- Method A: sp_groupfunction ------------------------------------------------
+sp_groupfunction [aw=pondih], mean(${concs_pc}) by(ymp_deciles_pc)
+
+*--- Method B: Native collapse (alternative) -----------------------------------
+* Uncomment below and comment Method A.
+/*
+u `output', clear
+collapse (mean) ${income_pc} [aw=pondih], by(ymp_deciles_pc)
+reshape long , i(ymp_deciles_pc) j(variable) string
+rename v1 value
+gen measure = "mean"
+*/
 ren ymp_deciles_pc deciles_pc
 
 g indicator = measure
 g context   = "equity"
 
 * Map income variables
-global codes "yd_pc yf_pc ymp_pc yc_pc yn_pc"
+* codes defined in 3-00-Setup.do as global
 
 gen income = ""
 forvalues k = 1/5 {

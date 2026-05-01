@@ -27,6 +27,8 @@
 	global metadata     "${root}/01-Data/00-Aux"
 
 *---> A.3 Policy macros (from globals set by 0-01-aux_policy_list.do)
+*     NOTE: All cross-file macros are globals so they survive across
+*     `include' calls in the modular 3-xx do-files.
 
 	local Directaxes 		"${Directaxes}"
 	local Contributions 	"${Contributions}"
@@ -35,24 +37,27 @@
 	local Indtaxes 			"${Indtaxes}"
 	local InKindTransfers	"${InKindTransfers}"
 
-	local tax        dirtax_total sscontribs_total `Directaxes' `Contributions'
-	local indtax     indtax_total `Indtaxes' Tax_VAT
-	local inkind     inktransf_total `InKindTransfers' education_inKind
-	local transfer   dirtransf_total `DirectTransfers'
-	local Subsidies  subsidy_total `Subsidies' subsidy_elec subsidy_fuel subsidy_water
-	local income     ymp yn yd yc yf
-	local concs      `tax' `indtax' `transfer' `inkind' `income' `Subsidies'
+	global tax        dirtax_total sscontribs_total `Directaxes' `Contributions'
+	global indtax     indtax_total `Indtaxes' Tax_VAT
+	global inkind     inktransf_total `InKindTransfers' education_inKind
+	global transfer   dirtransf_total `DirectTransfers'
+	global Subsidies  subsidy_total `Subsidies' subsidy_elec subsidy_fuel subsidy_water
+	global income     ymp yn yd yc yf
+	global concs      ${tax} ${indtax} ${transfer} ${inkind} ${income} ${Subsidies}
 
 *---> A.4 Per-capita versions
 	foreach x in tax indtax inkind transfer income concs Subsidies {
-		local `x'_pc
-		foreach y of local `x' {
-			local `x'_pc ``x'_pc' `y'_pc
+		global `x'_pc
+		foreach y in ${`x'} {
+			global `x'_pc ${`x'_pc} `y'_pc
 		}
 	}
 
 *---> A.5 Poverty lines
-	local pline zref line_1 line_2 line_3
+	global pline zref line_1 line_2 line_3
+	
+*---> A.5b Income codes for taxonomy mapping
+	global codes "yd_pc yf_pc ymp_pc yc_pc yn_pc"
 
 *---> A.6 Taxonomy correlative
 	gl taxonomy_components context indicator instrument income reference

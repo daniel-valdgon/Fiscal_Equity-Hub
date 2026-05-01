@@ -28,7 +28,7 @@
 u `output', clear
 
 *---> Flip taxes to negative for the addition
-local aux1 `tax' `indtax'
+local aux1 ${tax} ${indtax}
 foreach var of local aux1 {
 	replace `var'    = -`var'
 	replace `var'_pc = -`var'_pc
@@ -36,7 +36,7 @@ foreach var of local aux1 {
 
 *---> Generate counterfactual incomes: Y_inc_X = Y_pc + X_pc
 local income2 ""
-local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
+local aux2 ${tax} ${indtax} ${transfer} ${Subsidies} ${inkind}
 
 foreach inc in ymp yn yd yc {
 	foreach var of local aux2 {
@@ -52,8 +52,8 @@ foreach var of local aux1 {
 }
 
 *---> Compute Gini and poverty for base + counterfactual incomes
-sp_groupfunction [aw=pondih], gini(`income_pc' `income2') ///
-	poverty(`income_pc' `income2') povertyline(`pline') by(all)
+sp_groupfunction [aw=pondih], gini(${income_pc} `income2') ///
+	poverty(${income_pc} `income2') povertyline(${pline}) by(all)
 
 *---> Keep only base income rows for computing marginal differences
 * The full marginal contribution calculation requires subtracting

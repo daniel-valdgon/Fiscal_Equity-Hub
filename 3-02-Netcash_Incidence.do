@@ -12,7 +12,10 @@
 * Deciles:      1-10 (pre-fiscal and disposable)
 *--------------------------------------------------------------------------------
 * Requires: 3-00-Setup.do to be included first (provides `output' tempfile,
-*           policy locals, taxonomy tempfiles, and dataset globals).
+*           global macros, taxonomy tempfiles, and dataset globals).
+*--------------------------------------------------------------------------------
+* Method:   Native Stata collapse (no sp_groupfunction needed).
+*           groupfunction used only for weighted mean by decile.
 *--------------------------------------------------------------------------------*/
 
 *===============================================================================
@@ -25,15 +28,15 @@
 foreach y in ymp yd {
 
 	u `output', clear
-	keep hhid `concs_pc' pondih *_centile_pc *_deciles_pc
+	keep hhid ${concs_pc} pondih *_centile_pc *_deciles_pc
 
 	* Taxes: negative sign (burden)
-	foreach x in `tax' `indtax' {
+	foreach x in ${tax} ${indtax} {
 		gen share_`x'_pc = -`x'_pc / `y'_pc
 	}
 
 	* Transfers & subsidies: positive sign (benefit)
-	foreach x in `transfer' `inkind' `Subsidies' {
+	foreach x in ${transfer} ${inkind} ${Subsidies} {
 		gen share_`x'_pc = `x'_pc / `y'_pc
 	}
 

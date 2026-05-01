@@ -14,22 +14,58 @@
 * Deciles:      n/a (scalar, by "all")
 *--------------------------------------------------------------------------------
 * Requires: 3-00-Setup.do to be included first.
+*--------------------------------------------------------------------------------
+* Method A (default): sp_groupfunction — one call for all FGT measures
+* Method B (native):  Manual FGT via collapse — straightforward weighted means
+*                     of indicator variables. ~2x lines but transparent.
 *--------------------------------------------------------------------------------*/
 
 *===============================================================================
 *---> Poverty measures: FGT0 (headcount) and FGT1 (poverty gap)
-*     Uses sp_groupfunction with poverty() and povertyline() options
 *===============================================================================
 
 u `output', clear
 
-sp_groupfunction [aw=pondih], poverty(`income_pc') povertyline(`pline') by(all)
+*--- Method A: sp_groupfunction ------------------------------------------------
+sp_groupfunction [aw=pondih], poverty(${income_pc}) povertyline(${pline}) by(all)
+
+*--- Method B: Native Stata (alternative) --------------------------------------
+* Uncomment below and comment Method A to use native approach.
+* Generates FGT alpha=0,1 for each income x poverty line combination.
+/*
+u `output', clear
+
+* Generate FGT indicator variables
+foreach v in ${income_pc} {
+	foreach z in ${pline} {
+		gen double fgt0_`v'_`z' = (`v' < `z') if !missing(`v') & !missing(`z')
+		gen double fgt1_`v'_`z' = max(0, (`z' - `v') / `z') if !missing(`v') & !missing(`z')
+	}
+}
+
+* Weighted mean = population FGT
+preserve
+	collapse (mean) fgt0_* fgt1_* [aw=pondih]
+	gen all = 1
+
+	* Reshape to long: variable x measure x reference
+	reshape long fgt0_ fgt1_, i(all) j(_varline) string
+
+	* Parse variable and reference from _varline
+	* _varline format: incomevar_pc_povertyline
+	
+	rename fgt0_ value_fgt0
+	rename fgt1_ value_fgt1
+	reshape long value_, i(_varline) j(measure) string
+	rename value_ value
+	
+	* ... additional parsing needed to extract variable/reference
+restore
+*/
 
 *---> Map taxonomy fields
 g indicator = measure
 g context   = "equity"
-
-global codes "yd_pc yf_pc ymp_pc yc_pc yn_pc"
 
 gen income = ""
 forvalues k = 1/5 {
