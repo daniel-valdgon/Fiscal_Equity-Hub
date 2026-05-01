@@ -102,7 +102,7 @@ save `redist_impact'
 
 u `output', clear
 
-foreach y in ${income} {
+foreach y of global income {
 	qui _pctile `y'_pc [aw=pondih], p(10 90)
 	local p10_`y' = r(r1)
 	local p90_`y' = r(r2)
@@ -120,7 +120,7 @@ gen context = "equity"
 gen deciles_pc = .
 
 local k 0
-foreach y in ${income} {
+foreach y of global income {
 	local ++k
 	replace variable = "`y'_pc" in `k'
 	replace income   = "`y'_pc" in `k'
@@ -139,7 +139,7 @@ save `ratio_9010'
 
 u `output', clear
 
-foreach y in ${income} {
+foreach y of global income {
 	qui sum `y'_pc [aw=pondih], meanonly
 	local mean_`y' = r(mean)
 }
@@ -147,7 +147,7 @@ foreach y in ${income} {
 u `gini_wide', clear
 
 gen abs_gini = .
-foreach y in ${income} {
+foreach y of global income {
 	replace abs_gini = gini_val * `mean_`y'' if inc_var == "`y'_pc"
 }
 

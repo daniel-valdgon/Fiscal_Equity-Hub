@@ -1,0 +1,1999 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      StataNow 18.5
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 6-core network, expiring 16 Dec 2028
+Serial number: 501909318806
+  Licensed to: WBG User
+               World Bank
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running C:\Program Files\Stata18\sysprofile.do ...
+�set is not a valid command name
+r(199);
+
+. do _test_pipeline.do 
+
+. /*---------------------------------------------------------------------------
+> -----
+> * TEST: Run modular indicator pipeline on first available dataset
+> * This file tests that 3-00-Setup + all 3-xx modules execute without error.
+> * Run via: "C:\Program Files\Stata18\StataMP-64.exe" /e do _test_pipeline.do
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. clear all
+
+. set more off
+
+. timer clear 1
+
+. timer on 1
+
+. 
+. * Set root
+. global root "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Gro
+> up - Fiscal Equity Hub\Workspace\Data Hub"
+
+. 
+. * Install ado path
+. adopath ++ "${root}/02-Scripts/wb419055/_ado"
+  [1]              "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - W
+> B Group - Fiscal Equity Hub\Workspace\Data Hub/02-Scripts/wb419055/_ado"
+  [2]  (BASE)      "C:\Program Files\Stata18\ado\base/"
+  [3]  (SITE)      "C:\Program Files\Stata18\ado\site/"
+  [4]              "."
+  [5]  (PERSONAL)  "c:\ado\personal/"
+  [6]  (PLUS)      "c:\ado\plus/"
+  [7]  (OLDPLACE)  "c:\ado/"
+
+. 
+. * Load policy list (sets globals Directaxes, Contributions, etc.)
+. * Since 0-01-aux sets locals not globals, we set them here directly
+. global Directaxes     "PIT BIT PropertyTax FinancialTax"
+
+. global Contributions  "sscontribs_total"
+
+. global DirectTransfers "am_prog_1 am_prog_2 am_prog_3 am_prog_other"
+
+. global Subsidies      "subsidy_elec_direct subsidy_elec_indirect subsidy_fuel
+> _direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect sub
+> sidy_agric"
+
+. global Indtaxes       "CD_direct excise_taxes VAT_direct VAT_indirect"
+
+. global InKindTransfers "education_inKind am_health"
+
+. 
+. di as text "=== Loading 3-00-Setup.do ==="
+=== Loading 3-00-Setup.do ===
+
+. include "${root}/02-Scripts/wb419055/3-00-Setup.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Indicator Pipeline Setup
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Shared setup for all 3-xx indicator do-files
+> *----------------------------------------------------------------------------
+> ----
+> *----------------------------------------------------------------------------
+> ----
+> * Note: This file is included by each modular 3-xx do-file.
+> *       It defines paths, macros, loads taxonomy, detects microdata,
+> *       and opens/prepares each dataset inside a loop.
+> *       After including this file, the caller has access to:
+> *         - `output' tempfile with deciled microdata
+> *         - All policy locals (tax_pc, transfer_pc, etc.)
+> *         - All taxonomy tempfiles (context, indicator, etc.)
+> *         - $n_datasets, $sheetname, $datasetname globals
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> A. Paths and Macros
+. *============================================================================
+> ===
+. 
+.         global microdata        "${root}/01-Data/01-02-FIA_Microdata"
+
+.         global template         "${root}/01-Data/01-03-FIA_Core Indicators"
+
+.         global tempsim          "${root}/01-Data/3_temp_sim"
+
+.         global dataout      "${root}/03-Outputs/01-Cleaned-FIA-Indicators/01-
+> Cleaned-FIA-Indicators"
+
+.         global metadata     "${root}/01-Data/00-Aux"
+
+. 
+. *---> A.3 Policy macros (from globals set by 0-01-aux_policy_list.do)
+. *     NOTE: All cross-file macros are globals so they survive across
+. *     `include' calls in the modular 3-xx do-files.
+. 
+.         local Directaxes                "${Directaxes}"
+
+.         local Contributions     "${Contributions}"
+
+.         local DirectTransfers   "${DirectTransfers}"
+
+.         local Subsidies         "${Subsidies}"
+
+.         local Indtaxes                  "${Indtaxes}"
+
+.         local InKindTransfers   "${InKindTransfers}"
+
+. 
+.         global tax        dirtax_total sscontribs_total `Directaxes' `Contrib
+> utions'
+
+.         global indtax     indtax_total `Indtaxes' Tax_VAT
+
+.         global inkind     inktransf_total `InKindTransfers' education_inKind
+
+.         global transfer   dirtransf_total `DirectTransfers'
+
+.         global Subsidies  subsidy_total `Subsidies' subsidy_elec subsidy_fuel
+>  subsidy_water
+
+.         global income     ymp yn yd yc yf
+
+.         global concs      ${tax} ${indtax} ${transfer} ${inkind} ${income} ${
+> Subsidies}
+
+. 
+. *---> A.4 Per-capita versions (deduplicated)
+.         foreach x in tax indtax inkind transfer income concs Subsidies {
+  2.                 * Deduplicate: some policies appear in multiple groups
+.                 local raw_list ${`x'}
+  3.                 local dedup_list : list uniq raw_list
+  4.                 global `x' `dedup_list'
+  5.                 global `x'_pc
+  6.                 foreach y in `dedup_list' {
+  7.                         global `x'_pc ${`x'_pc} `y'_pc
+  8.                 }
+  9.                 local raw_pc ${`x'_pc}
+ 10.                 local dedup_pc : list uniq raw_pc
+ 11.                 global `x'_pc `dedup_pc'
+ 12.         }
+
+. 
+. *---> A.5 Poverty lines
+.         global pline zref line_1 line_2 line_3
+
+.         
+. *---> A.5b Income codes for taxonomy mapping
+.         global codes "yd_pc yf_pc ymp_pc yc_pc yn_pc"
+
+. 
+. *---> A.6 Taxonomy correlative
+.         gl taxonomy_components context indicator instrument income reference
+
+.         foreach j of global taxonomy_components {
+  2.                 import excel "$metadata/correlative.xlsx", sheet("`j'") fi
+> rstrow clear
+  3.                 drop if `j' == ""
+  4.                 tempfile `j'
+  5.                 save ``j''
+  6.         }
+(3 vars, 5 obs)
+(0 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000001.tmp saved as .dta
+    format
+(3 vars, 71 obs)
+(64 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000002.tmp saved as .dta
+    format
+(4 vars, 76 obs)
+(66 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000003.tmp saved as .dta
+    format
+(3 vars, 6 obs)
+(1 observation deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000004.tmp saved as .dta
+    format
+(3 vars, 14 obs)
+(10 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000005.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> B. Detect microdata
+. *============================================================================
+> ===
+. 
+.         global n_datasets 0
+
+. 
+.         local dirs1 : dir `"${microdata}"' dirs "*"
+
+. 
+.         foreach subf of local dirs1 {
+  2.                 local cty : di strupper("`subf'")
+  3.                 local cty_path `"${microdata}/`subf'"'
+  4.                 local cty_count 0
+  5.                 local dirs2 : dir `"`cty_path'"' dirs "*"
+  6. 
+.                 foreach subf2 of local dirs2 {
+  7.                         local cty_proj_path `"`cty_path'/`subf2'"'
+  8. 
+.                         * 2nd level: GMB/MRT-type
+.                         local files2 : dir `"`cty_proj_path'"' files "*.dta"
+  9.                         foreach f of local files2 {
+ 10.                                 local f_upper : di strupper("`f'")
+ 11.                                 local cty_count = `cty_count' + 1
+ 12.                                 global n_datasets = ${n_datasets} + 1
+ 13.                                 global path_${n_datasets} `"`cty_proj_path
+> '/`f_upper'"'
+ 14.                                 global cty_${n_datasets}  "`cty'_`cty_coun
+> t'"
+ 15.                         }
+ 16. 
+.                         * 3rd level: SEN-type
+.                         local dirs3 : dir `"`cty_proj_path'"' dirs "*"
+ 17.                         foreach subf3 of local dirs3 {
+ 18.                                 local cty_final_path `"`cty_proj_path'/`su
+> bf3'"'
+ 19.                                 local files3 : dir `"`cty_final_path'"' fi
+> les "*.dta"
+ 20.                                 foreach f of local files3 {
+ 21.                                         local f_upper : di strupper("`f'")
+ 22.                                         local cty_count = `cty_count' + 1
+ 23.                                         global n_datasets = ${n_datasets} 
+> + 1
+ 24.                                         global path_${n_datasets} `"`cty_f
+> inal_path'/`f_upper'"'
+ 25.                                         global cty_${n_datasets}  "`cty'_`
+> cty_count'"
+ 26.                                         global fname_${n_datasets} "`f_upp
+> er'"
+ 27.                                 }
+ 28.                         }
+ 29.                 }
+ 30.         }
+
+. 
+. 
+. di as text "=== Setup complete. n_datasets = ${n_datasets} ==="
+=== Setup complete. n_datasets = 7 ===
+
+. di as text "=== Globals check: pline = [${pline}] ==="
+=== Globals check: pline = [zref line_1 line_2 line_3] ===
+
+. di as text "=== Globals check: income_pc = [${income_pc}] ==="
+=== Globals check: income_pc = [ymp_pc yn_pc yd_pc yc_pc yf_pc] ===
+
+. di as text "=== Globals check: concs_pc = [${concs_pc}] ==="
+=== Globals check: concs_pc = [dirtax_total_pc sscontribs_total_pc PIT_pc BIT_p
+> c PropertyTax_pc FinancialTax_pc indtax_total_pc CD_direct_pc excise_taxes_pc
+>  VAT_direct_pc VAT_indirect_pc Tax_VAT_pc dirtransf_total_pc am_prog_1_pc am_
+> prog_2_pc am_prog_3_pc am_prog_other_pc inktransf_total_pc education_inKind_p
+> c am_health_pc ymp_pc yn_pc yd_pc yc_pc yf_pc subsidy_total_pc subsidy_elec_d
+> irect_pc subsidy_elec_indirect_pc subsidy_fuel_direct_pc subsidy_fuel_indirec
+> t_pc subsidy_water_direct_pc subsidy_water_indirect_pc subsidy_agric_pc subsi
+> dy_elec_pc subsidy_fuel_pc subsidy_water_pc] ===
+
+. di as text "=== Globals check: tax = [${tax}] ==="
+=== Globals check: tax = [dirtax_total sscontribs_total PIT BIT PropertyTax Fin
+> ancialTax] ===
+
+. 
+. * Only test first dataset
+. if ${n_datasets} == 0 {
+.         di as error "No datasets detected. Aborting test."
+.         exit 1
+. }
+
+. 
+. * Find the first dataset that has ymp_pc (some datasets like ECU may not)
+. local test_idx 0
+
+. forvalues i = 1/$n_datasets {
+  2.         qui cap use `"${path_`i'}"', clear
+  3.         cap confirm variable ymp_pc
+  4.         if _rc == 0 {
+  5.                 local test_idx = `i'
+  6.                 di as text "Using dataset `i': ${path_`i'}"
+  7.                 continue, break
+  8.         }
+  9.         else {
+ 10.                 di as text "Skipping dataset `i' (no ymp_pc): ${path_`i'}"
+ 11.         }
+ 12. }
+Skipping dataset 1 (no ymp_pc): C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fisca
+> l Equity - WB Group - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_
+> Microdata/ecu/ecu_enemdu_2024_2024_d01_p01_m01/master_data/ECUSIM_OUT_2024.DT
+> A
+Using dataset 2: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB G
+> roup - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/gmb/g
+> mb-ihs-2020-2020-d01-p01-m01/GMB-IHS-2020-2020-D01-P01-M01.DTA
+
+. 
+. if `test_idx' == 0 {
+.         di as error "No dataset with ymp_pc found. Aborting test."
+.         exit 1
+. }
+
+. 
+. * Process selected dataset
+. global sheetname   "${cty_`test_idx'}"
+
+. global datasetname "${fname_`test_idx'}"
+
+. di as text "=== Processing: ${path_`test_idx'} — Sheet: ${sheetname} ==="
+=== Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Gr
+> oup - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/gmb/gm
+> b-ihs-2020-2020-d01-p01-m01/GMB-IHS-2020-2020-D01-P01-M01.DTA — Sheet: GMB_1 
+> ===
+
+. 
+. use `"${path_`test_idx'}"', clear
+
+. 
+. cap drop *deciles_pc *centile_pc
+
+. 
+. foreach y in ymp yd {
+  2.         quantiles `y'_pc [w=pondih], gen(`y'_deciles_pc)  nq(10)
+  3.         quantiles `y'_pc [w=pondih], gen(`y'_centile_pc) nq(100)
+  4. }
+(frequency weights assumed)
+(8 missing values generated)
+(frequency weights assumed)
+(8 missing values generated)
+(frequency weights assumed)
+(8 missing values generated)
+(frequency weights assumed)
+(8 missing values generated)
+
+. 
+. tempfile output
+
+. save `output'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000006.tmp saved as .dta
+    format
+
+. 
+. di as text "=== Data loaded: `=_N' obs, `=c(k)' vars ==="
+=== Data loaded: 13488 obs, 159 vars ===
+
+. 
+. * Test each module
+. di as text _n "=== 3-02: Netcash Incidence ==="
+
+=== 3-02: Netcash Incidence ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-02-Netcash_Incidence.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Netcash Incidence
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Incidence by decile (netcash position)
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator ID: 37 (Incidence by decile)
+> * Context:      EQU (Equity impact)
+> * Income:       Pre-fiscal (ymp, id=1) and Disposable (yd, id=4)
+> * Instruments:  All taxes (negative share) and transfers (positive share)
+> * Deciles:      1-10 (pre-fiscal and disposable)
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first (provides `output' tempfile,
+> *           global macros, taxonomy tempfiles, and dataset globals).
+> *----------------------------------------------------------------------------
+> ----
+> * Method:   Native Stata collapse (no sp_groupfunction needed).
+> *           groupfunction used only for weighted mean by decile.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Netcash Position: incidence (relative) by decile
+. *     share_X_pc = -X_pc/Y_pc  for taxes
+. *     share_X_pc = +X_pc/Y_pc  for transfers
+. *     Indicator id_indicator = 37
+. *============================================================================
+> ===
+. 
+. foreach y in ymp yd {
+  2. 
+.         u `output', clear
+  3.         keep hhid ${concs_pc} pondih *_centile_pc *_deciles_pc
+  4. 
+.         * Taxes: negative sign (burden)
+.         foreach x in ${tax} ${indtax} {
+  5.                 cap gen share_`x'_pc = -`x'_pc / `y'_pc
+  6.         }
+  7. 
+.         * Transfers & subsidies: positive sign (benefit)
+.         foreach x in ${transfer} ${inkind} ${Subsidies} {
+  8.                 cap gen share_`x'_pc = `x'_pc / `y'_pc
+  9.         }
+ 10. 
+.         keep *_deciles_pc share* pondih
+ 11. 
+.         groupfunction [aw=pondih], mean(share*) by(`y'_deciles_pc) norestore
+ 12. 
+.         reshape long share_, i(`y'_deciles_pc) j(variable) string
+ 13.                 gen measure    = "netcash_`y'"
+ 14.                 rename share_ value
+ 15. 
+.         ren `y'_deciles_pc deciles_pc
+ 16. 
+.         * Taxonomy fields
+.         gen indicator  = "incidence"
+ 17.         gen income     = "`y'"
+ 18.         gen instrument = variable
+ 19. 
+.         tempfile netcash_`y'
+ 20.         save `netcash_`y''
+ 21. }
+(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
+> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
+> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
+> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
+> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
+> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
+> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000007.tmp saved as .dta
+    format
+(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
+> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
+> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
+> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
+> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
+> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
+> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000008.tmp saved as .dta
+    format
+
+. 
+. * Store in a combined tempfile for downstream use
+. u `netcash_ymp', clear
+
+. append using `netcash_yd'
+
+. tempfile ind_3_02
+
+. save `ind_3_02'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_000009.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-02 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-02 OK"
+3-02 OK
+
+. 
+. di as text _n "=== 3-03: Gini & Theil ==="
+
+=== 3-03: Gini & Theil ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-03-Gini_Theil.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Gini & Theil Inequality
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Gini index and Theil index by income concept
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   5  — Gini index
+> *   66 — Theil index
+> * Context:      EQU (Equity impact)
+> * Income:       ymp (id=1), yn (id=2), yd (id=4), yc (id=5), yf (id=6)
+> * Instruments:  n/a (computed on income concepts)
+> * Deciles:      n/a (scalar, by "all")
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----
+> * Method A (default): sp_groupfunction — computes Gini+Theil in one call
+> * Method B (native):  Manual weighted Gini + Theil via Mata, ~same line count
+> ,
+> *                     avoids ado overhead for large datasets.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Gini & Theil on each income concept
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. *--- Method A: sp_groupfunction (comment out B if using A) ------------------
+> ---
+. sp_groupfunction [aw=pondih], gini(${income_pc}) theil(${income_pc}) by(all)
+
+. 
+. *--- Method B: Native Mata Gini + Theil (alternative) -----------------------
+> --
+. * Uncomment below and comment Method A to use native approach.
+. * Performance: comparable to sp_groupfunction (both use Mata internally).
+. /*
+> local n_inc : word count ${income_pc}
+> local results_n = `n_inc' * 2
+> tempname vals
+> mat `vals' = J(`results_n', 1, .)
+> local rnames ""
+> local row 0
+> 
+> foreach v in ${income_pc} {
+>         * Gini: 2*cov(y, rank(y)) / mean(y)
+>         sort `v'
+>         tempvar rnk wsum
+>         gen double `rnk' = sum(pondih)
+>         replace `rnk' = (`rnk' - pondih/2) / `rnk'[_N]
+>         
+>         qui sum `v' [aw=pondih], meanonly
+>         local mu = r(mean)
+>         qui corr `v' `rnk' [aw=pondih], cov
+>         local cov_yr = r(cov_12)
+>         local gini_val = 2 * `cov_yr' / `mu'
+>         
+>         local ++row
+>         mat `vals'[`row', 1] = `gini_val'
+>         local rnames `rnames' gini_`v'
+>         
+>         * Theil: sum(w_i * (y_i/mu) * ln(y_i/mu)) / sum(w_i)
+>         tempvar th_term
+>         gen double `th_term' = pondih * (`v'/`mu') * ln(`v'/`mu') if `v' > 0
+>         qui sum `th_term', meanonly
+>         local sum_th = r(sum)
+>         qui sum pondih if `v' > 0, meanonly
+>         local sum_w = r(sum)
+>         
+>         local ++row
+>         mat `vals'[`row', 1] = `sum_th' / `sum_w'
+>         local rnames `rnames' theil_`v'
+>         
+>         drop `rnk' `wsum' `th_term'
+> }
+> * Convert to dataset ... (reshape needed, skipping for brevity)
+> */
+. 
+. *---> Map taxonomy fields
+. g indicator = measure
+
+. g context   = "equity"
+
+. 
+. gen income = ""
+(10 missing values generated)
+
+. forvalues k = 1/5 {
+  2.         local code : word `k' of ${codes}
+  3.         replace income = "`code'" if variable == "`code'"
+  4. }
+variable income was str1 now str5
+(2 real changes made)
+(2 real changes made)
+variable income was str5 now str6
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+
+. 
+. * Keep only Gini and Theil rows
+. keep if inlist(indicator, "gini", "theil")
+(0 observations deleted)
+
+. 
+. tempfile ind_3_03
+
+. save `ind_3_03'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000a.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-03 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-03 OK"
+3-03 OK
+
+. 
+. di as text _n "=== 3-04: Poverty FGT ==="
+
+=== 3-04: Poverty FGT ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-04-Poverty_FGT.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Poverty FGT Measures
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    FGT0 (headcount) and FGT1 (poverty gap) by income concept
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   4 — Headcount rate (FGT0)
+> *   6 — Poverty gap (FGT1)
+> * Context:      EQU (Equity impact)
+> * Income:       ymp (id=1), yn (id=2), yd (id=4), yc (id=5), yf (id=6)
+> * Poverty lines: zref (id=1), line_1 (id=2), line_2 (id=3), line_3 (id=4)
+> * Deciles:      n/a (scalar, by "all")
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----
+> * Method A (default): sp_groupfunction — one call for all FGT measures
+> * Method B (native):  Manual FGT via collapse — straightforward weighted mean
+> s
+> *                     of indicator variables. ~2x lines but transparent.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Poverty measures: FGT0 (headcount) and FGT1 (poverty gap)
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. *--- Method A: sp_groupfunction ---------------------------------------------
+> ---
+. sp_groupfunction [aw=pondih], poverty(${income_pc}) povertyline(${pline}) by(
+> all)
+
+. 
+. *--- Method B: Native Stata (alternative) -----------------------------------
+> ---
+. * Uncomment below and comment Method A to use native approach.
+. * Generates FGT alpha=0,1 for each income x poverty line combination.
+. /*
+> u `output', clear
+> 
+> * Generate FGT indicator variables
+> foreach v in ${income_pc} {
+>         foreach z in ${pline} {
+>                 gen double fgt0_`v'_`z' = (`v' < `z') if !missing(`v') & !mis
+> sing(`z')
+>                 gen double fgt1_`v'_`z' = max(0, (`z' - `v') / `z') if !missi
+> ng(`v') & !missing(`z')
+>         }
+> }
+> 
+> * Weighted mean = population FGT
+> preserve
+>         collapse (mean) fgt0_* fgt1_* [aw=pondih]
+>         gen all = 1
+> 
+>         * Reshape to long: variable x measure x reference
+>         reshape long fgt0_ fgt1_, i(all) j(_varline) string
+> 
+>         * Parse variable and reference from _varline
+>         * _varline format: incomevar_pc_povertyline
+>         
+>         rename fgt0_ value_fgt0
+>         rename fgt1_ value_fgt1
+>         reshape long value_, i(_varline) j(measure) string
+>         rename value_ value
+>         
+>         * ... additional parsing needed to extract variable/reference
+> restore
+> */
+. 
+. *---> Map taxonomy fields
+. g indicator = measure
+
+. g context   = "equity"
+
+. 
+. gen income = ""
+(60 missing values generated)
+
+. forvalues k = 1/5 {
+  2.         local code : word `k' of ${codes}
+  3.         replace income = "`code'" if variable == "`code'"
+  4. }
+variable income was str1 now str5
+(12 real changes made)
+(12 real changes made)
+variable income was str5 now str6
+(12 real changes made)
+(12 real changes made)
+(12 real changes made)
+
+. 
+. * Keep FGT0 and FGT1 only (drop FGT2)
+. keep if inlist(indicator, "fgt0", "fgt1")
+(20 observations deleted)
+
+. 
+. tempfile ind_3_04
+
+. save `ind_3_04'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000b.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-04 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-04 OK"
+3-04 OK
+
+. 
+. di as text _n "=== 3-05: Marginal Contributions ==="
+
+=== 3-05: Marginal Contributions ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-05-Marginal_Contributions.
+> do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Marginal Contributions
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Marginal contribution to inequality and poverty
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   44 — Marginal contribution to poverty headcount
+> *   45 — Marginal contribution to inequality (Gini)
+> * Context:      EQU (Equity impact)
+> * Income:       ymp (id=1), yn (id=2), yd (id=4), yc (id=5)
+> * Instruments:  Each tax/transfer instrument
+> * Deciles:      n/a (scalar, by "all")
+> *----------------------------------------------------------------------------
+> ----
+> * Method: For each income Y and instrument X, create Y_inc_X = Y_pc + X_pc.
+> *         Then compute Gini(Y_inc_X) and FGT0(Y_inc_X).
+> *         Marginal contribution = indicator(Y) - indicator(Y_inc_X).
+> *         Sign convention: taxes are flipped negative before adding.
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Marginal contributions to Gini and FGT0
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. *---> Flip taxes to negative for the addition
+. local aux1 ${tax} ${indtax}
+
+. foreach var of local aux1 {
+  2.         replace `var'    = -`var'
+  3.         replace `var'_pc = -`var'_pc
+  4. }
+(449 real changes made)
+(449 real changes made)
+(0 real changes made)
+(0 real changes made)
+(449 real changes made)
+(449 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+(13,477 real changes made)
+(13,471 real changes made)
+(11,813 real changes made)
+(11,809 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+
+. 
+. *---> Generate counterfactual incomes: Y_inc_X = Y_pc + X_pc
+. local income2 ""
+
+. local aux2 ${tax} ${indtax} ${transfer} ${Subsidies} ${inkind}
+
+. 
+. foreach inc in ymp yn yd yc {
+  2.         foreach var of local aux2 {
+  3.                 gen `inc'_inc_`var' = `inc'_pc + `var'_pc
+  4.                 local income2 `income2' `inc'_inc_`var'
+  5.         }
+  6. }
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+
+. 
+. *---> Restore original sign for taxes
+. foreach var of local aux1 {
+  2.         replace `var'    = -`var'
+  3.         replace `var'_pc = -`var'_pc
+  4. }
+(449 real changes made)
+(449 real changes made)
+(0 real changes made)
+(0 real changes made)
+(449 real changes made)
+(449 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+(13,477 real changes made)
+(13,471 real changes made)
+(11,813 real changes made)
+(11,809 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+(13,488 real changes made)
+(13,480 real changes made)
+
+. 
+. *---> Compute Gini and poverty for base + counterfactual incomes
+. sp_groupfunction [aw=pondih], gini(${income_pc} `income2') ///
+>         poverty(${income_pc} `income2') povertyline(${pline}) by(all)
+
+. 
+. *---> Keep only base income rows for computing marginal differences
+. * The full marginal contribution calculation requires subtracting
+. * indicator(Y_inc_X) from indicator(Y). This reshape is pending
+. * full implementation once the differencing logic is validated.
+. 
+. g indicator = measure
+
+. g context   = "equity"
+
+. 
+. * For now, save the raw components needed for marginal contributions
+. tempfile ind_3_05
+
+. save `ind_3_05'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000c.tmp saved as .dta
+    format
+
+. 
+. di as text "Note: 3-05 saves raw Gini/FGT for base and counterfactual incomes
+> ."
+Note: 3-05 saves raw Gini/FGT for base and counterfactual incomes.
+
+. di as text "      Marginal contributions = indicator(Y) - indicator(Y_inc_X).
+> "
+      Marginal contributions = indicator(Y) - indicator(Y_inc_X).
+
+. di as text "      Full differencing logic to be added in next iteration."
+      Full differencing logic to be added in next iteration.
+
+. 
+. if _rc di as error "3-05 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-05 OK"
+3-05 OK
+
+. 
+. di as text _n "=== 3-06: Coverage ==="
+
+=== 3-06: Coverage ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-06-Coverage.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Coverage by Decile
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Coverage rates by decile (pre-fiscal income)
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   52 — Coverage by decile
+> * Context:      EQU (Equity impact)
+> * Income:       n/a (coverage is instrument-based, not income-based)
+> * Instruments:  All fiscal instruments
+> * Deciles:      1-10 (pre-fiscal ymp)
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----
+> * Method A (default): sp_groupfunction — coverage option
+> * Method B (native):  gen indicator + collapse mean — simpler, no ado needed.
+> *                     ~same line count because reshape is needed either way.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Coverage: share of households with non-zero instrument, by decile
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. *--- Method A: sp_groupfunction ---------------------------------------------
+> ---
+. sp_groupfunction [aw=pondih], coverage(${concs_pc}) by(ymp_deciles_pc)
+
+. 
+. *--- Method B: Native collapse (alternative) --------------------------------
+> ---
+. * Coverage = weighted share of hh where X > 0. 
+. * Uncomment below and comment Method A.
+. /*
+> u `output', clear
+> foreach v in ${concs_pc} {
+>         gen byte _cov_`v' = (`v' > 0 & !missing(`v'))
+> }
+> collapse (mean) _cov_* [aw=pondih], by(ymp_deciles_pc)
+> reshape long _cov_, i(ymp_deciles_pc) j(variable) string
+> rename _cov_ value
+> gen measure = "coverage"
+> */
+. ren ymp_deciles_pc deciles_pc
+
+. 
+. g indicator = measure
+
+. g context   = "equity"
+
+. 
+. * Coverage applies only to instruments, not income concepts
+. * Drop rows where variable matches an income concept
+. * codes defined in 3-00-Setup.do as global
+. 
+. gen income = ""
+(360 missing values generated)
+
+. forvalues k = 1/5 {
+  2.         local code : word `k' of ${codes}
+  3.         replace income = "`code'" if variable == "`code'"
+  4. }
+variable income was str1 now str5
+(10 real changes made)
+(10 real changes made)
+variable income was str5 now str6
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+
+. 
+. drop if income != ""
+(50 observations deleted)
+
+. drop income
+
+. 
+. * Instrument mapping
+. g instrument = variable
+
+. 
+. tempfile ind_3_06
+
+. save `ind_3_06'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000d.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-06 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-06 OK"
+3-06 OK
+
+. 
+. di as text _n "=== 3-07: Mean Income ==="
+
+=== 3-07: Mean Income ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-07-Mean_Income.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Mean Income by Decile
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Mean income by decile (pre-fiscal income)
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   70 — Income by decile (mean)
+> * Context:      EQU (Equity impact)
+> * Income:       ymp (id=1), yn (id=2), yd (id=4), yc (id=5), yf (id=6)
+> * Instruments:  n/a
+> * Deciles:      1-10 (pre-fiscal ymp)
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----
+> * Method A (default): sp_groupfunction — mean option
+> * Method B (native):  collapse (mean) — simplest possible Stata, no ado neede
+> d.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Mean income by decile
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. *--- Method A: sp_groupfunction ---------------------------------------------
+> ---
+. sp_groupfunction [aw=pondih], mean(${concs_pc}) by(ymp_deciles_pc)
+
+. 
+. *--- Method B: Native collapse (alternative) --------------------------------
+> ---
+. * Uncomment below and comment Method A.
+. /*
+> u `output', clear
+> collapse (mean) ${income_pc} [aw=pondih], by(ymp_deciles_pc)
+> reshape long , i(ymp_deciles_pc) j(variable) string
+> rename v1 value
+> gen measure = "mean"
+> */
+. ren ymp_deciles_pc deciles_pc
+
+. 
+. g indicator = measure
+
+. g context   = "equity"
+
+. 
+. * Map income variables
+. * codes defined in 3-00-Setup.do as global
+. 
+. gen income = ""
+(360 missing values generated)
+
+. forvalues k = 1/5 {
+  2.         local code : word `k' of ${codes}
+  3.         replace income = "`code'" if variable == "`code'"
+  4. }
+variable income was str1 now str5
+(10 real changes made)
+(10 real changes made)
+variable income was str5 now str6
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+
+. 
+. * Mean is only meaningful for income concepts, drop instruments
+. keep if income != ""
+(310 observations deleted)
+
+. 
+. tempfile ind_3_07
+
+. save `ind_3_07'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000e.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-07 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-07 OK"
+3-07 OK
+
+. 
+. di as text _n "=== 3-08: Concentration & Kakwani ==="
+
+=== 3-08: Concentration & Kakwani ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-08-Concentration_Kakwani.d
+> o"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Concentration & Kakwani
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Concentration coefficients and Kakwani index
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   42 — Kakwani index
+> *   43 — Concentration coefficients
+> *   39 — Concentration shares by decile
+> * Context:      EQU (Equity impact)
+> * Income:       Pre-fiscal (ymp, id=1)
+> * Instruments:  All fiscal instruments
+> * Deciles:      Scalar (Kakwani/CC) or 1-10 (concentration shares)
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Concentration coefficients, Kakwani index, concentration shares
+. *     - CC: rank by income, compute Gini-like coefficient on instrument
+. *     - Kakwani = CC - Gini(income)
+. *     - Concentration shares: share of total instrument by decile
+. *============================================================================
+> ===
+. 
+. * NOTE: This module is a placeholder for the full implementation.
+. *       The sp_groupfunction command with benefits() provides the
+. *       building blocks for concentration shares. The Kakwani index
+. *       requires the Gini of income (from 3-03) and the concentration
+. *       coefficient of each instrument.
+. 
+. u `output', clear
+
+. 
+. * Concentration shares via benefits
+. sp_groupfunction [aw=pondih], benefits(${concs_pc}) by(ymp_deciles_pc)
+
+. ren ymp_deciles_pc deciles_pc
+
+. 
+. g indicator = "benefits"
+
+. g context   = "equity"
+
+. 
+. * Map instrument
+. g instrument = variable
+
+. 
+. * Filter: only instrument-level benefits (not income concepts)
+. * codes defined in 3-00-Setup.do as global
+. 
+. gen income = ""
+(360 missing values generated)
+
+. forvalues k = 1/5 {
+  2.         local code : word `k' of ${codes}
+  3.         replace income = "`code'" if variable == "`code'"
+  4. }
+variable income was str1 now str5
+(10 real changes made)
+(10 real changes made)
+variable income was str5 now str6
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+
+. 
+. drop if income != ""
+(50 observations deleted)
+
+. drop income
+
+. 
+. tempfile ind_3_08
+
+. save `ind_3_08'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000f.tmp saved as .dta
+    format
+
+. 
+. di as text "Note: 3-08 saves concentration shares (benefits by decile)."
+Note: 3-08 saves concentration shares (benefits by decile).
+
+. di as text "      Kakwani = CC(instrument) - Gini(income)."
+      Kakwani = CC(instrument) - Gini(income).
+
+. di as text "      Full Kakwani computation to be added in next iteration."
+      Full Kakwani computation to be added in next iteration.
+
+. 
+. if _rc di as error "3-08 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-08 OK"
+3-08 OK
+
+. 
+. di as text _n "=== 3-11: Redistributive Impact ==="
+
+=== 3-11: Redistributive Impact ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-11-Redistributive_Impact.d
+> o"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Redistributive Impact & RS Decomposition
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Reynolds-Smolensky, total redistributive & poverty impact
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   46 — Total redistributive impact (Gini_pre - Gini_post)
+> *   47 — Total poverty impact (FGT0_pre - FGT0_post)
+> *   69 — Reynolds-Smolensky decomposition (Gini_Y - CC_tax + CC_transfer)
+> *   67 — 90-10 ratio (P90/P10)
+> *   68 — Absolute Gini (Gini * mean)
+> * Context:      EQU (Equity impact)
+> * Income:       Multiple income concepts compared pairwise
+> *----------------------------------------------------------------------------
+> ----
+> * Method:   Native Stata — these are derived indicators computed from
+> *           Gini/FGT values already estimated. No sp_groupfunction needed.
+> *           Uses covconc.ado for concentration coefficients.
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do + 3-03-Gini_Theil.do + 3-04-Poverty_FGT.do
+> *           to have run (needs ind_3_03 and ind_3_04 tempfiles).
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> A. Total Redistributive Impact (id=46)
+. *     Gini(ymp) - Gini(yd) for pre-fiscal to disposable
+. *     Gini(ymp) - Gini(yc) for pre-fiscal to consumable
+. *     Gini(ymp) - Gini(yf) for pre-fiscal to final
+. *============================================================================
+> ===
+. 
+. u `ind_3_03', clear
+
+. 
+. * Keep only Gini
+. keep if indicator == "gini"
+(5 observations deleted)
+
+. 
+. * Reshape to get Gini values side by side
+. keep variable value
+
+. rename value gini_val
+
+. rename variable inc_var
+
+. 
+. * Create a temp dataset with one row per income concept
+. tempfile gini_wide
+
+. save `gini_wide'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000g.tmp saved as .dta
+    format
+
+. 
+. * Calculate pairwise differences
+. levelsof inc_var, local(inc_list)
+`"yc_pc"' `"yd_pc"' `"yf_pc"' `"ymp_pc"' `"yn_pc"'
+
+. local n_inc : word count `inc_list'
+
+. 
+. * Redistributive impact: Gini(ymp_pc) - Gini(Y_pc) for Y in {yn, yd, yc, yf}
+. preserve
+
+.         keep if inc_var == "ymp_pc"
+(4 observations deleted)
+
+.         local gini_ymp = gini_val[1]
+
+. restore
+
+. 
+. local ri_n = 0
+
+. tempname ri_mat
+
+. mat `ri_mat' = J(4, 1, .)
+
+. local ri_names ""
+
+. 
+. foreach y in yn_pc yd_pc yc_pc yf_pc {
+  2.         preserve
+  3.                 keep if inc_var == "`y'"
+  4.                 if _N > 0 {
+  5.                         local gini_y = gini_val[1]
+  6.                         local ++ri_n
+  7.                         mat `ri_mat'[`ri_n', 1] = `gini_ymp' - `gini_y'
+  8.                         local ri_names `ri_names' `y'
+  9.                 }
+ 10.         restore
+ 11. }
+(4 observations deleted)
+(4 observations deleted)
+(4 observations deleted)
+(4 observations deleted)
+
+. 
+. * Build output dataset
+. clear
+
+. local true_n = `ri_n'
+
+. if `true_n' == 0 local true_n = 1
+
+. set obs `true_n'
+Number of observations (_N) was 0, now 4.
+
+. gen variable = ""
+(4 missing values generated)
+
+. gen value = .
+(4 missing values generated)
+
+. gen measure = "redistributive_impact"
+
+. gen indicator = "redistributive_impact"
+
+. gen income = ""
+(4 missing values generated)
+
+. gen context = "equity"
+
+. gen deciles_pc = .
+(4 missing values generated)
+
+. 
+. forvalues k = 1/`ri_n' {
+  2.         local vname : word `k' of `ri_names'
+  3.         replace variable = "`vname'" in `k'
+  4.         replace income   = "`vname'" in `k'
+  5.         replace value    = `ri_mat'[`k', 1] in `k'
+  6. }
+variable variable was str1 now str5
+(1 real change made)
+variable income was str1 now str5
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+. 
+. drop if variable == ""
+(0 observations deleted)
+
+. 
+. tempfile redist_impact
+
+. save `redist_impact'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000m.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> B. 90-10 Ratio (id=67)
+. *     Ratio of income at 90th percentile to 10th percentile
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. foreach y of global income {
+  2.         qui _pctile `y'_pc [aw=pondih], p(10 90)
+  3.         local p10_`y' = r(r1)
+  4.         local p90_`y' = r(r2)
+  5. }
+
+. 
+. clear
+
+. local n_inc : word count ${income}
+
+. set obs `n_inc'
+Number of observations (_N) was 0, now 5.
+
+. gen variable = ""
+(5 missing values generated)
+
+. gen value = .
+(5 missing values generated)
+
+. gen measure = "p90_p10_ratio"
+
+. gen indicator = "p90_p10_ratio"
+
+. gen income = ""
+(5 missing values generated)
+
+. gen context = "equity"
+
+. gen deciles_pc = .
+(5 missing values generated)
+
+. 
+. local k 0
+
+. foreach y of global income {
+  2.         local ++k
+  3.         replace variable = "`y'_pc" in `k'
+  4.         replace income   = "`y'_pc" in `k'
+  5.         if `p10_`y'' != 0 {
+  6.                 replace value = `p90_`y'' / `p10_`y'' in `k'
+  7.         }
+  8. }
+variable variable was str1 now str6
+(1 real change made)
+variable income was str1 now str6
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+. 
+. tempfile ratio_9010
+
+. save `ratio_9010'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000n.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> C. Absolute Gini (id=68)
+. *     Absolute Gini = Gini(Y) * mean(Y)
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. foreach y of global income {
+  2.         qui sum `y'_pc [aw=pondih], meanonly
+  3.         local mean_`y' = r(mean)
+  4. }
+
+. 
+. u `gini_wide', clear
+
+. 
+. gen abs_gini = .
+(5 missing values generated)
+
+. foreach y of global income {
+  2.         replace abs_gini = gini_val * `mean_`y'' if inc_var == "`y'_pc"
+  3. }
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+. 
+. rename inc_var variable
+
+. rename abs_gini value
+
+. drop gini_val
+
+. gen measure    = "absolute_gini"
+
+. gen indicator  = "absolute_gini"
+
+. gen income     = variable
+
+. gen context    = "equity"
+
+. gen deciles_pc = .
+(5 missing values generated)
+
+. 
+. tempfile abs_gini
+
+. save `abs_gini'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000o.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> D. Total Poverty Impact (id=47)
+. *     FGT0(ymp) - FGT0(yd) for each poverty line
+. *============================================================================
+> ===
+. 
+. u `ind_3_04', clear
+
+. keep if indicator == "fgt0"
+(20 observations deleted)
+
+. 
+. * This requires pairing pre-fiscal vs post-fiscal poverty
+. * For now, save FGT0 values — differencing across income concepts
+. * is done by comparing variable (income) within each reference (poverty line)
+. 
+. tempfile pov_impact_raw
+
+. save `pov_impact_raw'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000p.tmp saved as .dta
+    format
+
+. 
+. * Compute differences: FGT0(ymp) - FGT0(Y) for each poverty line
+. preserve
+
+.         keep if variable == "ymp_pc"
+(16 observations deleted)
+
+.         rename value fgt0_ymp
+
+.         keep reference fgt0_ymp
+
+.         tempfile fgt0_base
+
+.         save `fgt0_base'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000r.tmp saved as .dta
+    format
+
+. restore
+
+. 
+. preserve
+
+.         keep if variable != "ymp_pc"
+(4 observations deleted)
+
+.         merge m:1 reference using `fgt0_base', nogen
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                                16  
+    -----------------------------------------
+
+.         gen value_diff = fgt0_ymp - value
+
+.         drop value fgt0_ymp
+
+.         rename value_diff value
+
+.         gen measure   = "poverty_impact"
+variable measure already defined
+r(110);
+
+. if _rc di as error "3-11 FAILED with rc = `=_rc'"
+3-11 FAILED with rc = 110
+
+. else   di as text  "3-11 OK"
+
+. 
+. di as text _n "=== 3-12: Conditional Incidence ==="
+
+=== 3-12: Conditional Incidence ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-12-Conditional_Incidence.d
+> o"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Conditional Incidence
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Conditional incidence by decile
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator ID: 38 (Conditional incidence by decile)
+> * Context:      EQU (Equity impact)
+> * Income:       Pre-fiscal (ymp, id=1) and Disposable (yd, id=4)
+> * Instruments:  All taxes and transfers
+> * Deciles:      1-10 (pre-fiscal and disposable)
+> *----------------------------------------------------------------------------
+> ----
+> * Definition:   Conditional incidence = mean(X/Y) among households where X !=
+>  0.
+> *               Unlike unconditional incidence (id=37), this restricts to
+> *               beneficiaries/payers of each instrument.
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Conditional Incidence by decile
+. *     share_X/Y conditional on X != 0
+. *============================================================================
+> ===
+. 
+. foreach y in ymp yd {
+  2. 
+.         u `output', clear
+  3.         keep hhid ${concs_pc} pondih *_deciles_pc
+  4. 
+.         * Taxes: negative sign (burden), conditional on paying
+.         foreach x in ${tax} ${indtax} {
+  5.                 cap gen share_`x'_pc = -`x'_pc / `y'_pc if `x'_pc != 0 & !
+> missing(`x'_pc)
+  6.         }
+  7. 
+.         * Transfers & subsidies: positive sign (benefit), conditional on rece
+> iving
+.         foreach x in ${transfer} ${inkind} ${Subsidies} {
+  8.                 cap gen share_`x'_pc = `x'_pc / `y'_pc if `x'_pc != 0 & !m
+> issing(`x'_pc)
+  9.         }
+ 10. 
+.         keep *_deciles_pc share* pondih
+ 11. 
+.         groupfunction [aw=pondih], mean(share*) by(`y'_deciles_pc) norestore
+ 12. 
+.         reshape long share_, i(`y'_deciles_pc) j(variable) string
+ 13.                 gen measure    = "conditional_incidence_`y'"
+ 14.                 rename share_ value
+ 15. 
+.         ren `y'_deciles_pc deciles_pc
+ 16. 
+.         * Taxonomy fields
+.         gen indicator  = "conditional_incidence"
+ 17.         gen income     = "`y'"
+ 18.         gen instrument = variable
+ 19.         gen context    = "equity"
+ 20. 
+.         tempfile cond_inc_`y'
+ 21.         save `cond_inc_`y''
+ 22. }
+(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
+> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
+> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
+> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
+> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
+> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
+> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000t.tmp saved as .dta
+    format
+(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
+> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
+> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
+> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
+> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
+> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
+> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000u.tmp saved as .dta
+    format
+
+. 
+. u `cond_inc_ymp', clear
+
+. append using `cond_inc_yd'
+
+. tempfile ind_3_12
+
+. save `ind_3_12'
+file C:\Users\wb419055\AppData\Local\Temp\ST_6228_00000v.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-12 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-12 OK"
+3-12 OK
+
+. 
+. di as text _n "=== 3-13: Concentration Shares, CC & Kakwani ==="
+
+=== 3-13: Concentration Shares, CC & Kakwani ===
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-13-Concentration_Shares_CC
+> _Kakwani.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Concentration Shares, CC & Kakwani
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Concentration shares by decile and by poor/non-poor,
+> *           concentration coefficients, and Kakwani index
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   39 — Concentration shares by decile
+> *   40 — Concentration shares by poor & non-poor
+> *   42 — Kakwani index
+> *   43 — Concentration coefficients
+> * Context:      EQU (Equity impact)
+> * Income:       Pre-fiscal (ymp, id=1)
+> * Instruments:  All fiscal instruments
+> *----------------------------------------------------------------------------
+> ----
+> * Definitions:
+> *   Concentration share(decile d) = sum(X_i * w_i, i in d) / sum(X_i * w_i, a
+> ll)
+> *   Concentration Coefficient = 2*cov(X, F(Y)) / mean(X) where F(Y) is the
+> *     cumulative distribution of income Y ranked by Y.
+> *   Kakwani = CC(instrument) - Gini(income)
+> *     Positive Kakwani => progressive (for taxes) or regressive (for transfer
+> s)
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *           Uses covconc.ado from _ado/ for concentration coefficients.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> A. Concentration Shares by Decile (id=39)
+. *     Share of each instrument's total that accrues to each decile
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. * Instruments only (exclude income concepts from concs) — deduplicated
+. local instruments ${tax} ${indtax} ${transfer} ${inkind} ${Subsidies}
+
+. local instruments : list uniq instruments
+
+. 
+. * Generate weighted values, then collapse
+. foreach x of local instruments {
+  2.         gen double w_`x' = `x'_pc * pondih
+  3. }
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+
+. 
+. preserve
+already preserved
+r(621);
+
+. if _rc di as error "3-13 FAILED with rc = `=_rc'"
+3-13 FAILED with rc = 621
+
+. else   di as text  "3-13 OK"
+
+. 
+. timer off 1
+
+. timer list 1
+   1:     60.76 /        1 =      60.7600
+
+. 
+. di as text _n "=== TEST COMPLETE ==="
+
+=== TEST COMPLETE ===
+
+. 
+end of do-file

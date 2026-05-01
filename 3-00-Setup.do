@@ -45,12 +45,19 @@
 	global income     ymp yn yd yc yf
 	global concs      ${tax} ${indtax} ${transfer} ${inkind} ${income} ${Subsidies}
 
-*---> A.4 Per-capita versions
+*---> A.4 Per-capita versions (deduplicated)
 	foreach x in tax indtax inkind transfer income concs Subsidies {
+		* Deduplicate: some policies appear in multiple groups
+		local raw_list ${`x'}
+		local dedup_list : list uniq raw_list
+		global `x' `dedup_list'
 		global `x'_pc
-		foreach y in ${`x'} {
+		foreach y in `dedup_list' {
 			global `x'_pc ${`x'_pc} `y'_pc
 		}
+		local raw_pc ${`x'_pc}
+		local dedup_pc : list uniq raw_pc
+		global `x'_pc `dedup_pc'
 	}
 
 *---> A.5 Poverty lines

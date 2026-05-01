@@ -141,8 +141,8 @@ forvalues i = 1/$n_datasets {
 	cap drop *deciles_pc *centile_pc
 	
 	foreach y in ymp yd { 
-	quantiles `y'_pc  [w=pondih], gen(`y'_deciles_pc ) nq(10) 
-	quantiles `y'_pc  [w=pondih], gen(`y'_centile_pc) nq(100) 
+		quantiles `y'_pc  [w=pondih], gen(`y'_deciles_pc ) nq(10) 
+		quantiles `y'_pc  [w=pondih], gen(`y'_centile_pc) nq(100) 
 	} 
 	
 	tempfile output
