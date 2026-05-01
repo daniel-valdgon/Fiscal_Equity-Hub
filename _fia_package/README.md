@@ -1,7 +1,7 @@
 # fia — Fiscal Incidence Analysis package for Stata
 
 > Standardized analytics for CEQ-based fiscal equity indicators.  
-> Inspired by the [PEA (Poverty and Equity Assessment)](https://github.com/worldbank/pea) package architecture.
+
 
 ## Overview
 
