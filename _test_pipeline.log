@@ -197,23 +197,23 @@ r(199);
   6.         }
 (3 vars, 5 obs)
 (0 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000001.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000001.tmp saved as .dta
     format
 (3 vars, 71 obs)
 (64 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000002.tmp saved as .dta
     format
 (4 vars, 76 obs)
 (66 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000003.tmp saved as .dta
     format
 (3 vars, 6 obs)
 (1 observation deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000004.tmp saved as .dta
     format
 (3 vars, 14 obs)
 (10 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000005.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000005.tmp saved as .dta
     format
 
 . 
@@ -371,7 +371,7 @@ Using dataset 2: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB G
 . tempfile output
 
 . save `output'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000006.tmp saved as .dta
     format
 
 . 
@@ -472,7 +472,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000007.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -490,7 +490,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000008.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000008.tmp saved as .dta
     format
 
 . 
@@ -502,7 +502,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000008.tmp saved as .dta
 . tempfile ind_3_02
 
 . save `ind_3_02'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000009.tmp saved as .dta
     format
 
 . 
@@ -639,7 +639,7 @@ variable income was str5 now str6
 . tempfile ind_3_03
 
 . save `ind_3_03'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000a.tmp saved as .dta
     format
 
 . 
@@ -768,7 +768,7 @@ variable income was str5 now str6
 . tempfile ind_3_04
 
 . save `ind_3_04'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000b.tmp saved as .dta
     format
 
 . 
@@ -1025,7 +1025,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000b.tmp saved as .dta
 . tempfile mc_raw
 
 . save `mc_raw'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000c.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000c.tmp saved as .dta
     format
 
 . 
@@ -1063,7 +1063,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000c.tmp saved as .dta
 .         keep base_inc gini_base
 
 .         save `gini_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000d.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000d.tmp saved as .dta
     format
 
 . restore
@@ -1133,7 +1133,7 @@ variable mc_instrument was str1 now str22
 . tempfile mc_gini
 
 . save `mc_gini'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000f.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000f.tmp saved as .dta
     format
 
 . 
@@ -1169,7 +1169,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000f.tmp saved as .dta
 .         keep base_inc fgt_base reference
 
 .         save `fgt_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000g.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000g.tmp saved as .dta
     format
 
 . restore
@@ -1237,7 +1237,7 @@ variable mc_instrument was str1 now str22
 . tempfile mc_fgt0
 
 . save `mc_fgt0'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000i.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000i.tmp saved as .dta
     format
 
 . 
@@ -1250,7 +1250,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000i.tmp saved as .dta
 . tempfile ind_3_05
 
 . save `ind_3_05'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000j.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000j.tmp saved as .dta
     format
 
 . 
@@ -1364,7 +1364,7 @@ variable income was str5 now str6
 . tempfile ind_3_06
 
 . save `ind_3_06'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000k.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000k.tmp saved as .dta
     format
 
 . 
@@ -1468,7 +1468,7 @@ variable income was str5 now str6
 . tempfile ind_3_07
 
 . save `ind_3_07'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000l.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000l.tmp saved as .dta
     format
 
 . 
@@ -1572,7 +1572,7 @@ variable income was str5 now str6
 . tempfile ind_3_08
 
 . save `ind_3_08'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000m.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000m.tmp saved as .dta
     format
 
 . 
@@ -1660,7 +1660,7 @@ Note: 3-08 saves concentration shares (benefits by decile).
 . tempfile gini_wide
 
 . save `gini_wide'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000n.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000n.tmp saved as .dta
     format
 
 . 
@@ -1766,7 +1766,7 @@ variable income was str1 now str5
 . tempfile redist_impact
 
 . save `redist_impact'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000t.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000t.tmp saved as .dta
     format
 
 . 
@@ -1845,7 +1845,7 @@ variable income was str1 now str6
 . tempfile ratio_9010
 
 . save `ratio_9010'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000u.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000u.tmp saved as .dta
     format
 
 . 
@@ -1902,7 +1902,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000u.tmp saved as .dta
 . tempfile abs_gini
 
 . save `abs_gini'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000v.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000v.tmp saved as .dta
     format
 
 . 
@@ -1926,7 +1926,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000v.tmp saved as .dta
 . tempfile pov_impact_raw
 
 . save `pov_impact_raw'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000w.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00000w.tmp saved as .dta
     format
 
 . 
@@ -1943,7 +1943,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000w.tmp saved as .dta
 .         tempfile fgt0_base
 
 .         save `fgt0_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000010.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000010.tmp saved as .dta
     format
 
 . restore
@@ -1994,7 +1994,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000010.tmp saved as .dta
 .         tempfile pov_impact
 
 .         save `pov_impact'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000012.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000012.tmp saved as .dta
     format
 
 . restore
@@ -2002,7 +2002,127 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000012.tmp saved as .dta
 . 
 . *============================================================================
 > ===
-. *---> E. Append all derived indicators
+. *---> E. Reynolds-Smolensky Decomposition (id=69)
+. *     RS = Gini(Y_pre) - CC(Y_pre, Y_post)
+. *     where CC(Y_pre, Y_post) = 2*cov(Y_post, F(Y_pre)) / mean(Y_post)
+. *     This measures how much fiscal policy changes the ordering of incomes.
+. *     RS > 0 means the system is equalizing.
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. * Rank by pre-fiscal income
+. sort ymp_pc
+
+. gen double _cumw = sum(pondih)
+
+. gen double _F_ymp = (_cumw - pondih/2) / _cumw[_N]
+(8 missing values generated)
+
+. 
+. * Gini of ymp
+. qui sum ymp_pc [aw=pondih], meanonly
+
+. local mu_ymp = r(mean)
+
+. qui corr ymp_pc _F_ymp [aw=pondih], cov
+
+. local gini_ymp = 2 * r(cov_12) / `mu_ymp'
+
+. 
+. * CC(Y_post ranked by Y_pre) for each post-fiscal income concept
+. local rs_n = 0
+
+. local rs_names ""
+
+. tempname rs_mat
+
+. mat `rs_mat' = J(4, 1, .)
+
+. 
+. foreach y in yn yd yc yf {
+  2.         cap confirm variable `y'_pc
+  3.         if _rc continue
+  4.         
+.         qui sum `y'_pc [aw=pondih], meanonly
+  5.         local mu_y = r(mean)
+  6.         if `mu_y' != 0 {
+  7.                 qui corr `y'_pc _F_ymp [aw=pondih], cov
+  8.                 local cc_post = 2 * r(cov_12) / `mu_y'
+  9.                 local ++rs_n
+ 10.                 mat `rs_mat'[`rs_n', 1] = `gini_ymp' - `cc_post'
+ 11.                 local rs_names `rs_names' `y'_pc
+ 12.         }
+ 13. }
+
+. 
+. * Build RS dataset
+. clear
+
+. local true_n = `rs_n'
+
+. if `true_n' == 0 local true_n = 1
+
+. set obs `true_n'
+Number of observations (_N) was 0, now 4.
+
+. gen variable = ""
+(4 missing values generated)
+
+. gen value = .
+(4 missing values generated)
+
+. gen measure    = "reynolds_smolensky"
+
+. gen indicator  = "reynolds_smolensky"
+
+. gen income     = ""
+(4 missing values generated)
+
+. gen context    = "equity"
+
+. gen deciles_pc = .
+(4 missing values generated)
+
+. 
+. forvalues k = 1/`rs_n' {
+  2.         local vname : word `k' of `rs_names'
+  3.         replace variable = "`vname'" in `k'
+  4.         replace income   = "`vname'" in `k'
+  5.         replace value    = `rs_mat'[`k', 1] in `k'
+  6. }
+variable variable was str1 now str5
+(1 real change made)
+variable income was str1 now str5
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+. 
+. drop if variable == ""
+(0 observations deleted)
+
+. 
+. tempfile rs_decomp
+
+. save `rs_decomp'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000013.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> F. Append all derived indicators
 . *============================================================================
 > ===
 . 
@@ -2016,11 +2136,13 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000012.tmp saved as .dta
 
 . cap append using `pov_impact'
 
+. cap append using `rs_decomp'
+
 . 
 . tempfile ind_3_11
 
 . save `ind_3_11'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000013.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000014.tmp saved as .dta
     format
 
 . 
@@ -2126,7 +2248,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000014.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000015.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -2144,7 +2266,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000015.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000016.tmp saved as .dta
     format
 
 . 
@@ -2155,7 +2277,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000015.tmp saved as .dta
 . tempfile ind_3_12
 
 . save `ind_3_12'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000016.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000017.tmp saved as .dta
     format
 
 . 
@@ -2342,7 +2464,7 @@ w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
 .         tempfile conc_shares_dec
 
 .         save `conc_shares_dec'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000018.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_000019.tmp saved as .dta
     format
 
 . restore
@@ -2485,7 +2607,7 @@ w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
 .         tempfile conc_shares_poor
 
 .         save `conc_shares_poor'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00001a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001b.tmp saved as .dta
     format
 
 . restore
@@ -2717,7 +2839,7 @@ variable measure was str3 now str25
 . tempfile cc_kakwani
 
 . save `cc_kakwani'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00001b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001c.tmp saved as .dta
     format
 
 . 
@@ -2739,7 +2861,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00001b.tmp saved as .dta
 . tempfile ind_3_13
 
 . save `ind_3_13'
-file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00001c.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001d.tmp saved as .dta
     format
 
 . 
@@ -2749,10 +2871,887 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00001c.tmp saved as .dta
 3-13 OK
 
 . 
+. di as text _n "=== 3-14: Targeting Errors ==="
+
+=== 3-14: Targeting Errors ===
+
+. cap restore
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-14-Targeting_Errors.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Coverage of Poor & Targeting Errors
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Coverage of the poor, inclusion errors, exclusion errors
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   53 — Coverage of the poor
+> *   54 — Inclusion error: Nonpoor population
+> *   55 — Inclusion error: Top 10%
+> *   56 — Inclusion error: Top 20%
+> *   57 — Exclusion error: Bottom 10%
+> *   58 — Exclusion error: Bottom 20%
+> *   59 — Exclusion error: Poor population
+> * Context:      EQU (Equity impact)
+> * Income:       Pre-fiscal (ymp, id=1)
+> * Instruments:  All fiscal instruments (transfers, in-kind, subsidies)
+> * Reference:    Poverty lines (zref, line_1, line_2, line_3)
+> *----------------------------------------------------------------------------
+> ----
+> * Definitions:
+> *   Coverage of the poor    = P(X>0 | poor)
+> *   Inclusion error nonpoor = P(nonpoor | X>0) = share of beneficiaries nonpo
+> or
+> *   Inclusion error top 10  = P(top decile | X>0)
+> *   Inclusion error top 20  = P(top 2 deciles | X>0)
+> *   Exclusion error bottom 10 = P(X==0 | bottom decile)
+> *   Exclusion error bottom 20 = P(X==0 | bottom 2 deciles)
+> *   Exclusion error poor    = P(X==0 | poor)
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. u `output', clear
+
+. 
+. * Instruments for targeting analysis (transfers, in-kind, subsidies — not tax
+> es)
+. local instruments ${transfer} ${inkind} ${Subsidies}
+
+. local instruments : list uniq instruments
+
+. 
+. * --- Generate beneficiary indicators ---
+. foreach x of local instruments {
+  2.         gen byte _ben_`x' = (`x'_pc > 0 & !missing(`x'_pc))
+  3. }
+
+. 
+. * --- Generate poverty and decile flags ---
+. gen byte is_poor = (ymp_pc < zref) if !missing(ymp_pc) & !missing(zref)
+(8 missing values generated)
+
+. gen byte bottom10 = (ymp_deciles_pc == 1)  if !missing(ymp_deciles_pc)
+
+. gen byte bottom20 = (ymp_deciles_pc <= 2)  if !missing(ymp_deciles_pc)
+
+. gen byte top10    = (ymp_deciles_pc == 10) if !missing(ymp_deciles_pc)
+
+. gen byte top20    = (ymp_deciles_pc >= 9)  if !missing(ymp_deciles_pc)
+
+. 
+. tempfile base
+
+. save `base'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001e.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> A. Coverage of the poor (id=53)
+. *     P(X>0 | poor) for each instrument
+. *============================================================================
+> ===
+. 
+. preserve
+
+.         keep if is_poor == 1
+(5,737 observations deleted)
+
+.         collapse (mean) _ben_* [aw=pondih]
+
+.         gen all = 1
+
+.         reshape long _ben_, i(all) j(variable) string
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+
+.         rename _ben_ value
+
+.         drop all
+
+.         gen measure    = "coverage_poor"
+
+.         gen indicator  = "coverage_poor"
+
+.         gen context    = "equity"
+
+.         gen instrument = variable
+
+.         gen income     = "ymp"
+
+.         gen reference  = "zref"
+
+.         gen deciles_pc = .
+(19 missing values generated)
+
+.         tempfile cov_poor
+
+.         save `cov_poor'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001g.tmp saved as .dta
+    format
+
+. restore
+
+. 
+. *============================================================================
+> ===
+. *---> B. Exclusion error: poor (id=59)
+. *     P(X==0 | poor)
+. *============================================================================
+> ===
+. 
+. preserve
+
+.         keep if is_poor == 1
+(5,737 observations deleted)
+
+.         foreach x of local instruments {
+  2.                 replace _ben_`x' = 1 - _ben_`x'
+  3.         }
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+
+.         collapse (mean) _ben_* [aw=pondih]
+
+.         gen all = 1
+
+.         reshape long _ben_, i(all) j(variable) string
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+
+.         rename _ben_ value
+
+.         drop all
+
+.         gen measure    = "exclusion_error_poor"
+
+.         gen indicator  = "exclusion_error_poor"
+
+.         gen context    = "equity"
+
+.         gen instrument = variable
+
+.         gen income     = "ymp"
+
+.         gen reference  = "zref"
+
+.         gen deciles_pc = .
+(19 missing values generated)
+
+.         tempfile excl_poor
+
+.         save `excl_poor'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001i.tmp saved as .dta
+    format
+
+. restore
+
+. 
+. *============================================================================
+> ===
+. *---> C. Exclusion error: bottom 10% (id=57) and bottom 20% (id=58)
+. *============================================================================
+> ===
+. 
+. foreach bottomg in bottom10 bottom20 {
+  2. 
+.         u `base', clear
+  3.         keep if `bottomg' == 1
+  4.         foreach x of local instruments {
+  5.                 replace _ben_`x' = 1 - _ben_`x'
+  6.         }
+  7.         collapse (mean) _ben_* [aw=pondih]
+  8.         gen all = 1
+  9.         reshape long _ben_, i(all) j(variable) string
+ 10.         rename _ben_ value
+ 11.         drop all
+ 12.         gen measure    = "exclusion_error_`bottomg'"
+ 13.         gen indicator  = "exclusion_error_`bottomg'"
+ 14.         gen context    = "equity"
+ 15.         gen instrument = variable
+ 16.         gen income     = "ymp"
+ 17.         gen reference  = ""
+ 18.         gen deciles_pc = .
+ 19.         tempfile excl_`bottomg'
+ 20.         save `excl_`bottomg''
+ 21. }
+(12,165 observations deleted)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001j.tmp saved as .dta
+    format
+(10,618 observations deleted)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001k.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> D. Inclusion error: nonpoor (id=54)
+. *     P(nonpoor | X>0) = share of beneficiaries who are nonpoor
+. *============================================================================
+> ===
+. 
+. u `base', clear
+
+. 
+. local n_inst : word count `instruments'
+
+. local k 0
+
+. tempname inc_mat
+
+. mat `inc_mat' = J(`n_inst', 3, .)
+
+. local inames ""
+
+. 
+. foreach x of local instruments {
+  2.         local ++k
+  3.         local inames `inames' `x'
+  4.         
+.         * Among beneficiaries: share nonpoor
+.         qui sum is_poor [aw=pondih] if _ben_`x' == 1, meanonly
+  5.         mat `inc_mat'[`k', 1] = 1 - r(mean)
+  6.         
+.         * Among beneficiaries: share top 10
+.         qui sum top10 [aw=pondih] if _ben_`x' == 1, meanonly
+  7.         mat `inc_mat'[`k', 2] = r(mean)
+  8.         
+.         * Among beneficiaries: share top 20
+.         qui sum top20 [aw=pondih] if _ben_`x' == 1, meanonly
+  9.         mat `inc_mat'[`k', 3] = r(mean)
+ 10. }
+
+. 
+. * Build inclusion error datasets
+. foreach err_idx in 1 2 3 {
+  2.         local err_name = cond(`err_idx'==1, "inclusion_error_nonpoor", ///
+>                          cond(`err_idx'==2, "inclusion_error_top10", ///
+>                                             "inclusion_error_top20"))
+  3.         clear
+  4.         set obs `n_inst'
+  5.         gen variable = ""
+  6.         gen value = .
+  7.         forvalues j = 1/`n_inst' {
+  8.                 local vname : word `j' of `inames'
+  9.                 replace variable = "`vname'" in `j'
+ 10.                 replace value = `inc_mat'[`j', `err_idx'] in `j'
+ 11.         }
+ 12.         gen measure    = "`err_name'"
+ 13.         gen indicator  = "`err_name'"
+ 14.         gen context    = "equity"
+ 15.         gen instrument = variable
+ 16.         gen income     = "ymp"
+ 17.         gen reference  = cond(`err_idx'==1, "zref", "")
+ 18.         gen deciles_pc = .
+ 19.         
+.         tempfile `err_name'
+ 20.         save ``err_name''
+ 21. }
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001l.tmp saved as .dta
+    format
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001m.tmp saved as .dta
+    format
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001n.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> E. Append all targeting indicators
+. *============================================================================
+> ===
+. 
+. u `cov_poor', clear
+
+. append using `excl_poor'
+(variable measure was str13, now str20 to accommodate using data's values)
+(variable indicator was str13, now str20 to accommodate using data's values)
+
+. append using `excl_bottom10'
+(variable measure was str20, now str24 to accommodate using data's values)
+(variable indicator was str20, now str24 to accommodate using data's values)
+
+. append using `excl_bottom20'
+
+. append using `inclusion_error_nonpoor'
+
+. append using `inclusion_error_top10'
+
+. append using `inclusion_error_top20'
+
+. 
+. tempfile ind_3_14
+
+. save `ind_3_14'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001o.tmp saved as .dta
+    format
+
+. 
+. if _rc di as error "3-14 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-14 OK"
+3-14 OK
+
+. 
+. di as text _n "=== 3-15: CEQ Effectiveness ==="
+
+=== 3-15: CEQ Effectiveness ===
+
+. cap restore
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-15-CEQ_Effectiveness.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - CEQ Effectiveness Indicators
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    CEQ Impact Effectiveness and Spending Effectiveness
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator IDs:
+> *   48 — CEQ Impact Effectiveness
+> *   49 — CEQ Spending Effectiveness
+> * Context:      EQU (Equity impact)
+> * Income:       Pre-fiscal (ymp, id=1) vs Disposable (yd, id=4)
+> * Instruments:  Each fiscal instrument
+> *----------------------------------------------------------------------------
+> ----
+> * Definitions (CEQ methodology, Lustig 2018):
+> *   Impact Effectiveness (IE):
+> *     For poverty:    IE = (FGT_pre - FGT_post) / (FGT_pre - FGT_post*)
+> *       where FGT_post* = poverty if transfers were perfectly targeted
+> *     For inequality: IE = (Gini_pre - Gini_post) / Gini_pre
+> *
+> *   Spending Effectiveness (SE):
+> *     SE = (FGT_pre - FGT_post) / (spending/GDP)
+> *     Simplified here as: change in poverty per unit of spending (% of total 
+> Y)
+> *
+> *   Simplified computable version:
+> *     IE_poverty(X) = [FGT0(Y) - FGT0(Y+X)] / FGT0(Y)
+> *       = marginal contribution to poverty / baseline poverty
+> *     IE_gini(X) = [Gini(Y) - Gini(Y+X)] / Gini(Y)
+> *       = marginal contribution to inequality / baseline Gini
+> *     SE_poverty(X) = [FGT0(Y) - FGT0(Y+X)] / [sum(X * w) / sum(Y * w)]
+> *       = poverty reduction per unit of spending as share of total income
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do + 3-05-Marginal_Contributions.do to have run
+> *           (needs ind_3_05 tempfile with mc_gini and mc_fgt0).
+> *           Also needs ind_3_03 (Gini) and ind_3_04 (FGT0) for baselines.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> A. Get baseline Gini and FGT0 for pre-fiscal income (ymp)
+. *============================================================================
+> ===
+. 
+. * Baseline Gini(ymp)
+. u `ind_3_03', clear
+
+. keep if indicator == "gini" & variable == "ymp_pc"
+(9 observations deleted)
+
+. local gini_ymp = value[1]
+
+. 
+. * Baseline FGT0(ymp) for each poverty line
+. u `ind_3_04', clear
+
+. keep if indicator == "fgt0" & variable == "ymp_pc"
+(36 observations deleted)
+
+. rename value fgt0_base
+
+. keep reference fgt0_base
+
+. tempfile fgt0_baselines
+
+. save `fgt0_baselines'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001p.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> B. CEQ Impact Effectiveness for inequality (id=48, Gini-based)
+. *     IE_gini(X) = MC_gini(X) / Gini(ymp)
+. *============================================================================
+> ===
+. 
+. u `ind_3_05', clear
+
+. keep if indicator == "mc_gini" & income == "ymp_pc"
+(589 observations deleted)
+
+. 
+. gen ie_value = value / `gini_ymp' if `gini_ymp' != 0
+
+. drop value
+
+. rename ie_value value
+
+. 
+. replace measure   = "ceq_impact_effectiveness_gini"
+variable measure was str7 now str29
+(31 real changes made)
+
+. replace indicator = "ceq_impact_effectiveness"
+variable indicator was str7 now str24
+(31 real changes made)
+
+. replace context   = "equity"
+(0 real changes made)
+
+. 
+. tempfile ie_gini
+
+. save `ie_gini'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001q.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ===
+. *---> C. CEQ Impact Effectiveness for poverty (id=48, FGT0-based)
+. *     IE_fgt0(X) = MC_fgt0(X, pline) / FGT0(ymp, pline)
+. *============================================================================
+> ===
+. 
+. u `ind_3_05', clear
+
+. keep if indicator == "mc_fgt0" & income == "ymp_pc"
+(496 observations deleted)
+
+. 
+. * Merge baseline FGT0 for each poverty line
+. cap confirm variable reference
+
+. if _rc {
+.         * If no reference column, IE_fgt0 cannot be computed — skip
+.         gen value_orig = value
+.         gen fgt0_base = .
+. }
+
+. else {
+.         merge m:1 reference using `fgt0_baselines', nogen keep(match master)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                               124  
+    -----------------------------------------
+.         gen value_orig = value
+. }
+
+. 
+. gen ie_value = value_orig / fgt0_base if fgt0_base != 0 & !missing(fgt0_base)
+
+. drop value value_orig fgt0_base
+
+. rename ie_value value
+
+. 
+. gen measure   = "ceq_impact_effectiveness_fgt0"
+variable measure already defined
+r(110);
+
+. if _rc di as error "3-15 FAILED with rc = `=_rc'"
+3-15 FAILED with rc = 110
+
+. else   di as text  "3-15 OK"
+
+. 
+. di as text _n "=== 3-16: Consumption Shares ==="
+
+=== 3-16: Consumption Shares ===
+
+. cap restore
+
+. cap noisily include "${root}/02-Scripts/wb419055/3-16-Consumption_Shares.do"
+
+. /*---------------------------------------------------------------------------
+> -----
+> *----------------------------------------------------------------------------
+> ----
+> * Program:  GSG3 Fiscal Equity Hub - Share of Consumption by Decile
+> * Author:   Daniel Valderrama & JM Monroy
+> * Date:     May 2026
+> * Title:    Share of total consumption/income accruing to each decile
+> *----------------------------------------------------------------------------
+> ----
+> * Indicator ID: 60 (Share of consumption by decile)
+> * Context:      EQU (Equity impact)
+> * Income:       All income concepts (ymp, yn, yd, yc, yf)
+> * Instruments:  n/a
+> * Deciles:      1-10 (pre-fiscal ymp)
+> *----------------------------------------------------------------------------
+> ----
+> * Definition:
+> *   Share(Y, d) = sum(Y_i * w_i, i in d) / sum(Y_i * w_i, all)
+> *   Shows what fraction of total income each decile commands.
+> *----------------------------------------------------------------------------
+> ----
+> * Requires: 3-00-Setup.do to be included first.
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> Share of consumption/income by decile
+. *============================================================================
+> ===
+. 
+. u `output', clear
+
+. 
+. * Generate weighted income for each concept
+. foreach y of global income {
+  2.         gen double w_`y' = `y'_pc * pondih
+  3. }
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+
+. 
+. preserve
+
+.         collapse (sum) w_*, by(ymp_deciles_pc)
+
+.         
+.         * Convert to shares
+.         foreach y of global income {
+  2.                 qui sum w_`y'
+  3.                 local tot = r(sum)
+  4.                 replace w_`y' = w_`y' / `tot' if `tot' != 0
+  5.         }
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+
+.         
+.         reshape long w_, i(ymp_deciles_pc) j(variable) string
+(j = yc yd yf ymp yn)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   50          
+Number of variables                   6   ->   3           
+j variable (5 values)                     ->   variable
+xij variables:
+                     w_yc w_yd ... w_yn   ->   w_
+-----------------------------------------------------------------------------
+
+.         rename w_ value
+
+.         ren ymp_deciles_pc deciles_pc
+
+.         
+.         * Append _pc suffix to variable for taxonomy matching
+.         replace variable = variable + "_pc"
+variable variable was str3 now str6
+(50 real changes made)
+
+.         
+.         gen measure    = "consumption_share"
+
+.         gen indicator  = "consumption_share"
+
+.         gen income     = variable
+
+.         gen context    = "equity"
+
+.         gen instrument = ""
+(50 missing values generated)
+
+.         
+.         tempfile ind_3_16
+
+.         save `ind_3_16'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4864_00001s.tmp saved as .dta
+    format
+
+. restore
+
+. 
+. if _rc di as error "3-16 FAILED with rc = `=_rc'"
+
+. else   di as text  "3-16 OK"
+3-16 OK
+
+. 
 . timer off 1
 
 . timer list 1
-   1:     63.84 /        1 =      63.8390
+   1:     60.94 /        1 =      60.9440
 
 . 
 . di as text _n "=== TEST COMPLETE ==="

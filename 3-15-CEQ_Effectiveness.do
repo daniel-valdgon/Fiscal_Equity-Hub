@@ -47,6 +47,8 @@ local gini_ymp = value[1]
 * Baseline FGT0(ymp) for each poverty line
 u `ind_3_04', clear
 keep if indicator == "fgt0" & variable == "ymp_pc"
+rename value fgt0_base
+keep reference fgt0_base
 tempfile fgt0_baselines
 save `fgt0_baselines'
 
@@ -78,13 +80,19 @@ u `ind_3_05', clear
 keep if indicator == "mc_fgt0" & income == "ymp_pc"
 
 * Merge baseline FGT0 for each poverty line
-rename reference _ref
-merge m:1 _ref using `fgt0_baselines', keepusing(value) nogen keep(match)
-rename value fgt0_base
-rename _ref reference
+cap confirm variable reference
+if _rc {
+	* If no reference column, IE_fgt0 cannot be computed — skip
+	gen value_orig = value
+	gen fgt0_base = .
+}
+else {
+	merge m:1 reference using `fgt0_baselines', nogen keep(match master)
+	gen value_orig = value
+}
 
-gen ie_value = value / fgt0_base if fgt0_base != 0
-drop value fgt0_base
+gen ie_value = value_orig / fgt0_base if fgt0_base != 0 & !missing(fgt0_base)
+drop value value_orig fgt0_base
 rename ie_value value
 
 gen measure   = "ceq_impact_effectiveness_fgt0"

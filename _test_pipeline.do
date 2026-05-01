@@ -139,6 +139,24 @@ cap noisily include "${root}/02-Scripts/wb419055/3-13-Concentration_Shares_CC_Ka
 if _rc di as error "3-13 FAILED with rc = `=_rc'"
 else   di as text  "3-13 OK"
 
+di as text _n "=== 3-14: Targeting Errors ==="
+cap restore
+cap noisily include "${root}/02-Scripts/wb419055/3-14-Targeting_Errors.do"
+if _rc di as error "3-14 FAILED with rc = `=_rc'"
+else   di as text  "3-14 OK"
+
+di as text _n "=== 3-15: CEQ Effectiveness ==="
+cap restore
+cap noisily include "${root}/02-Scripts/wb419055/3-15-CEQ_Effectiveness.do"
+if _rc di as error "3-15 FAILED with rc = `=_rc'"
+else   di as text  "3-15 OK"
+
+di as text _n "=== 3-16: Consumption Shares ==="
+cap restore
+cap noisily include "${root}/02-Scripts/wb419055/3-16-Consumption_Shares.do"
+if _rc di as error "3-16 FAILED with rc = `=_rc'"
+else   di as text  "3-16 OK"
+
 timer off 1
 timer list 1
 

@@ -20,6 +20,12 @@
 *   3-06  Coverage                  id_indicator = 52
 *   3-07  Mean Income by Decile     id_indicator = 70
 *   3-08  Concentration & Kakwani   id_indicator = 42, 43, 39
+*   3-11  Redistributive Impact     id_indicator = 46, 47, 67, 68, 69
+*   3-12  Conditional Incidence     id_indicator = 38
+*   3-13  Conc Shares, CC, Kakwani  id_indicator = 39, 40, 42, 43
+*   3-14  Targeting Errors          id_indicator = 53-59
+*   3-15  CEQ Effectiveness         id_indicator = 48, 49
+*   3-16  Consumption Shares        id_indicator = 60
 *   3-09  Taxonomy & Export         (merges IDs, exports)
 *   3-10  Cross-Country Assembly    (post-loop)
 *--------------------------------------------------------------------------------*/
@@ -60,6 +66,12 @@ forvalues i = 1/$n_datasets {
 	include "${root}/02-Scripts/wb419055/3-06-Coverage.do"
 	include "${root}/02-Scripts/wb419055/3-07-Mean_Income.do"
 	include "${root}/02-Scripts/wb419055/3-08-Concentration_Kakwani.do"
+	include "${root}/02-Scripts/wb419055/3-11-Redistributive_Impact.do"
+	include "${root}/02-Scripts/wb419055/3-12-Conditional_Incidence.do"
+	include "${root}/02-Scripts/wb419055/3-13-Concentration_Shares_CC_Kakwani.do"
+	include "${root}/02-Scripts/wb419055/3-14-Targeting_Errors.do"
+	include "${root}/02-Scripts/wb419055/3-15-CEQ_Effectiveness.do"
+	include "${root}/02-Scripts/wb419055/3-16-Consumption_Shares.do"
 
 	*--- Merge taxonomy & export -------------------------------------------
 	include "${root}/02-Scripts/wb419055/3-09-Taxonomy_Export.do"

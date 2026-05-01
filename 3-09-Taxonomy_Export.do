@@ -5,7 +5,7 @@
 * Date:     May 2026
 * Title:    Merge taxonomy IDs and export to Excel
 *--------------------------------------------------------------------------------
-* This file appends all indicator tempfiles produced by 3-02 through 3-08,
+* This file appends all indicator tempfiles produced by 3-02 through 3-16,
 * merges taxonomy components to generate UniqueID, and exports to Excel.
 *--------------------------------------------------------------------------------
 * Requires: 3-00-Setup.do included first, plus all 3-0x indicator files run.
@@ -26,6 +26,9 @@
 	cap append using `ind_3_11'            // Redistributive impact, 90-10, abs Gini, poverty impact
 	cap append using `ind_3_12'            // Conditional incidence
 	cap append using `ind_3_13'            // Concentration shares, CC, Kakwani
+	cap append using `ind_3_14'            // Targeting errors
+	cap append using `ind_3_15'            // CEQ effectiveness
+	cap append using `ind_3_16'            // Consumption shares
 
 	* Ensure context is set
 	cap replace context = "equity" if context == ""
