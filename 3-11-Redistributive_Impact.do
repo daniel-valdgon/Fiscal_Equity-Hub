@@ -209,13 +209,81 @@ preserve
 restore
 
 *===============================================================================
-*---> E. Append all derived indicators
+*---> E. Reynolds-Smolensky Decomposition (id=69)
+*     RS = Gini(Y_pre) - CC(Y_pre, Y_post)
+*     where CC(Y_pre, Y_post) = 2*cov(Y_post, F(Y_pre)) / mean(Y_post)
+*     This measures how much fiscal policy changes the ordering of incomes.
+*     RS > 0 means the system is equalizing.
+*===============================================================================
+
+u `output', clear
+
+* Rank by pre-fiscal income
+sort ymp_pc
+gen double _cumw = sum(pondih)
+gen double _F_ymp = (_cumw - pondih/2) / _cumw[_N]
+
+* Gini of ymp
+qui sum ymp_pc [aw=pondih], meanonly
+local mu_ymp = r(mean)
+qui corr ymp_pc _F_ymp [aw=pondih], cov
+local gini_ymp = 2 * r(cov_12) / `mu_ymp'
+
+* CC(Y_post ranked by Y_pre) for each post-fiscal income concept
+local rs_n = 0
+local rs_names ""
+tempname rs_mat
+mat `rs_mat' = J(4, 1, .)
+
+foreach y in yn yd yc yf {
+	cap confirm variable `y'_pc
+	if _rc continue
+	
+	qui sum `y'_pc [aw=pondih], meanonly
+	local mu_y = r(mean)
+	if `mu_y' != 0 {
+		qui corr `y'_pc _F_ymp [aw=pondih], cov
+		local cc_post = 2 * r(cov_12) / `mu_y'
+		local ++rs_n
+		mat `rs_mat'[`rs_n', 1] = `gini_ymp' - `cc_post'
+		local rs_names `rs_names' `y'_pc
+	}
+}
+
+* Build RS dataset
+clear
+local true_n = `rs_n'
+if `true_n' == 0 local true_n = 1
+set obs `true_n'
+gen variable = ""
+gen value = .
+gen measure    = "reynolds_smolensky"
+gen indicator  = "reynolds_smolensky"
+gen income     = ""
+gen context    = "equity"
+gen deciles_pc = .
+
+forvalues k = 1/`rs_n' {
+	local vname : word `k' of `rs_names'
+	replace variable = "`vname'" in `k'
+	replace income   = "`vname'" in `k'
+	replace value    = `rs_mat'[`k', 1] in `k'
+}
+
+drop if variable == ""
+
+tempfile rs_decomp
+save `rs_decomp'
+
+*===============================================================================
+*---> F. Append all derived indicators
 *===============================================================================
 
 u `redist_impact', clear
 append using `ratio_9010'
 append using `abs_gini'
 cap append using `pov_impact'
+cap append using `rs_decomp'
 
 tempfile ind_3_11
 save `ind_3_11'
