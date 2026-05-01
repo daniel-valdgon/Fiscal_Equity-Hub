@@ -1,0 +1,1430 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      StataNow 18.5
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 6-core network, expiring 16 Dec 2028
+Serial number: 501909318806
+  Licensed to: WBG User
+               World Bank
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running C:\Program Files\Stata18\sysprofile.do ...
+�set is not a valid command name
+r(199);
+
+. do _test_fia_package.do 
+
+. /*---------------------------------------------------------------------------
+> -----
+> * TEST: Run the fia package on the same data as _test_pipeline.do
+> * and compare results with the do-file pipeline output.
+> *
+> * This script:
+> *   1. Loads the same dataset as _test_pipeline
+> *   2. Runs each fia subcommand step-by-step
+> *   3. Saves fia results to a tempfile
+> *   4. Then runs the do-file pipeline on the same data
+> *   5. Compares key indicators (Gini, FGT0, coverage, etc.)
+> *
+> * Run via: "C:\Program Files\Stata18\StataMP-64.exe" /e do _test_fia_package.
+> do
+> *----------------------------------------------------------------------------
+> ----*/
+. 
+. clear all
+
+. set more off
+
+. timer clear 1
+
+. timer on 1
+
+. 
+. * ---------------------------------------------------------------
+. * 0. Paths and adopath
+. * ---------------------------------------------------------------
+. global root "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Gro
+> up - Fiscal Equity Hub\Workspace\Data Hub"
+
+. 
+. adopath ++ "${root}/02-Scripts/wb419055/_ado"
+  [1]              "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - W
+> B Group - Fiscal Equity Hub\Workspace\Data Hub/02-Scripts/wb419055/_ado"
+  [2]  (BASE)      "C:\Program Files\Stata18\ado\base/"
+  [3]  (SITE)      "C:\Program Files\Stata18\ado\site/"
+  [4]              "."
+  [5]  (PERSONAL)  "c:\ado\personal/"
+  [6]  (PLUS)      "c:\ado\plus/"
+  [7]  (OLDPLACE)  "c:\ado/"
+
+. adopath ++ "${root}/02-Scripts/wb419055/_fia_package"
+  [1]              "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - W
+> B Group - Fiscal Equity Hub\Workspace\Data Hub/02-Scripts/wb419055/_fia_packa
+> ge"
+  [2]              "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - W
+> B Group - Fiscal Equity Hub\Workspace\Data Hub/02-Scripts/wb419055/_ado"
+  [3]  (BASE)      "C:\Program Files\Stata18\ado\base/"
+  [4]  (SITE)      "C:\Program Files\Stata18\ado\site/"
+  [5]              "."
+  [6]  (PERSONAL)  "c:\ado\personal/"
+  [7]  (PLUS)      "c:\ado\plus/"
+  [8]  (OLDPLACE)  "c:\ado/"
+
+. 
+. * ---------------------------------------------------------------
+. * 1. Load policy list globals (same as _test_pipeline.do)
+. * ---------------------------------------------------------------
+. global Directaxes      "PIT BIT PropertyTax FinancialTax"
+
+. global Contributions   "sscontribs_total"
+
+. global DirectTransfers "am_prog_1 am_prog_2 am_prog_3 am_prog_other"
+
+. global Subsidies_raw   "subsidy_elec_direct subsidy_elec_indirect subsidy_fue
+> l_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect su
+> bsidy_agric"
+
+. global Indtaxes        "CD_direct excise_taxes VAT_direct VAT_indirect"
+
+. global InKindTransfers "education_inKind am_health"
+
+. 
+. * ---------------------------------------------------------------
+. * 2. Detect microdata (same logic as 3-00-Setup.do)
+. * ---------------------------------------------------------------
+. global microdata "${root}/01-Data/01-02-FIA_Microdata"
+
+. global metadata  "${root}/01-Data/00-Aux"
+
+. 
+. global n_datasets 0
+
+. local dirs1 : dir `"${microdata}"' dirs "*"
+
+. 
+. foreach subf of local dirs1 {
+  2.         local cty : di strupper("`subf'")
+  3.         local cty_path `"${microdata}/`subf'"'
+  4.         local cty_count 0
+  5.         local dirs2 : dir `"`cty_path'"' dirs "*"
+  6. 
+.         foreach subf2 of local dirs2 {
+  7.                 local cty_proj_path `"`cty_path'/`subf2'"'
+  8. 
+.                 local files2 : dir `"`cty_proj_path'"' files "*.dta"
+  9.                 foreach f of local files2 {
+ 10.                         local f_upper : di strupper("`f'")
+ 11.                         local cty_count = `cty_count' + 1
+ 12.                         global n_datasets = ${n_datasets} + 1
+ 13.                         global path_${n_datasets} `"`cty_proj_path'/`f_upp
+> er'"'
+ 14.                         global cty_${n_datasets}  "`cty'_`cty_count'"
+ 15.                 }
+ 16. 
+.                 local dirs3 : dir `"`cty_proj_path'"' dirs "*"
+ 17.                 foreach subf3 of local dirs3 {
+ 18.                         local cty_final_path `"`cty_proj_path'/`subf3'"'
+ 19.                         local files3 : dir `"`cty_final_path'"' files "*.d
+> ta"
+ 20.                         foreach f of local files3 {
+ 21.                                 local f_upper : di strupper("`f'")
+ 22.                                 local cty_count = `cty_count' + 1
+ 23.                                 global n_datasets = ${n_datasets} + 1
+ 24.                                 global path_${n_datasets} `"`cty_final_pat
+> h'/`f_upper'"'
+ 25.                                 global cty_${n_datasets}  "`cty'_`cty_coun
+> t'"
+ 26.                                 global fname_${n_datasets} "`f_upper'"
+ 27.                         }
+ 28.                 }
+ 29.         }
+ 30. }
+
+. 
+. di as text "Detected ${n_datasets} datasets"
+Detected 7 datasets
+
+. 
+. * Find first dataset with ymp_pc
+. local test_idx 0
+
+. forvalues i = 1/$n_datasets {
+  2.         qui cap use `"${path_`i'}"', clear
+  3.         cap confirm variable ymp_pc
+  4.         if _rc == 0 {
+  5.                 local test_idx = `i'
+  6.                 di as text "Using dataset `i': ${path_`i'}"
+  7.                 continue, break
+  8.         }
+  9. }
+Using dataset 2: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB G
+> roup - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/gmb/g
+> mb-ihs-2020-2020-d01-p01-m01/GMB-IHS-2020-2020-D01-P01-M01.DTA
+
+. 
+. if `test_idx' == 0 {
+.         di as error "No dataset with ymp_pc found. Aborting."
+.         exit 1
+. }
+
+. 
+. global sheetname   "${cty_`test_idx'}"
+
+. global datasetname "${fname_`test_idx'}"
+
+. 
+. use `"${path_`test_idx'}"', clear
+
+. di as text "Loaded: `=_N' obs, `=c(k)' vars"
+Loaded: 13488 obs, 163 vars
+
+. 
+. * ---------------------------------------------------------------
+. * PART A: Run the fia package
+. * ---------------------------------------------------------------
+. di as text _n "{hline 60}"
+
+------------------------------------------------------------
+
+. di as text ">>> PART A: Running fia package subcommands"
+>>> PART A: Running fia package subcommands
+
+. di as text "{hline 60}"
+------------------------------------------------------------
+
+. 
+. * A.1 Setup — validate and set fia_ globals
+. di as text _n ">>> A.1: fia setup"
+
+>>> A.1: fia setup
+
+. fia setup [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+  Setup complete.
+  Tax instruments:     dirtax_total PIT BIT PropertyTax FinancialTax sscontribs
+> _total
+  Indirect taxes:      indtax_total CD_direct excise_taxes VAT_direct VAT_indir
+> ect Tax_VAT
+  Direct transfers:    dirtransf_total am_prog_1 am_prog_2 am_prog_3 am_prog_ot
+> her
+  In-kind transfers:   inktransf_total education_inKind am_health
+  Subsidies:           subsidy_total subsidy_elec_direct subsidy_elec_indirect 
+> subsidy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_
+> indirect subsidy_agric subsidy_elec subsidy_fuel subsidy_water
+  Income concepts:     ymp yn yd yc yf
+  Poverty lines:       zref line_1 line_2 line_3
+
+. 
+. di as text "  fia_tax      = [${fia_tax}]"
+  fia_tax      = [dirtax_total PIT BIT PropertyTax FinancialTax sscontribs_tota
+> l]
+
+. di as text "  fia_indtax   = [${fia_indtax}]"
+  fia_indtax   = [indtax_total CD_direct excise_taxes VAT_direct VAT_indirect T
+> ax_VAT]
+
+. di as text "  fia_transfer = [${fia_transfer}]"
+  fia_transfer = [dirtransf_total am_prog_1 am_prog_2 am_prog_3 am_prog_other]
+
+. di as text "  fia_inkind   = [${fia_inkind}]"
+  fia_inkind   = [inktransf_total education_inKind am_health]
+
+. di as text "  fia_subsidy  = [${fia_subsidy}]"
+  fia_subsidy  = [subsidy_total subsidy_elec_direct subsidy_elec_indirect subsi
+> dy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indir
+> ect subsidy_agric subsidy_elec subsidy_fuel subsidy_water]
+
+. di as text "  fia_income   = [${fia_income}]"
+  fia_income   = [ymp yn yd yc yf]
+
+. di as text "  fia_pline    = [${fia_pline}]"
+  fia_pline    = [zref line_1 line_2 line_3]
+
+. 
+. * A.2 Create deciles
+. di as text _n ">>> A.2: Creating deciles"
+
+>>> A.2: Creating deciles
+
+. cap drop *deciles_pc *centile_pc
+
+. foreach y in ymp yd {
+  2.         cap confirm variable `y'_pc
+  3.         if _rc == 0 {
+  4.                 quantiles `y'_pc [w=pondih], gen(`y'_deciles_pc)  nq(10)
+  5.                 quantiles `y'_pc [w=pondih], gen(`y'_centile_pc) nq(100)
+  6.         }
+  7. }
+(frequency weights assumed)
+(8 missing values generated)
+(frequency weights assumed)
+(8 missing values generated)
+(frequency weights assumed)
+(8 missing values generated)
+(frequency weights assumed)
+(8 missing values generated)
+
+. 
+. tempfile fia_data
+
+. save `fia_data'
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000001.tmp saved as .dta
+    format
+
+. 
+. * A.3 Inequality
+. di as text _n ">>> A.3: fia inequality"
+
+>>> A.3: fia inequality
+
+. cap noisily fia inequality [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+(10 missing values generated)
+variable income was str1 now str6
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(0 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+  Inequality: Gini and Theil computed for ymp yn yd yc yf
+
+. local rc_ineq = _rc
+
+. if `rc_ineq' di as error "  fia inequality FAILED rc=`rc_ineq'"
+
+. else         di as text  "  fia inequality OK"
+  fia inequality OK
+
+. 
+. * A.4 Poverty
+. di as text _n ">>> A.4: fia poverty"
+
+>>> A.4: fia poverty
+
+. u `fia_data', clear
+
+. cap noisily fia poverty [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+(60 missing values generated)
+variable income was str1 now str6
+(12 real changes made)
+(12 real changes made)
+(12 real changes made)
+(12 real changes made)
+(12 real changes made)
+(20 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+  Poverty: FGT0 and FGT1 computed
+
+. local rc_pov = _rc
+
+. if `rc_pov' di as error "  fia poverty FAILED rc=`rc_pov'"
+
+. else        di as text  "  fia poverty OK"
+  fia poverty OK
+
+. 
+. * A.5 Incidence
+. di as text _n ">>> A.5: fia incidence"
+
+>>> A.5: fia incidence
+
+. u `fia_data', clear
+
+. cap noisily fia incidence [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
+> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
+> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
+> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
+> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
+> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
+> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000003.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000004.tmp saved as .dta
+    format
+invalid file specification
+
+. local rc_inc = _rc
+
+. if `rc_inc' di as error "  fia incidence FAILED rc=`rc_inc'"
+  fia incidence FAILED rc=198
+
+. else        di as text  "  fia incidence OK"
+
+. 
+. * A.6 Marginal contributions
+. di as text _n ">>> A.6: fia marginal"
+
+>>> A.6: fia marginal
+
+. u `fia_data', clear
+
+. cap noisily fia marginal [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+(449 real changes made)
+(449 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(13,480 real changes made)
+(13,471 real changes made)
+(11,809 real changes made)
+(13,480 real changes made)
+(13,480 real changes made)
+(13,480 real changes made)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(449 real changes made)
+(449 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(13,480 real changes made)
+(13,471 real changes made)
+(11,809 real changes made)
+(13,480 real changes made)
+(13,480 real changes made)
+(13,480 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000003.tmp saved as .dta
+    format
+(1,920 observations deleted)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(155 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000004.tmp saved as .dta
+    format
+(5 observations deleted)
+(155 missing values generated)
+(155 missing values generated)
+variable base_inc was str1 now str6
+(31 real changes made)
+variable mc_instrument was str1 now str22
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(31 real changes made)
+(variable base_inc was str6, now str30 to accommodate using data's values)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                               155  
+    -----------------------------------------
+(155 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000006.tmp saved as .dta
+    format
+(1,440 observations deleted)
+(4 real changes made)
+(4 real changes made)
+(4 real changes made)
+(4 real changes made)
+(4 real changes made)
+(620 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000007.tmp saved as .dta
+    format
+(20 observations deleted)
+(620 missing values generated)
+(620 missing values generated)
+variable base_inc was str1 now str6
+(124 real changes made)
+variable mc_instrument was str1 now str22
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(124 real changes made)
+(variable base_inc was str6, now str30 to accommodate using data's values)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                               620  
+    -----------------------------------------
+(620 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000009.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_00000a.tmp saved as .dta
+    format
+  Marginal contributions: mc_gini, mc_fgt0 computed
+
+. local rc_marg = _rc
+
+. if `rc_marg' di as error "  fia marginal FAILED rc=`rc_marg'"
+
+. else         di as text  "  fia marginal OK"
+  fia marginal OK
+
+. 
+. * A.7 Coverage + targeting
+. di as text _n ">>> A.7: fia coverage"
+
+>>> A.7: fia coverage
+
+. u `fia_data', clear
+
+. cap noisily fia coverage [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+(360 missing values generated)
+variable income was str1 now str3
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(50 observations deleted)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000003.tmp saved as .dta
+    format
+(8 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000004.tmp saved as .dta
+    format
+(5,737 observations deleted)
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000006.tmp saved as .dta
+    format
+(5,737 observations deleted)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(7,751 real changes made)
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000008.tmp saved as .dta
+    format
+(12,165 observations deleted)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(1,323 real changes made)
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000009.tmp saved as .dta
+    format
+(10,618 observations deleted)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(2,870 real changes made)
+(j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
+> ation_inKind inktransf_total subsidy_agric subsidy_elec subsidy_elec_direct s
+> ubsidy_elec_indirect subsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect s
+> ubsidy_total subsidy_water subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                1   ->   19          
+Number of variables                  20   ->   3           
+j variable (19 values)                    ->   variable
+xij variables:
+_ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
+-----------------------------------------------------------------------------
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_00000a.tmp saved as .dta
+    format
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_00000b.tmp saved as .dta
+    format
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_00000c.tmp saved as .dta
+    format
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_00000d.tmp saved as .dta
+    format
+(variable measure was str8, now str13 to accommodate using data's values)
+(variable indicator was str8, now str13 to accommodate using data's values)
+(variable measure was str13, now str20 to accommodate using data's values)
+(variable indicator was str13, now str20 to accommodate using data's values)
+(variable measure was str20, now str24 to accommodate using data's values)
+(variable indicator was str20, now str24 to accommodate using data's values)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_00000e.tmp saved as .dta
+    format
+  Coverage: decile coverage + targeting errors computed
+
+. local rc_cov = _rc
+
+. if `rc_cov' di as error "  fia coverage FAILED rc=`rc_cov'"
+
+. else        di as text  "  fia coverage OK"
+  fia coverage OK
+
+. 
+. * A.8 Shares
+. di as text _n ">>> A.8: fia shares"
+
+>>> A.8: fia shares
+
+. u `fia_data', clear
+
+. cap noisily fia shares [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(j = yc yd yf ymp yn)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   50          
+Number of variables                   6   ->   3           
+j variable (5 values)                     ->   variable
+xij variables:
+                     w_yc w_yd ... w_yn   ->   w_
+-----------------------------------------------------------------------------
+variable variable was str3 now str6
+(50 real changes made)
+(50 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000003.tmp saved as .dta
+    format
+  Shares: consumption/income shares by decile computed
+
+. local rc_sh = _rc
+
+. if `rc_sh' di as error "  fia shares FAILED rc=`rc_sh'"
+
+. else       di as text  "  fia shares OK"
+  fia shares OK
+
+. 
+. * A.9 Concentration, CC, Kakwani
+. di as text _n ">>> A.9: fia concentration"
+
+>>> A.9: fia concentration
+
+. u `fia_data', clear
+
+. cap noisily fia concentration [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(10 real changes made)
+(10 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(0 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(10 real changes made)
+(10 real changes made)
+(0 real changes made)
+(j = BIT CD_direct FinancialTax PIT PropertyTax Tax_VAT VAT_direct VAT_indirect
+>  am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtax_total dirtransf
+> _total education_inKind excise_taxes indtax_total inktransf_total sscontribs_
+> total subsidy_agric subsidy_elec subsidy_elec_direct subsidy_elec_indirect su
+> bsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect subsidy_total subsidy_wa
+> ter subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000004.tmp saved as .dta
+    format
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(13 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(2 real changes made)
+(2 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(0 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(2 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(2 real changes made)
+(2 real changes made)
+(0 real changes made)
+(j = BIT CD_direct FinancialTax PIT PropertyTax Tax_VAT VAT_direct VAT_indirect
+>  am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtax_total dirtransf
+> _total education_inKind excise_taxes indtax_total inktransf_total sscontribs_
+> total subsidy_agric subsidy_elec subsidy_elec_direct subsidy_elec_indirect su
+> bsidy_fuel subsidy_fuel_direct subsidy_fuel_indirect subsidy_total subsidy_wa
+> ter subsidy_water_direct subsidy_water_indirect)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations                3   ->   93          
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000006.tmp saved as .dta
+    format
+(8 missing values generated)
+Number of observations (_N) was 0, now 31.
+(31 missing values generated)
+(31 missing values generated)
+(31 missing values generated)
+variable variable was str1 now str12
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+variable variable was str12 now str16
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(0 real changes made)
+(j = cc kak)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               31   ->   62          
+Number of variables                   3   ->   3           
+j variable (2 values)                     ->   measure
+xij variables:
+                     value_cc value_kak   ->   value_
+-----------------------------------------------------------------------------
+variable measure was str3 now str25
+(31 real changes made)
+(31 real changes made)
+(62 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000007.tmp saved as .dta
+    format
+(variable measure was str19, now str27 to accommodate using data's values)
+(variable indicator was str19, now str27 to accommodate using data's values)
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000008.tmp saved as .dta
+    format
+  Concentration: shares, CC, Kakwani computed
+
+. local rc_conc = _rc
+
+. if `rc_conc' di as error "  fia concentration FAILED rc=`rc_conc'"
+
+. else         di as text  "  fia concentration OK"
+  fia concentration OK
+
+. 
+. * A.10 Redistribution (needs $fia_result_inequality and $fia_result_poverty)
+. di as text _n ">>> A.10: fia redistribution"
+
+>>> A.10: fia redistribution
+
+. u `fia_data', clear
+
+. cap noisily fia redistribution [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+indicator not found
+
+. local rc_red = _rc
+
+. if `rc_red' di as error "  fia redistribution FAILED rc=`rc_red'"
+  fia redistribution FAILED rc=111
+
+. else        di as text  "  fia redistribution OK"
+
+. 
+. * A.11 Effectiveness (needs $fia_result_marginal, inequality, poverty)
+. di as text _n ">>> A.11: fia effectiveness"
+
+>>> A.11: fia effectiveness
+
+. u `fia_data', clear
+
+. cap noisily fia effectiveness [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp saved as .dta
+    format
+indicator not found
+
+. local rc_eff = _rc
+
+. if `rc_eff' di as error "  fia effectiveness FAILED rc=`rc_eff'"
+  fia effectiveness FAILED rc=111
+
+. else        di as text  "  fia effectiveness OK"
+
+. 
+. * ---------------------------------------------------------------
+. * Save fia results by appending all globals
+. * ---------------------------------------------------------------
+. di as text _n ">>> Appending all fia results"
+
+>>> Appending all fia results
+
+. 
+. local first 1
+
+. foreach mod in inequality poverty incidence marginal concentration ///
+>                coverage redistribution shares effectiveness {
+  2.         if "${fia_result_`mod'}" != "" {
+  3.                 if `first' {
+  4.                         u "${fia_result_`mod'}", clear
+  5.                         gen _source_mod = "`mod'"
+  6.                         local first 0
+  7.                 }
+  8.                 else {
+  9.                         tempfile _tmp
+ 10.                         save `_tmp'
+ 11.                         u "${fia_result_`mod'}", clear
+ 12.                         gen _source_mod = "`mod'"
+ 13.                         append using `_tmp'
+ 14.                 }
+ 15.         }
+ 16.         else {
+ 17.                 di as text "  WARNING: fia_result_`mod' is empty"
+ 18.         }
+ 19. }
+file C:\Users\wb419055\AppData\Local\Temp\ST_c33c_000002.tmp not found
+r(601);
+
+end of do-file
+r(601);
