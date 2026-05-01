@@ -66,6 +66,14 @@ program fia, rclass
 		* Income/consumption shares by decile
 		fia_shares `0'
 	}
+	else if ("`subcmd'" == "meanincome") {
+		* Mean income by decile
+		fia_meanincome `0'
+	}
+	else if ("`subcmd'" == "benefits") {
+		* Benefits (concentration shares) by decile
+		fia_benefits `0'
+	}
 	else if ("`subcmd'" == "export") {
 		* Merge taxonomy and export to Excel
 		fia_export `0'

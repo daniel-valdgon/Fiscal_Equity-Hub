@@ -289,7 +289,7 @@ Loaded: 13488 obs, 163 vars
 . tempfile fia_data
 
 . save `fia_data'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000001.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000001.tmp saved as .dta
     format
 
 . 
@@ -314,8 +314,6 @@ variable income was str1 now str6
 (2 real changes made)
 (2 real changes made)
 (0 observations deleted)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_inequality.dta not
-    found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_inequality.dta saved
   Inequality: Gini and Theil computed for ymp yn yd yc yf
 
@@ -350,7 +348,6 @@ variable income was str1 now str6
 (12 real changes made)
 (12 real changes made)
 (20 observations deleted)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_poverty.dta not found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_poverty.dta saved
   Poverty: FGT0 and FGT1 computed
 
@@ -377,7 +374,7 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_poverty.dta saved
   CEQ-based standardized fiscal equity indicators
  ------------------------------------------------------------
 
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000002.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -395,7 +392,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000003.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -413,27 +410,9 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000004.tmp saved as .dta
     format
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000005.tmp saved as .dta
-    format
-(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
-> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
-> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
-> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
-> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
-> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
-> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
-
-Data                               Wide   ->   Long
------------------------------------------------------------------------------
-Number of observations               10   ->   310         
-Number of variables                  32   ->   3           
-j variable (31 values)                    ->   variable
-xij variables:
-share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
------------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000005.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -451,10 +430,26 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000006.tmp saved as .dta
     format
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_incidence.dta not
-    found)
+(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
+> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
+> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
+> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
+> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
+> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
+> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   310         
+Number of variables                  32   ->   3           
+j variable (31 values)                    ->   variable
+xij variables:
+share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000007.tmp saved as .dta
+    format
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_incidence.dta saved
   Incidence: netcash and conditional by decile computed
 
@@ -481,7 +476,7 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_incidence.dta saved
   CEQ-based standardized fiscal equity indicators
  ------------------------------------------------------------
 
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000002.tmp saved as .dta
     format
 (449 real changes made)
 (449 real changes made)
@@ -632,7 +627,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
 (13,480 real changes made)
 (13,480 real changes made)
 (13,480 real changes made)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000003.tmp saved as .dta
     format
 (1,920 observations deleted)
 (1 real change made)
@@ -641,7 +636,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
 (1 real change made)
 (1 real change made)
 (155 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000004.tmp saved as .dta
     format
 (5 observations deleted)
 (155 missing values generated)
@@ -666,7 +661,7 @@ variable mc_instrument was str1 now str22
     Matched                               155  
     -----------------------------------------
 (155 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000006.tmp saved as .dta
     format
 (1,440 observations deleted)
 (4 real changes made)
@@ -675,7 +670,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000006.tmp saved as .dta
 (4 real changes made)
 (4 real changes made)
 (620 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000007.tmp saved as .dta
     format
 (20 observations deleted)
 (620 missing values generated)
@@ -700,10 +695,8 @@ variable mc_instrument was str1 now str22
     Matched                               620  
     -----------------------------------------
 (620 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000009.tmp saved as .dta
     format
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_marginal.dta not
-    found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_marginal.dta saved
   Marginal contributions: mc_gini, mc_fgt0 computed
 
@@ -730,7 +723,7 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_marginal.dta saved
   CEQ-based standardized fiscal equity indicators
  ------------------------------------------------------------
 
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000002.tmp saved as .dta
     format
 (360 missing values generated)
 variable income was str1 now str3
@@ -740,10 +733,10 @@ variable income was str1 now str3
 (10 real changes made)
 (10 real changes made)
 (50 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000003.tmp saved as .dta
     format
 (8 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000004.tmp saved as .dta
     format
 (5,737 observations deleted)
 (j = am_health am_prog_1 am_prog_2 am_prog_3 am_prog_other dirtransf_total educ
@@ -760,7 +753,7 @@ xij variables:
 _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 -----------------------------------------------------------------------------
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000006.tmp saved as .dta
     format
 (5,737 observations deleted)
 (7,751 real changes made)
@@ -796,7 +789,7 @@ xij variables:
 _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 -----------------------------------------------------------------------------
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000008.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000008.tmp saved as .dta
     format
 (12,165 observations deleted)
 (1,323 real changes made)
@@ -833,7 +826,7 @@ _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 -----------------------------------------------------------------------------
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000009.tmp saved as .dta
     format
 (10,618 observations deleted)
 (2,870 real changes made)
@@ -870,7 +863,7 @@ _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 -----------------------------------------------------------------------------
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000a.tmp saved as .dta
     format
 Number of observations (_N) was 0, now 19.
 (19 missing values generated)
@@ -919,57 +912,7 @@ variable variable was str21 now str22
 (1 real change made)
 (0 real changes made)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000b.tmp saved as .dta
-    format
-Number of observations (_N) was 0, now 19.
-(19 missing values generated)
-(19 missing values generated)
-variable variable was str1 now str15
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(0 real changes made)
-(1 real change made)
-(1 real change made)
-variable variable was str15 now str16
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-variable variable was str16 now str19
-(1 real change made)
-(1 real change made)
-variable variable was str19 now str21
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(0 real changes made)
-(1 real change made)
-(0 real changes made)
-(1 real change made)
-(0 real changes made)
-variable variable was str21 now str22
-(1 real change made)
-(0 real changes made)
-(1 real change made)
-(0 real changes made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(0 real changes made)
-(1 real change made)
-(0 real changes made)
-(19 missing values generated)
-(19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000c.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000b.tmp saved as .dta
     format
 Number of observations (_N) was 0, now 19.
 (19 missing values generated)
@@ -1019,7 +962,57 @@ variable variable was str21 now str22
 (0 real changes made)
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000d.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000c.tmp saved as .dta
+    format
+Number of observations (_N) was 0, now 19.
+(19 missing values generated)
+(19 missing values generated)
+variable variable was str1 now str15
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+variable variable was str15 now str16
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+variable variable was str16 now str19
+(1 real change made)
+(1 real change made)
+variable variable was str19 now str21
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+variable variable was str21 now str22
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(0 real changes made)
+(1 real change made)
+(0 real changes made)
+(19 missing values generated)
+(19 missing values generated)
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000d.tmp saved as .dta
     format
 (variable measure was str8, now str13 to accommodate using data's values)
 (variable indicator was str8, now str13 to accommodate using data's values)
@@ -1027,8 +1020,6 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000d.tmp saved as .dta
 (variable indicator was str13, now str20 to accommodate using data's values)
 (variable measure was str20, now str24 to accommodate using data's values)
 (variable indicator was str20, now str24 to accommodate using data's values)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_coverage.dta not
-    found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_coverage.dta saved
   Coverage: decile coverage + targeting errors computed
 
@@ -1078,7 +1069,6 @@ xij variables:
 variable variable was str3 now str6
 (50 real changes made)
 (50 missing values generated)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_shares.dta not found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_shares.dta saved
   Shares: consumption/income shares by decile computed
 
@@ -1105,7 +1095,7 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_shares.dta saved
   CEQ-based standardized fiscal equity indicators
  ------------------------------------------------------------
 
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000002.tmp saved as .dta
     format
 (8 missing values generated)
 (8 missing values generated)
@@ -1184,7 +1174,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000004.tmp saved as .dta
     format
 (8 missing values generated)
 (8 missing values generated)
@@ -1264,7 +1254,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000006.tmp saved as .dta
     format
 (8 missing values generated)
 Number of observations (_N) was 0, now 31.
@@ -1383,12 +1373,10 @@ variable measure was str3 now str25
 (31 real changes made)
 (31 real changes made)
 (62 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000007.tmp saved as .dta
     format
 (variable measure was str19, now str27 to accommodate using data's values)
 (variable indicator was str19, now str27 to accommodate using data's values)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_concentration.dta not
-    found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_concentration.dta saved
   Concentration: shares, CC, Kakwani computed
 
@@ -1398,6 +1386,78 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_concentration.dta saved
 
 . else         di as text  "  fia concentration OK"
   fia concentration OK
+
+. 
+. * A.9b Mean income by decile
+. di as text _n ">>> A.9b: fia meanincome"
+
+>>> A.9b: fia meanincome
+
+. u `fia_data', clear
+
+. cap noisily fia meanincome [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+(360 missing values generated)
+variable income was str1 now str6
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(310 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp//fia_result_meanincome.dta not
+    found)
+file C:\Users\wb419055\AppData\Local\Temp//fia_result_meanincome.dta saved
+  Mean income: by decile computed for ymp yn yd yc yf
+
+. local rc_mi = _rc
+
+. if `rc_mi' di as error "  fia meanincome FAILED rc=`rc_mi'"
+
+. else       di as text  "  fia meanincome OK"
+  fia meanincome OK
+
+. 
+. * A.9c Benefits by decile
+. di as text _n ">>> A.9c: fia benefits"
+
+>>> A.9c: fia benefits
+
+. u `fia_data', clear
+
+. cap noisily fia benefits [aw=pondih]
+
+ ------------------------------------------------------------
+  Fiscal Incidence Analysis (FIA) Package v0.1.0
+  World Bank — GSG3 Fiscal Equity Hub
+  CEQ-based standardized fiscal equity indicators
+ ------------------------------------------------------------
+
+(360 missing values generated)
+variable income was str1 now str6
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(10 real changes made)
+(50 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp//fia_result_benefits.dta not
+    found)
+file C:\Users\wb419055\AppData\Local\Temp//fia_result_benefits.dta saved
+  Benefits: concentration shares by decile computed
+
+. local rc_ben = _rc
+
+. if `rc_ben' di as error "  fia benefits FAILED rc=`rc_ben'"
+
+. else        di as text  "  fia benefits OK"
+  fia benefits OK
 
 . 
 . * A.10 Redistribution (needs $fia_result_inequality and $fia_result_poverty)
@@ -1415,10 +1475,10 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_concentration.dta saved
   CEQ-based standardized fiscal equity indicators
  ------------------------------------------------------------
 
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000002.tmp saved as .dta
     format
 (5 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000003.tmp saved as .dta
     format
 (4 observations deleted)
 (4 observations deleted)
@@ -1445,7 +1505,7 @@ variable income was str1 now str5
 (1 real change made)
 (1 real change made)
 (0 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000009.tmp saved as .dta
     format
 Number of observations (_N) was 0, now 5.
 (5 missing values generated)
@@ -1469,7 +1529,7 @@ variable income was str1 now str6
 (1 real change made)
 (1 real change made)
 (1 real change made)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000a.tmp saved as .dta
     format
 (5 missing values generated)
 (1 real change made)
@@ -1478,13 +1538,13 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000a.tmp saved as .dta
 (1 real change made)
 (1 real change made)
 (5 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000b.tmp saved as .dta
     format
 (20 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000c.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000c.tmp saved as .dta
     format
 (16 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000e.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000e.tmp saved as .dta
     format
 (4 observations deleted)
 
@@ -1494,7 +1554,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000e.tmp saved as .dta
     Matched                                16  
     -----------------------------------------
 (16 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000g.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000g.tmp saved as .dta
     format
 (8 missing values generated)
 Number of observations (_N) was 0, now 4.
@@ -1517,12 +1577,10 @@ variable income was str1 now str5
 (1 real change made)
 (1 real change made)
 (0 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000h.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000h.tmp saved as .dta
     format
 (variable variable was str5, now str6 to accommodate using data's values)
 (variable income was str5, now str6 to accommodate using data's values)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_redistribution.dta not
-    found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_redistribution.dta
     saved
   Redistribution: RI, 90-10, abs Gini, poverty impact, RS computed
@@ -1550,11 +1608,11 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_redistribution.dta
   CEQ-based standardized fiscal equity indicators
  ------------------------------------------------------------
 
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000002.tmp saved as .dta
     format
 (9 observations deleted)
 (36 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000003.tmp saved as .dta
     format
 (744 observations deleted)
 variable measure was str7 now str29
@@ -1562,7 +1620,7 @@ variable measure was str7 now str29
 variable indicator was str7 now str24
 (31 real changes made)
 (0 real changes made)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000004.tmp saved as .dta
     format
 (651 observations deleted)
 
@@ -1576,7 +1634,7 @@ variable measure was str7 now str29
 variable indicator was str7 now str24
 (124 real changes made)
 (0 real changes made)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000005.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000005.tmp saved as .dta
     format
 Number of observations (_N) was 0, now 19.
 (19 missing values generated)
@@ -1624,7 +1682,7 @@ variable variable was str21 now str22
 (1 real change made)
 (1 real change made)
 (1 real change made)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000006.tmp saved as .dta
     format
 (651 observations deleted)
 
@@ -1639,11 +1697,9 @@ variable measure was str7 now str26
 variable indicator was str7 now str26
 (76 real changes made)
 (0 real changes made)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000007.tmp saved as .dta
     format
 (variable indicator was str24, now str26 to accommodate using data's values)
-(file C:\Users\wb419055\AppData\Local\Temp//fia_result_effectiveness.dta not
-    found)
 file C:\Users\wb419055\AppData\Local\Temp//fia_result_effectiveness.dta saved
   Effectiveness: IE_gini, IE_fgt0, SE computed
 
@@ -1666,7 +1722,8 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_effectiveness.dta saved
 . local first 1
 
 . foreach mod in inequality poverty incidence marginal concentration ///
->                coverage redistribution shares effectiveness {
+>                coverage redistribution shares effectiveness ///
+>                meanincome benefits {
   2.         if "${fia_result_`mod'}" != "" {
   3.                 cap confirm file "${fia_result_`mod'}"
   4.                 if _rc {
@@ -1693,34 +1750,38 @@ file C:\Users\wb419055\AppData\Local\Temp//fia_result_effectiveness.dta saved
  24.                 di as text "  WARNING: fia_result_`mod' is empty"
  25.         }
  26. }
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000003.tmp saved as .dta
     format
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000005.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000005.tmp saved as .dta
     format
 (variable variable was str6, now str25 to accommodate using data's values)
 (variable measure was str5, now str25 to accommodate using data's values)
 (variable indicator was str5, now str21 to accommodate using data's values)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000007.tmp saved as .dta
     format
 (variable income was str6, now str30 to accommodate using data's values)
 (variable reference was str6, now str7 to accommodate using data's values)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000009.tmp saved as .dta
     format
 (variable measure was str25, now str27 to accommodate using data's values)
 (variable indicator was str21, now str27 to accommodate using data's values)
 (variable _source_mod was str10, now str13 to accommodate using data's
        values)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000b.tmp saved as .dta
     format
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000d.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000d.tmp saved as .dta
     format
 (variable _source_mod was str13, now str14 to accommodate using data's
        values)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000f.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000f.tmp saved as .dta
     format
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000h.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000h.tmp saved as .dta
     format
 (variable measure was str27, now str29 to accommodate using data's values)
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000j.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000l.tmp saved as .dta
+    format
 
 . 
 . tempfile fia_all
@@ -1731,7 +1792,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000h.tmp saved as .dta
 . local fia_N = _N
 
 . di as text "  FIA package produced `fia_N' indicator rows"
-  FIA package produced 3288 indicator rows
+  FIA package produced 3648 indicator rows
 
 . 
 . * ---------------------------------------------------------------
@@ -1865,23 +1926,23 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000h.tmp saved as .dta
   6.         }
 (3 vars, 5 obs)
 (0 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000j.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000n.tmp saved as .dta
     format
 (3 vars, 71 obs)
 (64 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000k.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000o.tmp saved as .dta
     format
 (4 vars, 76 obs)
 (66 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000l.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000p.tmp saved as .dta
     format
 (3 vars, 6 obs)
 (1 observation deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000m.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000q.tmp saved as .dta
     format
 (3 vars, 14 obs)
 (10 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000n.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000r.tmp saved as .dta
     format
 
 . 
@@ -1976,7 +2037,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000n.tmp saved as .dta
 . tempfile output
 
 . save `output'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000o.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000s.tmp saved as .dta
     format
 
 . 
@@ -2069,7 +2130,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000p.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000t.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -2087,7 +2148,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000q.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000u.tmp saved as .dta
     format
 
 . 
@@ -2099,7 +2160,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000q.tmp saved as .dta
 . tempfile ind_3_02
 
 . save `ind_3_02'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000r.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000v.tmp saved as .dta
     format
 
 . 
@@ -2226,7 +2287,7 @@ variable income was str5 now str6
 . tempfile ind_3_03
 
 . save `ind_3_03'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000s.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000w.tmp saved as .dta
     format
 
 . 
@@ -2345,7 +2406,7 @@ variable income was str5 now str6
 . tempfile ind_3_04
 
 . save `ind_3_04'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000t.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00000x.tmp saved as .dta
     format
 
 . 
@@ -2592,7 +2653,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000t.tmp saved as .dta
 . tempfile mc_raw
 
 . save `mc_raw'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000u.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000010.tmp saved as .dta
     format
 
 . 
@@ -2630,7 +2691,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000u.tmp saved as .dta
 .         keep base_inc gini_base
 
 .         save `gini_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000v.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000011.tmp saved as .dta
     format
 
 . restore
@@ -2700,7 +2761,7 @@ variable mc_instrument was str1 now str22
 . tempfile mc_gini
 
 . save `mc_gini'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000x.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000013.tmp saved as .dta
     format
 
 . 
@@ -2736,7 +2797,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00000x.tmp saved as .dta
 .         keep base_inc fgt_base reference
 
 .         save `fgt_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000010.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000014.tmp saved as .dta
     format
 
 . restore
@@ -2804,7 +2865,7 @@ variable mc_instrument was str1 now str22
 . tempfile mc_fgt0
 
 . save `mc_fgt0'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000012.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000016.tmp saved as .dta
     format
 
 . 
@@ -2817,7 +2878,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000012.tmp saved as .dta
 . tempfile ind_3_05
 
 . save `ind_3_05'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000013.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000017.tmp saved as .dta
     format
 
 . 
@@ -2921,7 +2982,7 @@ variable income was str5 now str6
 . tempfile ind_3_06
 
 . save `ind_3_06'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000014.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000018.tmp saved as .dta
     format
 
 . 
@@ -3015,7 +3076,7 @@ variable income was str5 now str6
 . tempfile ind_3_07
 
 . save `ind_3_07'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000015.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000019.tmp saved as .dta
     format
 
 . 
@@ -3109,7 +3170,7 @@ variable income was str5 now str6
 . tempfile ind_3_08
 
 . save `ind_3_08'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000016.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001a.tmp saved as .dta
     format
 
 . 
@@ -3187,7 +3248,7 @@ Note: 3-08 saves concentration shares (benefits by decile).
 . tempfile gini_wide
 
 . save `gini_wide'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000017.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001b.tmp saved as .dta
     format
 
 . 
@@ -3293,7 +3354,7 @@ variable income was str1 now str5
 . tempfile redist_impact
 
 . save `redist_impact'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001d.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001h.tmp saved as .dta
     format
 
 . 
@@ -3372,7 +3433,7 @@ variable income was str1 now str6
 . tempfile ratio_9010
 
 . save `ratio_9010'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001e.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001i.tmp saved as .dta
     format
 
 . 
@@ -3429,7 +3490,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001e.tmp saved as .dta
 . tempfile abs_gini
 
 . save `abs_gini'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001f.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001j.tmp saved as .dta
     format
 
 . 
@@ -3453,7 +3514,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001f.tmp saved as .dta
 . tempfile pov_impact_raw
 
 . save `pov_impact_raw'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001g.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001k.tmp saved as .dta
     format
 
 . 
@@ -3470,7 +3531,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001g.tmp saved as .dta
 .         tempfile fgt0_base
 
 .         save `fgt0_base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001i.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001m.tmp saved as .dta
     format
 
 . restore
@@ -3521,7 +3582,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001i.tmp saved as .dta
 .         tempfile pov_impact
 
 .         save `pov_impact'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001k.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001o.tmp saved as .dta
     format
 
 . restore
@@ -3643,7 +3704,7 @@ variable income was str1 now str5
 . tempfile rs_decomp
 
 . save `rs_decomp'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001l.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001p.tmp saved as .dta
     format
 
 . 
@@ -3669,7 +3730,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001l.tmp saved as .dta
 . tempfile ind_3_11
 
 . save `ind_3_11'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001m.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001q.tmp saved as .dta
     format
 
 . 
@@ -3765,7 +3826,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001n.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001r.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -3783,7 +3844,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001o.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001s.tmp saved as .dta
     format
 
 . 
@@ -3794,7 +3855,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001o.tmp saved as .dta
 . tempfile ind_3_12
 
 . save `ind_3_12'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001p.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001t.tmp saved as .dta
     format
 
 . 
@@ -3971,7 +4032,7 @@ w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
 .         tempfile conc_shares_dec
 
 .         save `conc_shares_dec'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001r.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001v.tmp saved as .dta
     format
 
 . restore
@@ -4114,7 +4175,7 @@ w_BIT w_CD_direct ... w_subsidy_water_indirect->w_
 .         tempfile conc_shares_poor
 
 .         save `conc_shares_poor'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001t.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00001x.tmp saved as .dta
     format
 
 . restore
@@ -4346,7 +4407,7 @@ variable measure was str3 now str25
 . tempfile cc_kakwani
 
 . save `cc_kakwani'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001u.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000020.tmp saved as .dta
     format
 
 . 
@@ -4368,7 +4429,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001u.tmp saved as .dta
 . tempfile ind_3_13
 
 . save `ind_3_13'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001v.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000021.tmp saved as .dta
     format
 
 . 
@@ -4447,7 +4508,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001v.tmp saved as .dta
 . tempfile base
 
 . save `base'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00001w.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000022.tmp saved as .dta
     format
 
 . 
@@ -4504,7 +4565,7 @@ _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 .         tempfile cov_poor
 
 .         save `cov_poor'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000020.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000024.tmp saved as .dta
     format
 
 . restore
@@ -4586,7 +4647,7 @@ _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 .         tempfile excl_poor
 
 .         save `excl_poor'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000022.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000026.tmp saved as .dta
     format
 
 . restore
@@ -4655,7 +4716,7 @@ _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 -----------------------------------------------------------------------------
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000023.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000027.tmp saved as .dta
     format
 (10,618 observations deleted)
 (2,870 real changes made)
@@ -4692,7 +4753,7 @@ _ben_am_health _ben_am_prog_1 ... _ben_subsidy_water_indirect->_ben_
 -----------------------------------------------------------------------------
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000024.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000028.tmp saved as .dta
     format
 
 . 
@@ -4807,7 +4868,7 @@ variable variable was str21 now str22
 (1 real change made)
 (0 real changes made)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000025.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_000029.tmp saved as .dta
     format
 Number of observations (_N) was 0, now 19.
 (19 missing values generated)
@@ -4857,7 +4918,7 @@ variable variable was str21 now str22
 (0 real changes made)
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000026.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002a.tmp saved as .dta
     format
 Number of observations (_N) was 0, now 19.
 (19 missing values generated)
@@ -4907,7 +4968,7 @@ variable variable was str21 now str22
 (0 real changes made)
 (19 missing values generated)
 (19 missing values generated)
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000027.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002b.tmp saved as .dta
     format
 
 . 
@@ -4939,7 +5000,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000027.tmp saved as .dta
 . tempfile ind_3_14
 
 . save `ind_3_14'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000028.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002c.tmp saved as .dta
     format
 
 . 
@@ -5019,7 +5080,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000028.tmp saved as .dta
 . tempfile fgt0_baselines
 
 . save `fgt0_baselines'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_000029.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002d.tmp saved as .dta
     format
 
 . 
@@ -5058,7 +5119,7 @@ variable indicator was str7 now str24
 . tempfile ie_gini
 
 . save `ie_gini'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002e.tmp saved as .dta
     format
 
 . 
@@ -5118,7 +5179,7 @@ variable indicator was str7 now str24
 . tempfile ie_fgt0
 
 . save `ie_fgt0'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002f.tmp saved as .dta
     format
 
 . 
@@ -5227,7 +5288,7 @@ variable variable was str21 now str22
 . tempfile spending
 
 . save `spending'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002c.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002g.tmp saved as .dta
     format
 
 . 
@@ -5269,7 +5330,7 @@ variable indicator was str7 now str26
 . tempfile se_fgt0
 
 . save `se_fgt0'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002d.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002h.tmp saved as .dta
     format
 
 . 
@@ -5290,7 +5351,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002d.tmp saved as .dta
 . tempfile ind_3_15
 
 . save `ind_3_15'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002e.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002i.tmp saved as .dta
     format
 
 . 
@@ -5400,7 +5461,7 @@ variable variable was str3 now str6
 .         tempfile ind_3_16
 
 .         save `ind_3_16'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002g.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002k.tmp saved as .dta
     format
 
 . restore
@@ -5438,7 +5499,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002g.tmp saved as .dta
 . tempfile pipeline_all
 
 . save `pipeline_all'
-file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_80fc_00002l.tmp saved as .dta
     format
 
 . 
@@ -5495,7 +5556,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 . u `fia_all', clear
 
 . keep if indicator == "gini" & variable == "ymp_pc"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_gini_ymp = value[1]
@@ -5547,7 +5608,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 . u `fia_all', clear
 
 . keep if indicator == "theil" & variable == "ymp_pc"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_theil = value[1]
@@ -5595,7 +5656,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 . u `fia_all', clear
 
 . keep if indicator == "fgt0" & variable == "ymp_pc"
-(3,284 observations deleted)
+(3,644 observations deleted)
 
 . if _N > 0 {
 .         local fia_fgt0 = value[1]
@@ -5643,7 +5704,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 . u `fia_all', clear
 
 . keep if indicator == "gini" & variable == "yd_pc"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_gini_yd = value[1]
@@ -5692,7 +5753,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 . u `fia_all', clear
 
 . keep if indicator == "redistributive_impact" & variable == "yd_pc"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_ri = value[1]
@@ -5742,7 +5803,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 
 . keep if indicator == "coverage" & deciles_pc == 1 & variable == "`pipe_cov_va
 > r'"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_cov = value[1]
@@ -5793,7 +5854,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 
 . keep if indicator == "mc_gini" & income == "ymp_pc" & variable == "`pipe_mc_v
 > ar'"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_mc = value[1]
@@ -5844,7 +5905,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 
 . keep if indicator == "concentration_share" & deciles_pc == 1 & variable == "`
 > pipe_cs_var'"
-(3,287 observations deleted)
+(3,647 observations deleted)
 
 . if _N > 0 {
 .         local fia_cs = value[1]
@@ -5875,7 +5936,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 --- Row Counts ---
 
 . di as text "  FIA package:  `fia_N' rows"
-  FIA package:  3288 rows
+  FIA package:  3648 rows
 
 . di as text "  Pipeline:     `pipe_N' rows"
   Pipeline:     3493 rows
@@ -5966,6 +6027,14 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 > '")
   effectiveness:  OK
 
+. di as text "  meanincome:     " cond(`rc_mi'   == 0, "OK", "FAILED rc=`rc_mi'
+> ")
+  meanincome:     OK
+
+. di as text "  benefits:       " cond(`rc_ben'  == 0, "OK", "FAILED rc=`rc_ben
+> '")
+  benefits:       OK
+
 . di as text "{hline 40}"
 ----------------------------------------
 
@@ -5973,7 +6042,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_791c_00002h.tmp saved as .dta
 . timer off 1
 
 . timer list 1
-   1:    161.50 /        1 =     161.5010
+   1:    140.86 /        1 =     140.8600
 
 . 
 . di as text _n "=== FIA PACKAGE TEST COMPLETE ==="

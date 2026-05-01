@@ -87,10 +87,22 @@ program fia_core, rclass
 	if _rc di as error "  WARNING: fia_coverage returned rc=`=_rc'"
 	
 	* 3f. Income shares
-	di as text _n ">>> Step 3f: Mean income by decile"
+	di as text _n ">>> Step 3f: Consumption shares by decile"
 	u `_fia_output', clear
 	cap noisily fia_shares `wt'
 	if _rc di as error "  WARNING: fia_shares returned rc=`=_rc'"
+	
+	* 3f2. Mean income by decile
+	di as text _n ">>> Step 3f2: Mean income by decile"
+	u `_fia_output', clear
+	cap noisily fia_meanincome `wt'
+	if _rc di as error "  WARNING: fia_meanincome returned rc=`=_rc'"
+	
+	* 3f3. Benefits by decile
+	di as text _n ">>> Step 3f3: Benefits by decile"
+	u `_fia_output', clear
+	cap noisily fia_benefits `wt'
+	if _rc di as error "  WARNING: fia_benefits returned rc=`=_rc'"
 	
 	* 3g. Concentration, CC, Kakwani
 	di as text _n ">>> Step 3g: Concentration shares, CC, Kakwani"

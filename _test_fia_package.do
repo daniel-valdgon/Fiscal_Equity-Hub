@@ -191,6 +191,22 @@ local rc_conc = _rc
 if `rc_conc' di as error "  fia concentration FAILED rc=`rc_conc'"
 else         di as text  "  fia concentration OK"
 
+* A.9b Mean income by decile
+di as text _n ">>> A.9b: fia meanincome"
+u `fia_data', clear
+cap noisily fia meanincome [aw=pondih]
+local rc_mi = _rc
+if `rc_mi' di as error "  fia meanincome FAILED rc=`rc_mi'"
+else       di as text  "  fia meanincome OK"
+
+* A.9c Benefits by decile
+di as text _n ">>> A.9c: fia benefits"
+u `fia_data', clear
+cap noisily fia benefits [aw=pondih]
+local rc_ben = _rc
+if `rc_ben' di as error "  fia benefits FAILED rc=`rc_ben'"
+else        di as text  "  fia benefits OK"
+
 * A.10 Redistribution (needs $fia_result_inequality and $fia_result_poverty)
 di as text _n ">>> A.10: fia redistribution"
 u `fia_data', clear
@@ -214,7 +230,8 @@ di as text _n ">>> Appending all fia results"
 
 local first 1
 foreach mod in inequality poverty incidence marginal concentration ///
-               coverage redistribution shares effectiveness {
+               coverage redistribution shares effectiveness ///
+               meanincome benefits {
 	if "${fia_result_`mod'}" != "" {
 		cap confirm file "${fia_result_`mod'}"
 		if _rc {
@@ -619,6 +636,8 @@ di as text "  shares:         " cond(`rc_sh'   == 0, "OK", "FAILED rc=`rc_sh'")
 di as text "  concentration:  " cond(`rc_conc' == 0, "OK", "FAILED rc=`rc_conc'")
 di as text "  redistribution: " cond(`rc_red'  == 0, "OK", "FAILED rc=`rc_red'")
 di as text "  effectiveness:  " cond(`rc_eff'  == 0, "OK", "FAILED rc=`rc_eff'")
+di as text "  meanincome:     " cond(`rc_mi'   == 0, "OK", "FAILED rc=`rc_mi'")
+di as text "  benefits:       " cond(`rc_ben'  == 0, "OK", "FAILED rc=`rc_ben'")
 di as text "{hline 40}"
 
 timer off 1

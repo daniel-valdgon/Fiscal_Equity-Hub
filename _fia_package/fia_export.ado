@@ -14,7 +14,8 @@ program fia_export, rclass
 	* ---------------------------------------------------------------
 	local first 1
 	foreach mod in inequality poverty incidence marginal concentration ///
-	               coverage effectiveness redistribution shares {
+	               coverage effectiveness redistribution shares ///
+	               meanincome benefits {
 		if "${fia_result_`mod'}" != "" {
 			if `first' {
 				u "${fia_result_`mod'}", clear
