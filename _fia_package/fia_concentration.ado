@@ -142,9 +142,9 @@ program fia_concentration, rclass
 	append using `conc_shares_poor'
 	append using `cc_kakwani'
 	
-	tempfile _fia_concentration
-	save `_fia_concentration'
-	global fia_result_concentration `_fia_concentration'
+	local tmppath "`c(tmpdir)'/fia_result_concentration.dta"
+	save "`tmppath'", replace
+	global fia_result_concentration "`tmppath'"
 	
 	di as text "  Concentration: shares, CC, Kakwani computed"
 end

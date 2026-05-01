@@ -21,9 +21,9 @@ program fia_poverty, rclass
 	
 	keep if inlist(indicator, "fgt0", "fgt1")
 	
-	tempfile _fia_poverty
-	save `_fia_poverty'
-	global fia_result_poverty `_fia_poverty'
+	local tmppath "`c(tmpdir)'/fia_result_poverty.dta"
+	save "`tmppath'", replace
+	global fia_result_poverty "`tmppath'"
 	
 	di as text "  Poverty: FGT0 and FGT1 computed"
 end

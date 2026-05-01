@@ -35,9 +35,9 @@ program fia_shares, rclass
 		gen context    = "equity"
 		gen instrument = ""
 		
-		tempfile _fia_shares
-		save `_fia_shares'
-		global fia_result_shares `_fia_shares'
+		local tmppath "`c(tmpdir)'/fia_result_shares.dta"
+		save "`tmppath'", replace
+		global fia_result_shares "`tmppath'"
 	restore
 	
 	* Drop temp variables

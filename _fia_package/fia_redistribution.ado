@@ -238,9 +238,9 @@ program fia_redistribution, rclass
 	cap append using `pov_impact'
 	cap append using `rs_decomp'
 	
-	tempfile _fia_redistribution
-	save `_fia_redistribution'
-	global fia_result_redistribution `_fia_redistribution'
+	local tmppath "`c(tmpdir)'/fia_result_redistribution.dta"
+	save "`tmppath'", replace
+	global fia_result_redistribution "`tmppath'"
 	
 	di as text "  Redistribution: RI, 90-10, abs Gini, poverty impact, RS computed"
 end

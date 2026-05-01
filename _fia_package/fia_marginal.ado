@@ -144,9 +144,9 @@ program fia_marginal, rclass
 	u `mc_gini', clear
 	append using `mc_fgt0'
 	
-	tempfile _fia_marginal
-	save `_fia_marginal'
-	global fia_result_marginal `_fia_marginal'
+	local tmppath "`c(tmpdir)'/fia_result_marginal.dta"
+	save "`tmppath'", replace
+	global fia_result_marginal "`tmppath'"
 	
 	di as text "  Marginal contributions: mc_gini, mc_fgt0 computed"
 end

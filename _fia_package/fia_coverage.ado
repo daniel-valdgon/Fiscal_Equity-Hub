@@ -172,9 +172,9 @@ program fia_coverage, rclass
 	append using `inclusion_error_top10'
 	append using `inclusion_error_top20'
 	
-	tempfile _fia_coverage
-	save `_fia_coverage'
-	global fia_result_coverage `_fia_coverage'
+	local tmppath "`c(tmpdir)'/fia_result_coverage.dta"
+	save "`tmppath'", replace
+	global fia_result_coverage "`tmppath'"
 	
 	di as text "  Coverage: decile coverage + targeting errors computed"
 end

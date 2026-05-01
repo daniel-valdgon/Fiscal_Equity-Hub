@@ -22,9 +22,9 @@ program fia_inequality, rclass
 	
 	keep if inlist(indicator, "gini", "theil")
 	
-	tempfile _fia_inequality
-	save `_fia_inequality'
-	global fia_result_inequality `_fia_inequality'
+	local tmppath "`c(tmpdir)'/fia_result_inequality.dta"
+	save "`tmppath'", replace
+	global fia_result_inequality "`tmppath'"
 	
 	di as text "  Inequality: Gini and Theil computed for ${fia_income}"
 end

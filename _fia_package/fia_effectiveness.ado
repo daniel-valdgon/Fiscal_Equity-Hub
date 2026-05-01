@@ -132,9 +132,9 @@ program fia_effectiveness, rclass
 	append using `ie_fgt0'
 	append using `se_fgt0'
 	
-	tempfile _fia_effectiveness
-	save `_fia_effectiveness'
-	global fia_result_effectiveness `_fia_effectiveness'
+	local tmppath "`c(tmpdir)'/fia_result_effectiveness.dta"
+	save "`tmppath'", replace
+	global fia_result_effectiveness "`tmppath'"
 	
 	di as text "  Effectiveness: IE_gini, IE_fgt0, SE computed"
 end

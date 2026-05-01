@@ -16,10 +16,9 @@ program fia_incidence, rclass
 	* A. Netcash Incidence (id=37)
 	* ---------------------------------------------------------------
 	foreach y in ymp yd {
+		u `_fia_data', clear
 		cap confirm variable `y'_pc
 		if _rc continue
-		
-		u `_fia_data', clear
 		
 		* Taxes: negative sign (burden)
 		foreach x in ${fia_tax} ${fia_indtax} {
@@ -54,10 +53,9 @@ program fia_incidence, rclass
 	* B. Conditional Incidence (id=38)
 	* ---------------------------------------------------------------
 	foreach y in ymp yd {
+		u `_fia_data', clear
 		cap confirm variable `y'_pc
 		if _rc continue
-		
-		u `_fia_data', clear
 		
 		foreach x in ${fia_tax} ${fia_indtax} {
 			cap gen share_`x'_pc = -`x'_pc / `y'_pc if `x'_pc != 0 & !missing(`x'_pc)
@@ -87,9 +85,9 @@ program fia_incidence, rclass
 	* Append netcash
 	append using `_fia_netcash'
 	
-	tempfile _fia_incidence
-	save `_fia_incidence'
-	global fia_result_incidence `_fia_incidence'
+	local tmppath "`c(tmpdir)'/fia_result_incidence.dta"
+	save "`tmppath'", replace
+	global fia_result_incidence "`tmppath'"
 	
 	di as text "  Incidence: netcash and conditional by decile computed"
 end

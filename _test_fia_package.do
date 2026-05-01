@@ -216,17 +216,24 @@ local first 1
 foreach mod in inequality poverty incidence marginal concentration ///
                coverage redistribution shares effectiveness {
 	if "${fia_result_`mod'}" != "" {
+		cap confirm file "${fia_result_`mod'}"
+		if _rc {
+			di as text "  WARNING: fia_result_`mod' file not found"
+			continue
+		}
 		if `first' {
 			u "${fia_result_`mod'}", clear
 			gen _source_mod = "`mod'"
 			local first 0
 		}
 		else {
-			tempfile _tmp
-			save `_tmp'
-			u "${fia_result_`mod'}", clear
-			gen _source_mod = "`mod'"
-			append using `_tmp'
+			preserve
+				u "${fia_result_`mod'}", clear
+				gen _source_mod = "`mod'"
+				tempfile _append_tmp
+				save `_append_tmp'
+			restore
+			append using `_append_tmp'
 		}
 	}
 	else {
