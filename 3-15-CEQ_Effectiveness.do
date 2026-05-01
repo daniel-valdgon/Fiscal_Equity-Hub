@@ -95,7 +95,7 @@ gen ie_value = value_orig / fgt0_base if fgt0_base != 0 & !missing(fgt0_base)
 drop value value_orig fgt0_base
 rename ie_value value
 
-gen measure   = "ceq_impact_effectiveness_fgt0"
+replace measure   = "ceq_impact_effectiveness_fgt0"
 replace indicator = "ceq_impact_effectiveness"
 replace context   = "equity"
 
