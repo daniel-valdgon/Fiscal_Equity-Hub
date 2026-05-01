@@ -13,18 +13,6 @@ _-------------------------------------------------------------------------------
 *---> A. Paths and Macros definition
 *===============================================================================
    
-   clear all
-   timer clear 1
-   timer on 1
-   
-*---> A.1 Define user paths
-if "`c(username)'"=="wb419055" {
-	global root     	"C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\Workspace\Data Hub"	
-}
-
-if "`c(username)'"=="wb527706" {
-	global root     	"C:\Users\wb527706\OneDrive - WBG\Data Hub"	
-}
 
 *---> A.2 Define project folder paths. 
 *         Input folders: Country economists will share either the microdata or
