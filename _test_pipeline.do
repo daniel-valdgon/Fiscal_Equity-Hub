@@ -80,51 +80,61 @@ di as text "=== Data loaded: `=_N' obs, `=c(k)' vars ==="
 
 * Test each module
 di as text _n "=== 3-02: Netcash Incidence ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-02-Netcash_Incidence.do"
 if _rc di as error "3-02 FAILED with rc = `=_rc'"
 else   di as text  "3-02 OK"
 
 di as text _n "=== 3-03: Gini & Theil ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-03-Gini_Theil.do"
 if _rc di as error "3-03 FAILED with rc = `=_rc'"
 else   di as text  "3-03 OK"
 
 di as text _n "=== 3-04: Poverty FGT ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-04-Poverty_FGT.do"
 if _rc di as error "3-04 FAILED with rc = `=_rc'"
 else   di as text  "3-04 OK"
 
 di as text _n "=== 3-05: Marginal Contributions ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-05-Marginal_Contributions.do"
 if _rc di as error "3-05 FAILED with rc = `=_rc'"
 else   di as text  "3-05 OK"
 
 di as text _n "=== 3-06: Coverage ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-06-Coverage.do"
 if _rc di as error "3-06 FAILED with rc = `=_rc'"
 else   di as text  "3-06 OK"
 
 di as text _n "=== 3-07: Mean Income ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-07-Mean_Income.do"
 if _rc di as error "3-07 FAILED with rc = `=_rc'"
 else   di as text  "3-07 OK"
 
 di as text _n "=== 3-08: Concentration & Kakwani ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-08-Concentration_Kakwani.do"
 if _rc di as error "3-08 FAILED with rc = `=_rc'"
 else   di as text  "3-08 OK"
 
 di as text _n "=== 3-11: Redistributive Impact ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-11-Redistributive_Impact.do"
 if _rc di as error "3-11 FAILED with rc = `=_rc'"
 else   di as text  "3-11 OK"
 
 di as text _n "=== 3-12: Conditional Incidence ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-12-Conditional_Incidence.do"
 if _rc di as error "3-12 FAILED with rc = `=_rc'"
 else   di as text  "3-12 OK"
 
 di as text _n "=== 3-13: Concentration Shares, CC & Kakwani ==="
+cap restore
 cap noisily include "${root}/02-Scripts/wb419055/3-13-Concentration_Shares_CC_Kakwani.do"
 if _rc di as error "3-13 FAILED with rc = `=_rc'"
 else   di as text  "3-13 OK"

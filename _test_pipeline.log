@@ -197,23 +197,23 @@ r(199);
   6.         }
 (3 vars, 5 obs)
 (0 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000001.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000001.tmp saved as .dta
     format
 (3 vars, 71 obs)
 (64 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000002.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000002.tmp saved as .dta
     format
 (4 vars, 76 obs)
 (66 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000003.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000003.tmp saved as .dta
     format
 (3 vars, 6 obs)
 (1 observation deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000004.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000004.tmp saved as .dta
     format
 (3 vars, 14 obs)
 (10 observations deleted)
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000005.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000005.tmp saved as .dta
     format
 
 . 
@@ -371,7 +371,7 @@ Using dataset 2: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB G
 . tempfile output
 
 . save `output'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000006.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000006.tmp saved as .dta
     format
 
 . 
@@ -383,6 +383,8 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000006.tmp saved as .dta
 . di as text _n "=== 3-02: Netcash Incidence ==="
 
 === 3-02: Netcash Incidence ===
+
+. cap restore
 
 . cap noisily include "${root}/02-Scripts/wb419055/3-02-Netcash_Incidence.do"
 
@@ -470,7 +472,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000007.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000007.tmp saved as .dta
     format
 (j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
 > irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
@@ -488,7 +490,7 @@ j variable (31 values)                    ->   variable
 xij variables:
 share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
 -----------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000008.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000008.tmp saved as .dta
     format
 
 . 
@@ -500,7 +502,7 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000008.tmp saved as .dta
 . tempfile ind_3_02
 
 . save `ind_3_02'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000009.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_000009.tmp saved as .dta
     format
 
 . 
@@ -513,6 +515,8 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_2368_000009.tmp saved as .dta
 . di as text _n "=== 3-03: Gini & Theil ==="
 
 === 3-03: Gini & Theil ===
+
+. cap restore
 
 . cap noisily include "${root}/02-Scripts/wb419055/3-03-Gini_Theil.do"
 
@@ -635,7 +639,7 @@ variable income was str5 now str6
 . tempfile ind_3_03
 
 . save `ind_3_03'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000a.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000a.tmp saved as .dta
     format
 
 . 
@@ -648,6 +652,8 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000a.tmp saved as .dta
 . di as text _n "=== 3-04: Poverty FGT ==="
 
 === 3-04: Poverty FGT ===
+
+. cap restore
 
 . cap noisily include "${root}/02-Scripts/wb419055/3-04-Poverty_FGT.do"
 
@@ -762,7 +768,7 @@ variable income was str5 now str6
 . tempfile ind_3_04
 
 . save `ind_3_04'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000b.tmp saved as .dta
+file C:\Users\wb419055\AppData\Local\Temp\ST_7834_00000b.tmp saved as .dta
     format
 
 . 
@@ -775,6 +781,8 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000b.tmp saved as .dta
 . di as text _n "=== 3-05: Marginal Contributions ==="
 
 === 3-05: Marginal Contributions ===
+
+. cap restore
 
 . cap noisily include "${root}/02-Scripts/wb419055/3-05-Marginal_Contributions.
 > do"
@@ -998,723 +1006,3 @@ file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000b.tmp saved as .dta
 . *---> Compute Gini and poverty for base + counterfactual incomes
 . sp_groupfunction [aw=pondih], gini(${income_pc} `income2') ///
 >         poverty(${income_pc} `income2') povertyline(${pline}) by(all)
-
-. 
-. *---> Keep only base income rows for computing marginal differences
-. * The full marginal contribution calculation requires subtracting
-. * indicator(Y_inc_X) from indicator(Y). This reshape is pending
-. * full implementation once the differencing logic is validated.
-. 
-. g indicator = measure
-
-. g context   = "equity"
-
-. 
-. *---> Compute marginal contributions by differencing
-. * MC_gini(Y, X) = Gini(Y) - Gini(Y_inc_X)
-. * MC_fgt0(Y, X) = FGT0(Y) - FGT0(Y_inc_X)
-. 
-. tempfile mc_raw
-
-. save `mc_raw'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000c.tmp saved as .dta
-    format
-
-. 
-. * --- MC to Inequality (id=45): Gini(Y) - Gini(Y_inc_X) ---
-. preserve
-
-.         keep if indicator == "gini"
-(1,548 observations deleted)
-
-.         
-.         * Separate base incomes from counterfactual
-.         gen is_base = 0
-
-.         foreach inc in ymp_pc yn_pc yd_pc yc_pc {
-  2.                 replace is_base = 1 if variable == "`inc'"
-  3.         }
-(1 real change made)
-(1 real change made)
-(1 real change made)
-(1 real change made)
-
-.         
-.         * Base Gini values
-.         tempfile gini_base
-
-.         preserve
-already preserved
-r(621);
-
-. if _rc di as error "3-05 FAILED with rc = `=_rc'"
-3-05 FAILED with rc = 621
-
-. else   di as text  "3-05 OK"
-
-. 
-. di as text _n "=== 3-06: Coverage ==="
-
-=== 3-06: Coverage ===
-
-. cap noisily include "${root}/02-Scripts/wb419055/3-06-Coverage.do"
-
-. /*---------------------------------------------------------------------------
-> -----
-> *----------------------------------------------------------------------------
-> ----
-> * Program:  GSG3 Fiscal Equity Hub - Coverage by Decile
-> * Author:   Daniel Valderrama & JM Monroy
-> * Date:     May 2026
-> * Title:    Coverage rates by decile (pre-fiscal income)
-> *----------------------------------------------------------------------------
-> ----
-> * Indicator IDs:
-> *   52 — Coverage by decile
-> * Context:      EQU (Equity impact)
-> * Income:       n/a (coverage is instrument-based, not income-based)
-> * Instruments:  All fiscal instruments
-> * Deciles:      1-10 (pre-fiscal ymp)
-> *----------------------------------------------------------------------------
-> ----
-> * Requires: 3-00-Setup.do to be included first.
-> *----------------------------------------------------------------------------
-> ----
-> * Method A (default): sp_groupfunction — coverage option
-> * Method B (native):  gen indicator + collapse mean — simpler, no ado needed.
-> *                     ~same line count because reshape is needed either way.
-> *----------------------------------------------------------------------------
-> ----*/
-. 
-. *============================================================================
-> ===
-. *---> Coverage: share of households with non-zero instrument, by decile
-. *============================================================================
-> ===
-. 
-. u `output', clear
-
-. 
-. *--- Method A: sp_groupfunction ---------------------------------------------
-> ---
-. sp_groupfunction [aw=pondih], coverage(${concs_pc}) by(ymp_deciles_pc)
-
-. 
-. *--- Method B: Native collapse (alternative) --------------------------------
-> ---
-. * Coverage = weighted share of hh where X > 0. 
-. * Uncomment below and comment Method A.
-. /*
-> u `output', clear
-> foreach v in ${concs_pc} {
->         gen byte _cov_`v' = (`v' > 0 & !missing(`v'))
-> }
-> collapse (mean) _cov_* [aw=pondih], by(ymp_deciles_pc)
-> reshape long _cov_, i(ymp_deciles_pc) j(variable) string
-> rename _cov_ value
-> gen measure = "coverage"
-> */
-. ren ymp_deciles_pc deciles_pc
-
-. 
-. g indicator = measure
-
-. g context   = "equity"
-
-. 
-. * Coverage applies only to instruments, not income concepts
-. * Drop rows where variable matches an income concept
-. * codes defined in 3-00-Setup.do as global
-. 
-. gen income = ""
-(360 missing values generated)
-
-. forvalues k = 1/5 {
-  2.         local code : word `k' of ${codes}
-  3.         replace income = "`code'" if variable == "`code'"
-  4. }
-variable income was str1 now str5
-(10 real changes made)
-(10 real changes made)
-variable income was str5 now str6
-(10 real changes made)
-(10 real changes made)
-(10 real changes made)
-
-. 
-. drop if income != ""
-(50 observations deleted)
-
-. drop income
-
-. 
-. * Instrument mapping
-. g instrument = variable
-
-. 
-. tempfile ind_3_06
-
-. save `ind_3_06'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000f.tmp saved as .dta
-    format
-
-. 
-. if _rc di as error "3-06 FAILED with rc = `=_rc'"
-
-. else   di as text  "3-06 OK"
-3-06 OK
-
-. 
-. di as text _n "=== 3-07: Mean Income ==="
-
-=== 3-07: Mean Income ===
-
-. cap noisily include "${root}/02-Scripts/wb419055/3-07-Mean_Income.do"
-
-. /*---------------------------------------------------------------------------
-> -----
-> *----------------------------------------------------------------------------
-> ----
-> * Program:  GSG3 Fiscal Equity Hub - Mean Income by Decile
-> * Author:   Daniel Valderrama & JM Monroy
-> * Date:     May 2026
-> * Title:    Mean income by decile (pre-fiscal income)
-> *----------------------------------------------------------------------------
-> ----
-> * Indicator IDs:
-> *   70 — Income by decile (mean)
-> * Context:      EQU (Equity impact)
-> * Income:       ymp (id=1), yn (id=2), yd (id=4), yc (id=5), yf (id=6)
-> * Instruments:  n/a
-> * Deciles:      1-10 (pre-fiscal ymp)
-> *----------------------------------------------------------------------------
-> ----
-> * Requires: 3-00-Setup.do to be included first.
-> *----------------------------------------------------------------------------
-> ----
-> * Method A (default): sp_groupfunction — mean option
-> * Method B (native):  collapse (mean) — simplest possible Stata, no ado neede
-> d.
-> *----------------------------------------------------------------------------
-> ----*/
-. 
-. *============================================================================
-> ===
-. *---> Mean income by decile
-. *============================================================================
-> ===
-. 
-. u `output', clear
-
-. 
-. *--- Method A: sp_groupfunction ---------------------------------------------
-> ---
-. sp_groupfunction [aw=pondih], mean(${concs_pc}) by(ymp_deciles_pc)
-
-. 
-. *--- Method B: Native collapse (alternative) --------------------------------
-> ---
-. * Uncomment below and comment Method A.
-. /*
-> u `output', clear
-> collapse (mean) ${income_pc} [aw=pondih], by(ymp_deciles_pc)
-> reshape long , i(ymp_deciles_pc) j(variable) string
-> rename v1 value
-> gen measure = "mean"
-> */
-. ren ymp_deciles_pc deciles_pc
-
-. 
-. g indicator = measure
-
-. g context   = "equity"
-
-. 
-. * Map income variables
-. * codes defined in 3-00-Setup.do as global
-. 
-. gen income = ""
-(360 missing values generated)
-
-. forvalues k = 1/5 {
-  2.         local code : word `k' of ${codes}
-  3.         replace income = "`code'" if variable == "`code'"
-  4. }
-variable income was str1 now str5
-(10 real changes made)
-(10 real changes made)
-variable income was str5 now str6
-(10 real changes made)
-(10 real changes made)
-(10 real changes made)
-
-. 
-. * Mean is only meaningful for income concepts, drop instruments
-. keep if income != ""
-(310 observations deleted)
-
-. 
-. tempfile ind_3_07
-
-. save `ind_3_07'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000g.tmp saved as .dta
-    format
-
-. 
-. if _rc di as error "3-07 FAILED with rc = `=_rc'"
-
-. else   di as text  "3-07 OK"
-3-07 OK
-
-. 
-. di as text _n "=== 3-08: Concentration & Kakwani ==="
-
-=== 3-08: Concentration & Kakwani ===
-
-. cap noisily include "${root}/02-Scripts/wb419055/3-08-Concentration_Kakwani.d
-> o"
-
-. /*---------------------------------------------------------------------------
-> -----
-> *----------------------------------------------------------------------------
-> ----
-> * Program:  GSG3 Fiscal Equity Hub - Concentration & Kakwani
-> * Author:   Daniel Valderrama & JM Monroy
-> * Date:     May 2026
-> * Title:    Concentration coefficients and Kakwani index
-> *----------------------------------------------------------------------------
-> ----
-> * Indicator IDs:
-> *   42 — Kakwani index
-> *   43 — Concentration coefficients
-> *   39 — Concentration shares by decile
-> * Context:      EQU (Equity impact)
-> * Income:       Pre-fiscal (ymp, id=1)
-> * Instruments:  All fiscal instruments
-> * Deciles:      Scalar (Kakwani/CC) or 1-10 (concentration shares)
-> *----------------------------------------------------------------------------
-> ----
-> * Requires: 3-00-Setup.do to be included first.
-> *----------------------------------------------------------------------------
-> ----*/
-. 
-. *============================================================================
-> ===
-. *---> Concentration coefficients, Kakwani index, concentration shares
-. *     - CC: rank by income, compute Gini-like coefficient on instrument
-. *     - Kakwani = CC - Gini(income)
-. *     - Concentration shares: share of total instrument by decile
-. *============================================================================
-> ===
-. 
-. * NOTE: This module is a placeholder for the full implementation.
-. *       The sp_groupfunction command with benefits() provides the
-. *       building blocks for concentration shares. The Kakwani index
-. *       requires the Gini of income (from 3-03) and the concentration
-. *       coefficient of each instrument.
-. 
-. u `output', clear
-
-. 
-. * Concentration shares via benefits
-. sp_groupfunction [aw=pondih], benefits(${concs_pc}) by(ymp_deciles_pc)
-
-. ren ymp_deciles_pc deciles_pc
-
-. 
-. g indicator = "benefits"
-
-. g context   = "equity"
-
-. 
-. * Map instrument
-. g instrument = variable
-
-. 
-. * Filter: only instrument-level benefits (not income concepts)
-. * codes defined in 3-00-Setup.do as global
-. 
-. gen income = ""
-(360 missing values generated)
-
-. forvalues k = 1/5 {
-  2.         local code : word `k' of ${codes}
-  3.         replace income = "`code'" if variable == "`code'"
-  4. }
-variable income was str1 now str5
-(10 real changes made)
-(10 real changes made)
-variable income was str5 now str6
-(10 real changes made)
-(10 real changes made)
-(10 real changes made)
-
-. 
-. drop if income != ""
-(50 observations deleted)
-
-. drop income
-
-. 
-. tempfile ind_3_08
-
-. save `ind_3_08'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000h.tmp saved as .dta
-    format
-
-. 
-. di as text "Note: 3-08 saves concentration shares (benefits by decile)."
-Note: 3-08 saves concentration shares (benefits by decile).
-
-. di as text "      Kakwani = CC(instrument) - Gini(income)."
-      Kakwani = CC(instrument) - Gini(income).
-
-. di as text "      Full Kakwani computation to be added in next iteration."
-      Full Kakwani computation to be added in next iteration.
-
-. 
-. if _rc di as error "3-08 FAILED with rc = `=_rc'"
-
-. else   di as text  "3-08 OK"
-3-08 OK
-
-. 
-. di as text _n "=== 3-11: Redistributive Impact ==="
-
-=== 3-11: Redistributive Impact ===
-
-. cap noisily include "${root}/02-Scripts/wb419055/3-11-Redistributive_Impact.d
-> o"
-
-. /*---------------------------------------------------------------------------
-> -----
-> *----------------------------------------------------------------------------
-> ----
-> * Program:  GSG3 Fiscal Equity Hub - Redistributive Impact & RS Decomposition
-> * Author:   Daniel Valderrama & JM Monroy
-> * Date:     May 2026
-> * Title:    Reynolds-Smolensky, total redistributive & poverty impact
-> *----------------------------------------------------------------------------
-> ----
-> * Indicator IDs:
-> *   46 — Total redistributive impact (Gini_pre - Gini_post)
-> *   47 — Total poverty impact (FGT0_pre - FGT0_post)
-> *   69 — Reynolds-Smolensky decomposition (Gini_Y - CC_tax + CC_transfer)
-> *   67 — 90-10 ratio (P90/P10)
-> *   68 — Absolute Gini (Gini * mean)
-> * Context:      EQU (Equity impact)
-> * Income:       Multiple income concepts compared pairwise
-> *----------------------------------------------------------------------------
-> ----
-> * Method:   Native Stata — these are derived indicators computed from
-> *           Gini/FGT values already estimated. No sp_groupfunction needed.
-> *           Uses covconc.ado for concentration coefficients.
-> *----------------------------------------------------------------------------
-> ----
-> * Requires: 3-00-Setup.do + 3-03-Gini_Theil.do + 3-04-Poverty_FGT.do
-> *           to have run (needs ind_3_03 and ind_3_04 tempfiles).
-> *----------------------------------------------------------------------------
-> ----*/
-. 
-. *============================================================================
-> ===
-. *---> A. Total Redistributive Impact (id=46)
-. *     Gini(ymp) - Gini(yd) for pre-fiscal to disposable
-. *     Gini(ymp) - Gini(yc) for pre-fiscal to consumable
-. *     Gini(ymp) - Gini(yf) for pre-fiscal to final
-. *============================================================================
-> ===
-. 
-. u `ind_3_03', clear
-
-. 
-. * Keep only Gini
-. keep if indicator == "gini"
-(5 observations deleted)
-
-. 
-. * Reshape to get Gini values side by side
-. keep variable value
-
-. rename value gini_val
-
-. rename variable inc_var
-
-. 
-. * Create a temp dataset with one row per income concept
-. tempfile gini_wide
-
-. save `gini_wide'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000i.tmp saved as .dta
-    format
-
-. 
-. * Calculate pairwise differences
-. levelsof inc_var, local(inc_list)
-`"yc_pc"' `"yd_pc"' `"yf_pc"' `"ymp_pc"' `"yn_pc"'
-
-. local n_inc : word count `inc_list'
-
-. 
-. * Redistributive impact: Gini(ymp_pc) - Gini(Y_pc) for Y in {yn, yd, yc, yf}
-. preserve
-already preserved
-r(621);
-
-. if _rc di as error "3-11 FAILED with rc = `=_rc'"
-3-11 FAILED with rc = 621
-
-. else   di as text  "3-11 OK"
-
-. 
-. di as text _n "=== 3-12: Conditional Incidence ==="
-
-=== 3-12: Conditional Incidence ===
-
-. cap noisily include "${root}/02-Scripts/wb419055/3-12-Conditional_Incidence.d
-> o"
-
-. /*---------------------------------------------------------------------------
-> -----
-> *----------------------------------------------------------------------------
-> ----
-> * Program:  GSG3 Fiscal Equity Hub - Conditional Incidence
-> * Author:   Daniel Valderrama & JM Monroy
-> * Date:     May 2026
-> * Title:    Conditional incidence by decile
-> *----------------------------------------------------------------------------
-> ----
-> * Indicator ID: 38 (Conditional incidence by decile)
-> * Context:      EQU (Equity impact)
-> * Income:       Pre-fiscal (ymp, id=1) and Disposable (yd, id=4)
-> * Instruments:  All taxes and transfers
-> * Deciles:      1-10 (pre-fiscal and disposable)
-> *----------------------------------------------------------------------------
-> ----
-> * Definition:   Conditional incidence = mean(X/Y) among households where X !=
->  0.
-> *               Unlike unconditional incidence (id=37), this restricts to
-> *               beneficiaries/payers of each instrument.
-> *----------------------------------------------------------------------------
-> ----
-> * Requires: 3-00-Setup.do to be included first.
-> *----------------------------------------------------------------------------
-> ----*/
-. 
-. *============================================================================
-> ===
-. *---> Conditional Incidence by decile
-. *     share_X/Y conditional on X != 0
-. *============================================================================
-> ===
-. 
-. foreach y in ymp yd {
-  2. 
-.         u `output', clear
-  3.         keep hhid ${concs_pc} pondih *_deciles_pc
-  4. 
-.         * Taxes: negative sign (burden), conditional on paying
-.         foreach x in ${tax} ${indtax} {
-  5.                 cap gen share_`x'_pc = -`x'_pc / `y'_pc if `x'_pc != 0 & !
-> missing(`x'_pc)
-  6.         }
-  7. 
-.         * Transfers & subsidies: positive sign (benefit), conditional on rece
-> iving
-.         foreach x in ${transfer} ${inkind} ${Subsidies} {
-  8.                 cap gen share_`x'_pc = `x'_pc / `y'_pc if `x'_pc != 0 & !m
-> issing(`x'_pc)
-  9.         }
- 10. 
-.         keep *_deciles_pc share* pondih
- 11. 
-.         groupfunction [aw=pondih], mean(share*) by(`y'_deciles_pc) norestore
- 12. 
-.         reshape long share_, i(`y'_deciles_pc) j(variable) string
- 13.                 gen measure    = "conditional_incidence_`y'"
- 14.                 rename share_ value
- 15. 
-.         ren `y'_deciles_pc deciles_pc
- 16. 
-.         * Taxonomy fields
-.         gen indicator  = "conditional_incidence"
- 17.         gen income     = "`y'"
- 18.         gen instrument = variable
- 19.         gen context    = "equity"
- 20. 
-.         tempfile cond_inc_`y'
- 21.         save `cond_inc_`y''
- 22. }
-(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
-> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
-> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
-> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
-> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
-> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
-> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
-
-Data                               Wide   ->   Long
------------------------------------------------------------------------------
-Number of observations               10   ->   310         
-Number of variables                  32   ->   3           
-j variable (31 values)                    ->   variable
-xij variables:
-share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
------------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000j.tmp saved as .dta
-    format
-(j = BIT_pc CD_direct_pc FinancialTax_pc PIT_pc PropertyTax_pc Tax_VAT_pc VAT_d
-> irect_pc VAT_indirect_pc am_health_pc am_prog_1_pc am_prog_2_pc am_prog_3_pc 
-> am_prog_other_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc excis
-> e_taxes_pc indtax_total_pc inktransf_total_pc sscontribs_total_pc subsidy_agr
-> ic_pc subsidy_elec_direct_pc subsidy_elec_indirect_pc subsidy_elec_pc subsidy
-> _fuel_direct_pc subsidy_fuel_indirect_pc subsidy_fuel_pc subsidy_total_pc sub
-> sidy_water_direct_pc subsidy_water_indirect_pc subsidy_water_pc)
-
-Data                               Wide   ->   Long
------------------------------------------------------------------------------
-Number of observations               10   ->   310         
-Number of variables                  32   ->   3           
-j variable (31 values)                    ->   variable
-xij variables:
-share_BIT_pc share_CD_direct_pc ... share_subsidy_water_pc->share_
------------------------------------------------------------------------------
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000k.tmp saved as .dta
-    format
-
-. 
-. u `cond_inc_ymp', clear
-
-. append using `cond_inc_yd'
-
-. tempfile ind_3_12
-
-. save `ind_3_12'
-file C:\Users\wb419055\AppData\Local\Temp\ST_2368_00000l.tmp saved as .dta
-    format
-
-. 
-. if _rc di as error "3-12 FAILED with rc = `=_rc'"
-
-. else   di as text  "3-12 OK"
-3-12 OK
-
-. 
-. di as text _n "=== 3-13: Concentration Shares, CC & Kakwani ==="
-
-=== 3-13: Concentration Shares, CC & Kakwani ===
-
-. cap noisily include "${root}/02-Scripts/wb419055/3-13-Concentration_Shares_CC
-> _Kakwani.do"
-
-. /*---------------------------------------------------------------------------
-> -----
-> *----------------------------------------------------------------------------
-> ----
-> * Program:  GSG3 Fiscal Equity Hub - Concentration Shares, CC & Kakwani
-> * Author:   Daniel Valderrama & JM Monroy
-> * Date:     May 2026
-> * Title:    Concentration shares by decile and by poor/non-poor,
-> *           concentration coefficients, and Kakwani index
-> *----------------------------------------------------------------------------
-> ----
-> * Indicator IDs:
-> *   39 — Concentration shares by decile
-> *   40 — Concentration shares by poor & non-poor
-> *   42 — Kakwani index
-> *   43 — Concentration coefficients
-> * Context:      EQU (Equity impact)
-> * Income:       Pre-fiscal (ymp, id=1)
-> * Instruments:  All fiscal instruments
-> *----------------------------------------------------------------------------
-> ----
-> * Definitions:
-> *   Concentration share(decile d) = sum(X_i * w_i, i in d) / sum(X_i * w_i, a
-> ll)
-> *   Concentration Coefficient = 2*cov(X, F(Y)) / mean(X) where F(Y) is the
-> *     cumulative distribution of income Y ranked by Y.
-> *   Kakwani = CC(instrument) - Gini(income)
-> *     Positive Kakwani => progressive (for taxes) or regressive (for transfer
-> s)
-> *----------------------------------------------------------------------------
-> ----
-> * Requires: 3-00-Setup.do to be included first.
-> *           Uses covconc.ado from _ado/ for concentration coefficients.
-> *----------------------------------------------------------------------------
-> ----*/
-. 
-. *============================================================================
-> ===
-. *---> A. Concentration Shares by Decile (id=39)
-. *     Share of each instrument's total that accrues to each decile
-. *============================================================================
-> ===
-. 
-. u `output', clear
-
-. 
-. * Instruments only (exclude income concepts from concs) — deduplicated
-. local instruments ${tax} ${indtax} ${transfer} ${inkind} ${Subsidies}
-
-. local instruments : list uniq instruments
-
-. 
-. * Generate weighted values, then collapse
-. foreach x of local instruments {
-  2.         gen double w_`x' = `x'_pc * pondih
-  3. }
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(13 missing values generated)
-(13 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-(8 missing values generated)
-
-. 
-. preserve
-already preserved
-r(621);
-
-. if _rc di as error "3-13 FAILED with rc = `=_rc'"
-3-13 FAILED with rc = 621
-
-. else   di as text  "3-13 OK"
-
-. 
-. timer off 1
-
-. timer list 1
-   1:     60.47 /        1 =      60.4700
-
-. 
-. di as text _n "=== TEST COMPLETE ==="
-
-=== TEST COMPLETE ===
-
-. 
-end of do-file

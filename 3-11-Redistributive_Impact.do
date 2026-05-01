@@ -201,6 +201,7 @@ preserve
 	gen context   = "equity"
 	cap drop deciles_pc
 	gen deciles_pc = .
+	cap drop income
 	rename variable income
 	gen variable = income
 	tempfile pov_impact
