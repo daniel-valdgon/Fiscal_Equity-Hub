@@ -152,7 +152,7 @@ Default: {cmd:zref line_1 line_2 line_3}{p_end}
 {title:Authors}
 
 {pstd}Daniel Valderrama, The World Bank, {browse "mailto:dvalderrama1@worldbank.org":dvalderrama1@worldbank.org}{p_end}
-{pstd}JM Monroy, The World Bank, {browse "mailto:jmonroypaez@worldbank.org":jmonroypaez@worldbank.org}{p_end}
+
 
 {pstd}Inspired by the {browse "https://github.com/worldbank/pea":PEA package} 
 by Minh Cong Nguyen, Sandra Segovia, and Henry Stemmler.{p_end}
