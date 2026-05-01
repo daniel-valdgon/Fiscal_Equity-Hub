@@ -109,7 +109,7 @@ Each subcommand saves its results to a global tempfile (`$fia_result_<name>`) so
 ## Authors
 
 - Daniel Valderrama (dvalderrama1@worldbank.org)
-- JM Monroy (jmonroypaez@worldbank.org)
+
 
 ## License
 
