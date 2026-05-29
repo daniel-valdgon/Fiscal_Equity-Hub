@@ -39,8 +39,9 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 *============================================================================*
-//	1. Revise data infrastructure/ Load all countries
+//	1. Data infrastrucure
 *============================================================================*
+* Obj: This section will include protocols to revise the databases, q-check over the FIA data
 
 * A. Data file 
 * It create a dataset with information available in the datalab and save it
@@ -55,7 +56,7 @@ qui: include "${scripts}/1-01-Inventory.do"
 *local misscellaneuos "hhweight deciles_pc hhsize"
 
 *============================================================================*
-//	2. Harmonize Fiscal Microdata (only needed once, create a log that validates if data was replaced or not, if it was replaced, create a log with the changes and the reason for the change)
+//	2. Reproducibility Harmonize Fiscal Microdata (only needed once, create a log that validates if data was replaced or not, if it was replaced, create a log with the changes and the reason for the change)
 *============================================================================*
 
 include "${scripts}/2-01-MFMD2HFMD.do"
@@ -67,7 +68,6 @@ include "${scripts}/2-03-data_check_report.do"
 *============================================================================*
 //	3. Calculations and data checks on Indicators 
 *============================================================================*
-
 
 include "${scripts}/3-01-Incidences.do"
 
