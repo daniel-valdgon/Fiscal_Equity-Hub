@@ -1,0 +1,504 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      StataNow 18.5
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 6-core network, expiring 16 Dec 2028
+Serial number: 501909318806
+  Licensed to: WBG User
+               World Bank
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running C:\Program Files\Stata18\sysprofile.do ...
+�set is not a valid command name
+r(199);
+
+. do _test_frames_vs_tempfiles.do 
+
+. /*---------------------------------------------------------------------------
+> ---
+>   Test v2: Compare frame-based approach vs tempfile approach
+>   Focus on actual computed values (not sort-order-dependent first() metadata)
+> -----------------------------------------------------------------------------
+> -*/
+. 
+. clear all
+
+. set more off
+
+. 
+. *--- Paths ---
+. global root "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Gro
+> up - Fiscal Equity Hub\Workspace\Data Hub"
+
+. global scripts "${root}/02-Scripts/wb419055"
+
+. global microdata "${root}/01-Data/01-02-FIA_Microdata"
+
+. global dataaux "${root}/01-Data/00-Aux/temp"
+
+. 
+. * Load ado files
+. local dirfiles: dir "$scripts/_ado/" files "*.ado"
+
+. foreach ado of local dirfiles {
+  2.         run "$scripts/_ado/`ado'"
+  3. }
+
+. 
+. *--- Macros (assuming globals are empty, use defaults) ---
+. local tax dirtax_total sscontribs_total
+
+. local indtax indtax_total Tax_VAT
+
+. local inkind inktransf_total education_inKind
+
+. local transfer dirtransf_total
+
+. local Subsidies subsidy_total subsidy_elec subsidy_fuel subsidy_water
+
+. local income ymp yn yd yc yf
+
+. local concs `tax' `indtax' `transfer' `inkind' `income' `Subsidies'
+
+. 
+. foreach x in tax indtax inkind transfer income concs Subsidies {
+  2.         local `x'_pc
+  3.         foreach y of local `x' {
+  4.                 local `x'_pc ``x'_pc' `y'_pc
+  5.         }
+  6. }
+
+. 
+. *--- Load one dataset (ECU) ---
+. use "${microdata}/ECU/ECU_ENEMDU_S2024_P2024_v01/HFMD/ECU_ENEMDU_S2024_P2024_
+> v01.dta", clear
+
+. 
+. * Create bins
+. foreach bins in deciles centile millile {
+  2.         cap noisily drop *`bins'_pc*
+  3. }
+variable *deciles_pc* not found
+variable *centile_pc* not found
+variable *millile_pc* not found
+
+. 
+. set seed 80292367
+
+. local i=0
+
+. foreach y in ymp yd {
+  2.         local ++i
+  3.         quantiles `y'_pc [w=pondih], gen(`y'_deciles_pc) nq(10) stable
+  4.         quantiles `y'_pc [w=pondih], gen(`y'_centile_pc) nq(100) stable
+  5.         quantiles `y'_pc [w=pondih], gen(`y'_millile_pc) nq(1000) stable
+  6. }
+(frequency weights assumed)
+(frequency weights assumed)
+(frequency weights assumed)
+(frequency weights assumed)
+(frequency weights assumed)
+(frequency weights assumed)
+
+. 
+. tempfile output
+
+. save `output', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000001.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000001.tmp saved as .dta
+    format
+
+. 
+. *============================================================================
+> ==
+. * METHOD 1: ORIGINAL (tempfile-based) - for y=ymp
+. *============================================================================
+> ==
+. dis _n "===== RUNNING OLD METHOD (tempfiles) ====="
+
+===== RUNNING OLD METHOD (tempfiles) =====
+
+. 
+. local y "ymp"
+
+. 
+. u `output', clear
+
+. keep hhid `concs_pc' pondih *_centile_pc *_deciles_pc *_millile_pc
+
+. 
+. foreach x in `tax' `indtax' {
+  2.         gen share_`x'_pc= -`x'_pc/ `y'_pc
+  3. }
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+
+. foreach x in `transfer' `inkind' `Subsidies' {
+  2.         gen share_`x'_pc= `x'_pc/ `y'_pc
+  3. }
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,945 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(105,775 missing values generated)
+
+. 
+. keep *_deciles_pc *_centile_pc *_millile_pc share* pondih
+
+. 
+. tempfile aux1
+
+. save `aux1', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000002.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000002.tmp saved as .dta
+    format
+
+. 
+. groupfunction [aw=pondih], mean(share*) first(pondih *_centile_pc *_deciles_p
+> c) by(`y'_millile_pc)
+
+. reshape long share_, i(`y'_millile_pc) j(variable) string
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations            1,000   ->   11,000      
+Number of variables                  17   ->   8           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+
+.         gen measure = "netcash_`y'_millile"
+
+.         rename share_ value
+
+.         ren `y'_millile_pc millile_pc
+
+. tempfile aux2_mill
+
+. save `aux2_mill', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000003.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000003.tmp saved as .dta
+    format
+
+. 
+. use `aux1', clear
+
+. groupfunction [aw=pondih], mean(share*) by(`y'_centile_pc) norestore
+
+. reshape long share_, i(`y'_centile_pc) j(variable) string
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+
+.         gen measure = "netcash_`y'_centile"
+
+.         rename share_ value
+
+.         ren `y'_centile_pc centile_pc
+
+. tempfile aux2_cent
+
+. save `aux2_cent', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000004.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000004.tmp saved as .dta
+    format
+
+. 
+. use `aux1', clear
+
+. groupfunction [aw=pondih], mean(share*) by(`y'_deciles_pc) norestore
+
+. reshape long share_, i(`y'_deciles_pc) j(variable) string
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+
+.         gen measure = "netcash_`y'_decile"
+
+.         rename share_ value
+
+.         ren `y'_deciles_pc decile_pc
+
+. 
+. append using `aux2_cent'
+(variable measure was str18, now str19 to accommodate using data's values)
+
+. append using `aux2_mill'
+
+. 
+. gen indicator = "incidence"
+
+. gen income = "`y'"
+
+. gen instrument = variable
+
+. 
+. * Keep only the meaningful analysis variables and sort deterministically
+. keep measure variable value indicator income instrument millile_pc centile_pc
+>  decile_pc
+
+. sort measure variable millile_pc centile_pc decile_pc
+
+. 
+. tempfile old_result
+
+. save `old_result', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000005.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000005.tmp saved as .dta
+    format
+
+. dis "Old method: `=_N' observations"
+Old method: 12210 observations
+
+. 
+. *============================================================================
+> ==
+. * METHOD 2: NEW (frame-based)
+. *============================================================================
+> ==
+. dis _n "===== RUNNING NEW METHOD (frames) ====="
+
+===== RUNNING NEW METHOD (frames) =====
+
+. 
+. u `output', clear
+
+. keep hhid `concs_pc' pondih *_centile_pc *_deciles_pc *_millile_pc
+
+. 
+. foreach x in `tax' `indtax' {
+  2.         gen share_`x'_pc= -`x'_pc/ `y'_pc
+  3. }
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+
+. foreach x in `transfer' `inkind' `Subsidies' {
+  2.         gen share_`x'_pc= `x'_pc/ `y'_pc
+  3. }
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,945 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(105,775 missing values generated)
+
+. 
+. keep *_deciles_pc *_centile_pc *_millile_pc share* pondih
+
+. 
+. * Store micro-data in a frame for reuse (avoids disk I/O)
+. cap frame drop fr_micro
+
+. frame copy default fr_micro, replace
+(note: frame fr_micro not found)
+
+. 
+. * --- Millile level ---
+. groupfunction [aw=pondih], mean(share*) first(pondih *_centile_pc *_deciles_p
+> c) by(`y'_millile_pc)
+
+. reshape long share_, i(`y'_millile_pc) j(variable) string
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations            1,000   ->   11,000      
+Number of variables                  17   ->   8           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+
+.         gen measure = "netcash_`y'_millile"
+
+.         rename share_ value
+
+.         ren `y'_millile_pc millile_pc
+
+. cap frame drop fr_mill
+
+. frame copy default fr_mill, replace
+(note: frame fr_mill not found)
+
+. 
+. * --- Centile level ---
+. frame copy fr_micro default, replace
+
+. groupfunction [aw=pondih], mean(share*) by(`y'_centile_pc) norestore
+
+. reshape long share_, i(`y'_centile_pc) j(variable) string
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+
+.         gen measure = "netcash_`y'_centile"
+
+.         rename share_ value
+
+.         ren `y'_centile_pc centile_pc
+
+. cap frame drop fr_cent
+
+. frame copy default fr_cent, replace
+(note: frame fr_cent not found)
+
+. 
+. * --- Decile level ---
+. frame copy fr_micro default, replace
+
+. groupfunction [aw=pondih], mean(share*) by(`y'_deciles_pc) norestore
+
+. reshape long share_, i(`y'_deciles_pc) j(variable) string
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+
+.         gen measure = "netcash_`y'_decile"
+
+.         rename share_ value
+
+.         ren `y'_deciles_pc decile_pc
+
+. 
+. * Combining milliles, centiles, and deciles (decile already in default)
+. tempfile _tf_cent _tf_mill
+
+. frame fr_cent: save `_tf_cent'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000006.tmp saved as .dta
+    format
+
+. frame fr_mill: save `_tf_mill'
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000007.tmp saved as .dta
+    format
+
+. append using `_tf_cent'
+(variable measure was str18, now str19 to accommodate using data's values)
+
+. append using `_tf_mill'
+
+. 
+. * Cleanup frames
+. frame drop fr_micro
+
+. frame drop fr_mill
+
+. frame drop fr_cent
+
+. 
+. gen indicator = "incidence"
+
+. gen income = "`y'"
+
+. gen instrument = variable
+
+. 
+. * Keep only the meaningful analysis variables and sort deterministically
+. keep measure variable value indicator income instrument millile_pc centile_pc
+>  decile_pc
+
+. sort measure variable millile_pc centile_pc decile_pc
+
+. 
+. tempfile new_result
+
+. save `new_result', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000008.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_4a54_000008.tmp saved as .dta
+    format
+
+. dis "New method: `=_N' observations"
+New method: 12210 observations
+
+. 
+. *============================================================================
+> ==
+. * COMPARISON
+. *============================================================================
+> ==
+. dis _n "===== COMPARING RESULTS ====="
+
+===== COMPARING RESULTS =====
+
+. 
+. use `old_result', clear
+
+. dis "Old obs: `=_N'"
+Old obs: 12210
+
+. cf _all using `new_result'
+
+. 
+. dis _n as result "SUCCESS: Both methods produce IDENTICAL results."
+
+SUCCESS: Both methods produce IDENTICAL results.
+
+. dis "The frame-based approach is validated."
+The frame-based approach is validated.
+
+. 
+. 
+end of do-file

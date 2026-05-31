@@ -1,0 +1,1241 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      StataNow 18.5
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 6-core network, expiring 16 Dec 2028
+Serial number: 501909318806
+  Licensed to: WBG User
+               World Bank
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running C:\Program Files\Stata18\sysprofile.do ...
+�set is not a valid command name
+r(199);
+
+. do "c:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group - Fisc
+> al Equity Hub\Workspace\Data Hub\02-Scripts\wb419055\1. Calculations_v2.do" 
+
+. /*---------------------------------------------------------------------------
+> ---
+> *----------------------------------------------------------------------------
+> ---
+> * Program: GSG3 Fiscal Equity Hub - Core Database Outputs
+> * Author:       Daniel VAlderrama 
+> * Date:         Feb 2026
+> * Title:        Generate outputs for the GSG3 Core Database
+> *----------------------------------------------------------------------------
+> ---
+> *----------------------------------------------------------------------------
+> ---
+> * Note: Outputs are exported in long format to the hidden sheet all_${sheetna
+> me}.
+> -----------------------------------------------------------------------------
+> ----*/
+. 
+. *============================================================================
+> ===
+. *---> A. Paths and Macros definition
+. *============================================================================
+> ===
+.    
+.    clear all
+
+.    timer clear 1
+
+.    timer on 1
+
+.    
+. *---> A.1 Define user paths
+. if "`c(username)'"=="wb419055" {
+.         global root             "C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fi
+> scal Equity - WB Group - Fiscal Equity Hub\Workspace\Data Hub"     
+. 
+.    global scripts               "${root}/02-Scripts/wb419055"
+. }
+
+. 
+. if "`c(username)'"=="wb527706" {
+.         global root             "C:\Users\wb527706\OneDrive - WBG\GSG Fiscal 
+> Equity - WB Group - Data Hub"      
+.     global scripts              "${root}/02-Scripts/wb527706"
+. }
+
+. 
+. 
+. *---> A.2 Define project folder paths. 
+. *         Input folders: Country economists will share either the microdata o
+> r
+. *         the core indicators, if both are shared, the code should validate t
+> he
+. *         consistency between them.     
+. 
+.         global microdata        "${root}/01-Data/01-02-FIA_Microdata"        
+>            
+
+.         global template         "${root}/01-Data/01-03-FIA_Core Indicators"
+
+. 
+.         global tempsim          "${root}/01-Data/3_temp_sim"
+
+.         global fia-data         "${root}/04-Products\00-FIA-Database/AFW_Sim_
+> tool_Output.csv"
+
+.         global dataout       "${root}/03-Outputs\01-Cleaned-FIA-Indicators"
+
+.         global metadata       "${root}/01-Data/00-Aux"
+
+.         global dataaux        "${root}/01-Data/00-Aux/temp"
+
+. 
+.         local dirfiles: dir "$scripts/_ado/" files "*.ado"
+
+.         
+.         foreach ado of local dirfiles {
+  2.                 run "$scripts/_ado/`ado'"
+  3.         }
+
+.         
+. *---> A.3 Macros for policies and income concepts values 
+. 
+.                 
+.         local Directaxes                "${Directaxes}"
+
+.         local Contributions     "${Contributions}" 
+
+.         local DirectTransfers   "${DirectTransfers}"
+
+.         local Subsidies         "${Subsidies}"
+
+.         local Indtaxes                  "${Indtaxes}"
+
+.         local InKindTransfers   "${InKindTransfers}" 
+
+. 
+.         local tax dirtax_total sscontribs_total `Directaxes' `Contributions' 
+
+.         local indtax indtax_total `Indtaxes' Tax_VAT
+
+.         local inkind inktransf_total `InKindTransfers' education_inKind
+
+.         local transfer dirtransf_total `DirectTransfers' 
+
+.         local Subsidies subsidy_total `Subsidies' subsidy_elec subsidy_fuel s
+> ubsidy_water
+
+.         local income ymp yn yd yc yf 
+
+.         local concs `tax' `indtax' `transfer' `inkind' `income' `Subsidies'
+
+.         
+. 
+. *---> A.4 Macros at per-capita values 
+.         foreach x in tax indtax inkind transfer income concs Subsidies {
+  2.                 local `x'_pc
+  3.                 foreach y of local `x' {
+  4.                         local `x'_pc ``x'_pc' `y'_pc    
+  5.                 }
+  6.         }
+
+. *---> A.5 Other macros. Poverty lines  
+.         local pline zref line_1 line_2 line_3
+
+.         
+. *---> A.6 Other macros. Taxonomy equivalence 
+.         
+. gl taxonomy_components context indicator instrument income povertyline partit
+> ion pension 
+
+. foreach j of global taxonomy_components  {
+  2.         
+.         import excel "$metadata\correlative_2.xlsx", sheet("`j'") firstrow cl
+> ear
+  3.         drop if  `j' ==""
+  4.         tempfile `j'
+  5.         save ``j'', replace 
+  6. }
+(3 vars, 5 obs)
+(0 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000001.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000001.tmp saved as .dta
+    format
+(4 vars, 71 obs)
+(64 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000002.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000002.tmp saved as .dta
+    format
+(5 vars, 77 obs)
+(67 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000003.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000003.tmp saved as .dta
+    format
+(4 vars, 7 obs)
+(2 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000004.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000004.tmp saved as .dta
+    format
+(4 vars, 15 obs)
+(10 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000005.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000005.tmp saved as .dta
+    format
+(4 vars, 1,111 obs)
+(0 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000006.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000006.tmp saved as .dta
+    format
+(5 vars, 3 obs)
+(0 observations deleted)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000007.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000007.tmp saved as .dta
+    format
+
+. 
+. 
+. *============================================================================
+> *
+. *--->   B. Detecting microdata 
+. *============================================================================
+> *
+. 
+. * This code explore all subfolders available within each folder and search fo
+> ll
+. * all dta files in there. It create asserts that the dta files have the same 
+> naming
+. * structure namely. It saves a global that 
+. 
+. *---> B.1 Identify each dataset 
+.         global n_datasets 0
+
+. 
+. local dirs1 : dir `"${microdata}"' dirs "*"
+
+. 
+. foreach subf of local dirs1 {
+  2.     local cty : di strupper("`subf'")
+  3.     local cty_path `"${microdata}/`subf'"'
+  4.     local cty_count 0
+  5.     local dirs2 : dir `"`cty_path'"' dirs "*"
+  6. 
+.     foreach subf2 of local dirs2 {
+  7.         * Fixed structure: CountryName/dataname/HFMD/dataname.dta
+.         local hfmd_path `"`cty_path'/`subf2'/HFMD"'
+  8.         local f_upper : di strupper("`subf2'")
+  9.         local files : dir `"`hfmd_path'"' files "*.dta"
+ 10. 
+.         foreach f of local files {
+ 11.             local f_upper : di strupper("`f'")
+ 12.             local cty_count = `cty_count' + 1
+ 13.             global n_datasets   = ${n_datasets} + 1
+ 14.             global path_${n_datasets}  `"`hfmd_path'/`f_upper'"'
+ 15.             global cty_${n_datasets}   "`cty'_`cty_count'" // * @jmmonroyb
+> , names for each country shoudl use database id SEN_S2022_P2022, so we avoid 
+> Senegal_2 that when this is scaled up create confusions 
+ 16.             global fname_${n_datasets} "`f_upper'"
+ 17.         }
+ 18.     }
+ 19. }
+
+. 
+. *============================================================================
+> ===
+. *---> C. Netcash Position for ymp and yd.
+. *        Generating incidence (relative) by decil (pre-fiscal and disposable)
+. *============================================================================
+> ===
+. 
+. 
+. * Loop over each country:
+. * @jmmonroyb, final do-file that will be used by country economist should not
+>  include this loop as they will have one country. So we need to ensure smooth
+>  tranistion and less loop dependent as poosible 
+. 
+. 
+. forvalues i = 1/$n_datasets {
+  2.     
+.         * globals to call dataset and define the spreadsheet name .
+.         global sheetname    "${cty_`i'}"
+  3.     global datasetname  "${fname_`i'}"
+  4.         global indivname "d_`i'" // @jmmonroyb, do we need this? 
+  5.     di "Processing: ${path_`i'} - Sheet: ${sheetname}"
+  6. 
+.     use `"${path_`i'}"', clear
+  7. 
+.         *@jmmonroyb should go here adapted to official income aggregate  
+.         *Create bin partitions
+.         foreach bins in deciles centile millile {
+  8.         cap noisily drop *`bins'_pc* 
+  9.         }
+ 10. 
+. 
+. 
+.         set seed 80292367
+ 11.         local i=0
+ 12.     foreach y in ymp yd {
+ 13.                 local ++i
+ 14.                 
+.                 quantiles `y'_pc [w=pondih], gen(`y'_millile_pc) nq(1000) sta
+> ble
+ 15.                 gen `y'_centile_pc = ceil(`y'_millile_pc / 10)
+ 16.                 gen `y'_decile_pc  = ceil(`y'_millile_pc / 100)
+ 17.         dis "`i' bins for `y' (millile → centile → decile)"
+ 18.     }
+ 19.         
+.         tempfile output
+ 20.         save `output', replace 
+ 21. 
+.         * Note on bins: bins are created in the code to ensure consistent con
+> struction across countries.
+.         *               quantiles correct (in a different way) than _ebin by 
+> ties between observations when defining the different bins. 
+.         *      _ebin include the boundary observation above. This implies som
+> e mmistmatches, more in larger datasets like COL (66 mistmacthces)
+.         
+. *------------------------------Indicators -----------------------------------
+> ---------
+. *---> C.1 Estimate indicators by different income concepts and deciles
+.         foreach y in ymp yd {
+ 22. 
+.                 u `output', clear       
+ 23.                 keep hhid `concs_pc' pondih *_centile_pc *_decile_pc *_mil
+> lile_pc
+ 24. 
+.                 *Tax net cash as negative positions
+.                 foreach x in `tax' `indtax'  {
+ 25.                 gen share_`x'_pc= -`x'_pc/ `y'_pc // @jmmonroyb, before do
+> ing this is important a assert in previos sections that there are not missing
+>  values
+ 26.                 }
+ 27. 
+.                 *Transfers as positive positions
+.                 foreach x in `transfer' `inkind' `Subsidies' {
+ 28.                         gen share_`x'_pc= `x'_pc/ `y'_pc
+ 29.                 }
+ 30. 
+.                 keep `y'_millile_pc share* pondih       
+ 31. 
+.                 * --- Single pass: millile-level weighted means (only full-da
+> ta operation) ---
+.                 groupfunction [aw=pondih], mean(share*) by(`y'_millile_pc)
+ 32. 
+.                 * Derive centile/decile from millile (guaranteed perfect nest
+> ing)
+.                 gen `y'_centile_pc = ceil(`y'_millile_pc / 10)
+ 33.                 gen `y'_decile_pc  = ceil(`y'_millile_pc / 100)
+ 34.                 gen _wt = 1  // equal weight per millile (each has ~same p
+> op by construction)
+ 35. 
+.                 * Store millile-wide data in frame (1000 rows, for centile/de
+> cile derivation)
+.                 cap frame drop fr_wide
+ 36.                 frame copy default fr_wide, replace
+ 37. 
+.                 * --- Millile level: reshape to long ---
+.                 drop `y'_centile_pc `y'_decile_pc _wt
+ 38.                 reshape long share_, i(`y'_millile_pc) j(variable) string
+ 39.                         gen measure = "netcash_`y'_millile"
+ 40.                         rename share_ value
+ 41.                         tostring `y'_millile_pc, gen(partition) format(%04
+> .0f)
+ 42.                         replace partition = "pv_pm_" + partition
+ 43.                         drop `y'_millile_pc
+ 44.                 cap frame drop fr_mill
+ 45.                 frame copy default fr_mill, replace
+ 46. 
+.                 * --- Centile level (aggregate 10 millile means → 1 centile, 
+> weighted) ---
+.                 frame copy fr_wide default, replace
+ 47.                 drop `y'_millile_pc `y'_decile_pc
+ 48.                 groupfunction [aw=_wt], mean(share*) by(`y'_centile_pc)
+ 49.                 reshape long share_, i(`y'_centile_pc) j(variable) string
+ 50.                         gen measure = "netcash_`y'_centile"
+ 51.                         rename share_ value
+ 52.                         tostring `y'_centile_pc, gen(partition) format(%04
+> .0f)
+ 53.                         replace partition = "pv_pc_" + partition
+ 54.                         drop `y'_centile_pc
+ 55.                 cap frame drop fr_cent
+ 56.                 frame copy default fr_cent, replace
+ 57. 
+.                 * --- Decile level (aggregate 100 millile means → 1 decile, w
+> eighted) ---
+.                 frame copy fr_wide default, replace
+ 58.                 drop `y'_millile_pc `y'_centile_pc
+ 59.                 groupfunction [aw=_wt], mean(share*) by(`y'_decile_pc)
+ 60.                 reshape long share_, i(`y'_decile_pc) j(variable) string
+ 61.                         gen measure = "netcash_`y'_decile"
+ 62.                         rename share_ value
+ 63.                         tostring `y'_decile_pc, gen(partition) format(%04.
+> 0f)
+ 64.                         replace partition = "pv_dc_" + partition
+ 65.                         drop `y'_decile_pc
+ 66. 
+.                 * --- Combine all levels (from frames, no disk I/O) ---
+.                 tempfile _tf_cent _tf_mill
+ 67.                 frame fr_cent: save `_tf_cent'
+ 68.                 frame fr_mill: save `_tf_mill'
+ 69.                 append using `_tf_cent'
+ 70.                 append using `_tf_mill'
+ 71. 
+.                 * Cleanup frames
+.                 frame drop fr_wide
+ 72.                 frame drop fr_mill
+ 73.                 frame drop fr_cent
+ 74. 
+. 
+.         *---> C.2 Generate decomposition by taxonomy items (3 levels)
+.                 gen indicator ="incidence" 
+ 75.                 gen income="`y'"
+ 76.                 gen instrument=variable
+ 77. 
+.                 save "$dataaux/netcash_`y'", replace 
+ 78. 
+.         }
+ 79. 
+. }
+Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/col/col_ge
+> ih_s2021_p2021_v01/HFMD/COL_GEIH_S2021_P2021_V01_H.DTA - Sheet: COL_1
+variable *deciles_pc* not found
+variable *centile_pc* not found
+variable *millile_pc* not found
+(frequency weights assumed)
+1 bins for ymp (millile → centile → decile)
+(frequency weights assumed)
+2 bins for yd (millile → centile → decile)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000008.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000008.tmp saved as .dta
+    format
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(2,751 missing values generated)
+(225,815 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations            1,000   ->   11,000      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(11,000 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000009.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000a.tmp saved as .dta
+    format
+(variable measure was str18, now str19 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_ymp.dta
+    saved
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(481 missing values generated)
+(225,815 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations            1,000   ->   11,000      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(11,000 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000b.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000c.tmp saved as .dta
+    format
+(variable measure was str17, now str18 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_yd.dta
+    saved
+Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/ecu/ecu_en
+> emdu_s2024_p2024_v01/HFMD/ECU_ENEMDU_S2024_P2024_V01.DTA - Sheet: ECU_1
+variable *deciles_pc* not found
+variable *centile_pc* not found
+variable *millile_pc* not found
+(frequency weights assumed)
+1 bins for ymp (millile → centile → decile)
+(frequency weights assumed)
+2 bins for yd (millile → centile → decile)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000d.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000d.tmp saved as .dta
+    format
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,945 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(1,156 missing values generated)
+(105,775 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations            1,000   ->   11,000      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(11,000 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000e.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000f.tmp saved as .dta
+    format
+(variable measure was str18, now str19 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_ymp.dta
+    saved
+(818 missing values generated)
+(818 missing values generated)
+(818 missing values generated)
+(818 missing values generated)
+(818 missing values generated)
+(818 missing values generated)
+(1,945 missing values generated)
+(818 missing values generated)
+(818 missing values generated)
+(818 missing values generated)
+(105,775 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              999   ->   10,989      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,989 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000g.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000h.tmp saved as .dta
+    format
+(variable measure was str17, now str18 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_yd.dta
+    saved
+Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/gmb/gmb_ih
+> s_s2020_p2020_v01/HFMD/GMB_IHS_S2020_P2020_V01.DTA - Sheet: GMB_1
+variable *millile_pc* not found
+(frequency weights assumed)
+(8 missing values generated)
+1 bins for ymp (millile → centile → decile)
+(frequency weights assumed)
+(8 missing values generated)
+2 bins for yd (millile → centile → decile)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000i.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000i.tmp saved as .dta
+    format
+(8 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              987   ->   10,857      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,857 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000j.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000k.tmp saved as .dta
+    format
+(variable measure was str18, now str19 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_ymp.dta
+    saved
+(8 missing values generated)
+(13 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(8 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              988   ->   10,868      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,868 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000l.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000m.tmp saved as .dta
+    format
+(variable measure was str17, now str18 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_yd.dta
+    saved
+Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/mrt/mrt_ep
+> cv_s2019_p2019_v01/HFMD/MRT_ECPV_S2019_P2019_V01.DTA - Sheet: MRT_1
+variable *millile_pc* not found
+(frequency weights assumed)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+1 bins for ymp (millile → centile → decile)
+(frequency weights assumed)
+(3 missing values generated)
+2 bins for yd (millile → centile → decile)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000n.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000n.tmp saved as .dta
+    format
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(3 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              989   ->   10,879      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,879 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000o.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000p.tmp saved as .dta
+    format
+(variable measure was str18, now str19 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_ymp.dta
+    saved
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(40 missing values generated)
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              987   ->   10,857      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,857 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000q.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000r.tmp saved as .dta
+    format
+(variable measure was str17, now str18 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_yd.dta
+    saved
+Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/sen/sen_eh
+> cvm_s2018_p2018_v01/HFMD/SEN_EHCVM_S2018_P2018_V01.DTA - Sheet: SEN_1
+variable *millile_pc* not found
+(frequency weights assumed)
+1 bins for ymp (millile → centile → decile)
+(frequency weights assumed)
+2 bins for yd (millile → centile → decile)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000s.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000s.tmp saved as .dta
+    format
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              997   ->   10,967      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,967 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000t.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000u.tmp saved as .dta
+    format
+(variable measure was str18, now str19 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_ymp.dta
+    saved
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              993   ->   10,923      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,923 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000v.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000w.tmp saved as .dta
+    format
+(variable measure was str17, now str18 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_yd.dta
+    saved
+Processing: C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub\Workspace\Data Hub/01-Data/01-02-FIA_Microdata/sen/sen_eh
+> cvm_s2021_p2021_v01/HFMD/SEN_EHCVM_S2021_P2021_V01.DTA - Sheet: SEN_2
+variable *millile_pc* not found
+(frequency weights assumed)
+1 bins for ymp (millile → centile → decile)
+(frequency weights assumed)
+2 bins for yd (millile → centile → decile)
+(file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000x.tmp not found)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_00000x.tmp saved as .dta
+    format
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              997   ->   10,967      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,967 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000010.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000011.tmp saved as .dta
+    format
+(variable measure was str18, now str19 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_ymp.dta
+    saved
+(note: frame fr_wide not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              993   ->   10,923      
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(10,923 real changes made)
+(note: frame fr_mill not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations              100   ->   1,100       
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(1,100 real changes made)
+(note: frame fr_cent not found)
+(j = Tax_VAT_pc dirtax_total_pc dirtransf_total_pc education_inKind_pc indtax_t
+> otal_pc inktransf_total_pc sscontribs_total_pc subsidy_elec_pc subsidy_fuel_p
+> c subsidy_total_pc subsidy_water_pc)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations               10   ->   110         
+Number of variables                  12   ->   3           
+j variable (11 values)                    ->   variable
+xij variables:
+share_Tax_VAT_pc share_dirtax_total_pc ... share_subsidy_water_pc->share_
+-----------------------------------------------------------------------------
+partition generated as str4
+variable partition was str4 now str10
+(110 real changes made)
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000012.tmp saved as .dta
+    format
+file C:\Users\wb419055\AppData\Local\Temp\ST_69c8_000013.tmp saved as .dta
+    format
+(variable measure was str17, now str18 to accommodate using data's values)
+file C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group -
+    Fiscal Equity Hub\Workspace\Data Hub/01-Data/00-Aux/temp/netcash_yd.dta
+    saved
+
+. 
+. 
+. 
+. exit
+
+end of do-file

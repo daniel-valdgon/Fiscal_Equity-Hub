@@ -1,0 +1,20 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^Test-Path \"C:\\\\Program Files\\\\Stata\\*\" ; Get-ChildItem \"C:\\\\Program Files\" -Filter \"Stata\\*\" -Directory -ErrorAction SilentlyContinue \\| Select-Object FullName$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^Test-Path \"C:\\\\Users\\\\wb419055\\\\OneDrive - WBG\\\\GSG3\\\\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\\\\Workspace\\\\Data Hub\\\\01-Data\\\\01-02-FIA_Microdata\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd \"C:\\\\Users\\\\wb419055\\\\OneDrive - WBG\\\\GSG3\\\\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\\\\Workspace\\\\Data Hub\\\\02-Scripts\\\\wb419055\"; & \"C:\\\\Program Files\\\\Stata18\\\\StataMP-64\\.exe\" /e do \"_test_frames_vs_tempfiles\\.do\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^Test-Path \"_test_frames_vs_tempfiles\\.log\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
