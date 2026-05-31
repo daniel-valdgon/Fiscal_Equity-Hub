@@ -51,7 +51,7 @@ if "`c(username)'"=="wb527706" {
 	
 *---> A.3 Macros for policies and income concepts values 
 
-		
+	*Original policy instruments, harmonized level of dissagregation should come ideally from a excel file that is core to the harmonization process (@jmmonroyb, create the excel file with the names not as per-capita and wih the meaning of each of them based on th emanual, when the excel is read immediately the list of instuments are created) 
 	local Directaxes 		"${Directaxes}"
 	local Contributions 	"${Contributions}" 
 	local DirectTransfers   "${DirectTransfers}"
@@ -59,28 +59,40 @@ if "`c(username)'"=="wb527706" {
 	local Indtaxes 			"${Indtaxes}"
 	local InKindTransfers	"${InKindTransfers}" 
 
+	*Gropus adding the totals of each of the previous categories 
 	local tax dirtax_total sscontribs_total `Directaxes' `Contributions' 
-	local indtax indtax_total `Indtaxes' Tax_VAT
+	local indtax indtax_total  Tax_VAT `Indtaxes' //@ Tax_VAT needs to be moved to indtaxes when we have the final excel file with the names
 	local taxes `tax' `indtax'
 	
-	local inkind inktransf_total `InKindTransfers' education_inKind
+	local inkind inktransf_total  education_inKind `InKindTransfers'
 	local transfer dirtransf_total `DirectTransfers' 
-	local Subsidies subsidy_total `Subsidies' subsidy_elec subsidy_fuel subsidy_water
+	local Subsidies subsidy_total  subsidy_elec subsidy_fuel subsidy_water `Subsidies' // @jmmonroyb, subsidy_elec subsidy_fuel subsidy_water need to bemoved to `Subsidies' when we have the final excel file
 	local spending `inkind' `transfer' `Subsidies'
 	
-	local income ymp yn yd yc yf 
-	local concs `tax' `indtax' `transfer' `inkind' `income' `Subsidies'
+	local income_concepts ymp yn yd yc yf 
+	local concs `tax' `indtax' `transfer' `Subsidies' `inkind' `income_concepts' 
 	
 
-*---> A.4 Macros at per-capita values 
-	foreach x in tax indtax inkind transfer income concs Subsidies {
+*---> A.4 Converting all macros into percapita values 
+	foreach x in tax indtax inkind transfer Subsidies income_concepts concs  {
 		local `x'_pc
 		foreach y of local `x' {
 			local `x'_pc ``x'_pc' `y'_pc 	
 		}
+		dis  `"list of `x' : ``x'_pc'"'
 	}
+	*Example: 
+	*list of tax : dirtax_total_pc sscontribs_total_pc
+	*list of indtax : indtax_total_pc Tax_VAT_pc
+	*list of inkind : inktransf_total_pc education_inKind_pc
+	*list of transfer : dirtransf_total_pc
+	*list of Subsidies : subsidy_total_pc subsidy_elec_pc subsidy_fuel_pc subsidy_water_pc
+	*list of income_concepts : ymp_pc yn_pc yd_pc yc_pc yf_pc
+	*list of concs : dirtax_total_pc sscontribs_total_pc indtax_total_pc Tax_VAT_pc dirtransf_total_pc subsidy_total_pc subsidy_elec_pc subsidy_fuel_pc subsidy_water_pc inktransf_total_pc education_inKind_pc ymp_pc yn_pc yd_pc yc_pc yf_pc
+
 *---> A.5 Other macros. Poverty lines  
-	local pline zref line_1 line_2 line_3
+
+	local pline line_nat line_li line_lm line_um
 	
 *---> A.6 Other macros. Taxonomy equivalence 
 	
@@ -140,6 +152,9 @@ foreach subf of local dirs1 {
 * @jmmonroyb, final do-file that will be used by country economist should not include this loop as they will have one country. So we need to ensure smooth tranistion and less loop dependent as poosible 
 
 *@jmmonroyb, to debug we run with one data and call with a loop all the entire master file to run across countries 
+
+qui {
+/* 
 
 local j=0
 forvalues i = 1/$n_datasets {
@@ -276,15 +291,17 @@ save `output_quantiles', replace
 
 
 		*---> C.2 Generate decomposition by taxonomy items (3 levels)
+			
 			gen indicator = "`indicator'"
 			gen income = "`y'"
-			gen instrument=variable
+			rename variable instrument
 			gen category = "CAT_NA"
 			gen povertyline = "PL_NONE_N"
 			gen pension = "PEN_PDI"
 			gen country= substr("${fname_`i'}", 1, 3)
 			gen dataset = "${fname_`i'}"
 
+			order 
 			save "$dataaux/`indicator'_`y'_`i'", replace
 
 		}	  // eo foreach indicator
@@ -312,53 +329,87 @@ foreach indicator in share uinc cinc cov abs {
 				save "$dataaux/final_`indicator'.dta", replace
 			}	
 			
-		}
-	}
-}
-
-
-
-
-
-
+		} // eo foreach country
+	} // eo foreach y
+} // eo foreach indicator
 
 exit
+
+*/
+
+}
 
 *===============================================================================
 *---> D. Distributional indicators Gini, Theil, and FGT measures
 		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
 
-u `output', clear
+local j=0
+forvalues i = 1/$n_datasets {
+local ++j
+
+	* globals to call dataset and define the spreadsheet name .
+	global sheetname    "${cty_`i'}"
+    global datasetname  "${fname_`i'}"
+	global indivname "d_`i'" // @jmmonroyb, do we need this? 
+    di "Processing: ${path_`i'} - Sheet: ${sheetname}"
+
+    use `"${path_`i'}"', clear
+	*temporal changes to the data
+
+	rename (zref line_1 line_2 line_3) (line_nat line_li line_lm line_um )
+
+	tempfile output
+	save `output', replace
 		
 
 *---> D.1 List of all new marginal contributinos store in income
-    local income2 ""
+    local income2 "" // list with all counterfactual vectors  
 
-    local aux1 `tax' `indtax'
-foreach var of local aux1{
-	replace `var' = -`var'
-	replace `var'_pc = -`var'_pc
-}
-
-    local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
-foreach inc in ymp yn yd yc {   //(AGV) I'm excluding final income because it does not make sense contributing to that
-   foreach var of local aux2 {
-		gen `inc'_inc_`var'=`inc'_pc+`var'_pc
-		local income2 `income2' `inc'_inc_`var'   // Store incomes to marignal contribution calculation
+	*Separating list of taxes from transfers: Final income concept always substract taxes and add up taxes (for now we keep it as it is to double check but it needs to be change)
+	foreach policy of local taxes {
+		replace `policy'_pc = -`policy'_pc
+		cap assert (`policy'_pc >= 0 | `policy'_pc==.) // in the meantime not calculated on the basis of the final income concept 
 	}
+
+	*Computing vectors of marginal contributions, all computed with respect market income and consumable income
+    local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
+	foreach inc in yd yc yf {   
+   		foreach policy of local aux2 {
+			
+			
+			gen `inc'_inc_`policy'=`inc'_pc+`policy'_pc // when missing the policy we want missing the counterfactual income  
+			local income2 `income2' `inc'_inc_`policy'   // Store incomes to marignal contribution calculation
+		}
+	}
+
+	*Turning back taxes (Spending later to positive values)
+	foreach policy of local aux1 {
+		replace `policy'_pc = -`policy'_pc
+		cap assert (`policy'_pc >= 0 | `policy'_pc==.)
+	}
+
+	dis " ${fname_`i'} - List of counterfactual income concepts: `income2' "
+	sp_groupfunction [aw=pondih], gini(`income_pc' `income2') theil(`income_pc' `income2') poverty(`income_pc' `income2') povertyline(`pline')  by(all) 
+
+
+	**Computing marginal contributions 
+	*foreach pline of local pline {
+	*	foreach pov of local poverty {
+	*		foreach inc in yd yc yf {   
+	*			foreach policy of local aux2 {
+	*				gen mc_`inc'_`policy'_`pov'_`pline' = (`inc'_inc_`policy' - `inc'_pc) / (`inc'_pc - *`pline') if `inc'_pc > `pline'
+	*			}
+	*		}
+	*	}
+	*}
+	
+
 }
 
-foreach var of local aux1{
-	replace `var' = -`var'
-	replace `var'_pc = -`var'_pc
-}
-
-sp_groupfunction [aw=pondih], gini(`income_pc' `income2') theil(`income_pc' `income2') poverty(`income_pc' `income2') povertyline(`pline')  by(all) 
+exit 
 
 *---> D.2 Generate decomposition by taxonomy items (4 levels)
-
-g indicator=measure
 
 *NOTE, WE EXCLUDE FOR NOW INDICATORS THAT ALLOW US TO ESTIMATE MARGINAL CONTRIBUTION
 
