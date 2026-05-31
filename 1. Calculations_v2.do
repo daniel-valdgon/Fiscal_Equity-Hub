@@ -69,7 +69,7 @@ if "`c(username)'"=="wb527706" {
 	local Subsidies subsidy_total  subsidy_elec subsidy_fuel subsidy_water `Subsidies' // @jmmonroyb, subsidy_elec subsidy_fuel subsidy_water need to bemoved to `Subsidies' when we have the final excel file
 	local spending `inkind' `transfer' `Subsidies'
 	
-	local income_concepts ymp yn yd yc yf 
+	local income_concepts ym yn yd yc yf 
 	local concs `tax' `indtax' `transfer' `Subsidies' `inkind' `income_concepts' 
 	
 
@@ -92,7 +92,9 @@ if "`c(username)'"=="wb527706" {
 
 *---> A.5 Other macros. Poverty lines  
 
-	local pline line_nat line_li line_lm line_um
+	local pline line_nat line_li21 line_lm21 line_um21
+	local npline line_nat 
+	local ipline line_li21 line_lm21 line_um21
 	
 *---> A.6 Other macros. Taxonomy equivalence 
 	
@@ -152,9 +154,6 @@ foreach subf of local dirs1 {
 * @jmmonroyb, final do-file that will be used by country economist should not include this loop as they will have one country. So we need to ensure smooth tranistion and less loop dependent as poosible 
 
 *@jmmonroyb, to debug we run with one data and call with a loop all the entire master file to run across countries 
-
-qui {
-/* 
 
 local j=0
 forvalues i = 1/$n_datasets {
@@ -290,7 +289,7 @@ save `output_quantiles', replace
 			*cap frame drop fr_dec fr_cent fr_mill
 
 
-		*---> C.2 Generate decomposition by taxonomy items (3 levels)
+*---> C.2 Generate decomposition by taxonomy items (3 levels)
 			
 			gen indicator = "`indicator'"
 			gen income = "`y'"
@@ -301,7 +300,7 @@ save `output_quantiles', replace
 			gen country= substr("${fname_`i'}", 1, 3)
 			gen dataset = "${fname_`i'}"
 
-			order 
+			order indicator category instrument income povertyline partition pension country dataset value
 			save "$dataaux/`indicator'_`y'_`i'", replace
 
 		}	  // eo foreach indicator
@@ -313,20 +312,21 @@ save `output_quantiles', replace
 
 } // eo foreach dataset
 
-
-*Compiling and saving data by indicator 
+*---> C.3 Compiling and saving data 
 foreach indicator in share uinc cinc cov abs {
 	foreach y in ymp yd {
 		forvalues i = 1/$n_datasets {	
 			
 			use "$dataaux/`indicator'_`y'_`i'", clear
 			
-			if `i'==1 & "`y'"=="ymp" {
-				save "$dataaux/final_`indicator'.dta", replace
+			if `i'==1 & "`y'"=="ymp" & "`indicator'"=="share" {
+				save "$dataaux/final_dist.dta", replace
 			}
 			else {
-				append using "$dataaux/final_`indicator'.dta"
-				save "$dataaux/final_`indicator'.dta", replace
+				append using "$dataaux/final_dist.dta"
+				save "$dataaux/final_dist.dta", replace
+
+				isid indicator category instrument income povertyline partition pension country dataset, sort
 			}	
 			
 		} // eo foreach country
@@ -335,12 +335,10 @@ foreach indicator in share uinc cinc cov abs {
 
 exit
 
-*/
 
-}
 
 *===============================================================================
-*---> D. Distributional indicators Gini, Theil, and FGT measures
+*---> D. Distributional indicators International values Gini, Theil, and FGT measures
 		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
 
@@ -356,8 +354,8 @@ local ++j
 
     use `"${path_`i'}"', clear
 	*temporal changes to the data
-
-	rename (zref line_1 line_2 line_3) (line_nat line_li line_lm line_um )
+	rename (ymp_pc ) (ym_pc )
+	rename (zref line_1 line_2 line_3) (line_nat line_li21 line_lm21 line_um21 )
 
 	tempfile output
 	save `output', replace
@@ -374,11 +372,12 @@ local ++j
 
 	*Computing vectors of marginal contributions, all computed with respect market income and consumable income
     local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
-	foreach inc in yd yc yf {   
+	foreach inc in yd yc yf {
+		   
    		foreach policy of local aux2 {
 			
 			
-			gen `inc'_inc_`policy'=`inc'_pc+`policy'_pc // when missing the policy we want missing the counterfactual income  
+			gen `inc'_inc_`policy'=`inc'_pc-`policy'_pc // when missing the policy we want missing the counterfactual income  
 			local income2 `income2' `inc'_inc_`policy'   // Store incomes to marignal contribution calculation
 		}
 	}
@@ -389,92 +388,117 @@ local ++j
 		cap assert (`policy'_pc >= 0 | `policy'_pc==.)
 	}
 
+	*1. Computing poverty levels 
 	dis " ${fname_`i'} - List of counterfactual income concepts: `income2' "
-	sp_groupfunction [aw=pondih], gini(`income_pc' `income2') theil(`income_pc' `income2') poverty(`income_pc' `income2') povertyline(`pline')  by(all) 
+	sp_groupfunction [aw=pondih], gini(`income_concepts_pc' `income2') theil(`income_concepts_pc' `income2') poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
+	gen value_level = value
+	
+	*2. Computing marginal contributions
+	ren variable long_variable
+	ren measure indicator
+	gen income_concept = substr(long_variable,1,2)
+	gen policy = substr(long_variable, 8, .)
+	replace reference ="PL_NONE_N" if indicator == "gini" | indicator == "theil"
+	replace reference = upper(reference) 
+	
+	gen aux_end_y=value if ( income_concept+"_pc"==long_variable)
+	bysort indicator income_concept reference (value): egen sd=sd(aux_end_y) 
+	bysort indicator income_concept reference (value): egen end_y=mean(aux_end_y) 
 
-
-	**Computing marginal contributions 
-	*foreach pline of local pline {
-	*	foreach pov of local poverty {
-	*		foreach inc in yd yc yf {   
-	*			foreach policy of local aux2 {
-	*				gen mc_`inc'_`policy'_`pov'_`pline' = (`inc'_inc_`policy' - `inc'_pc) / (`inc'_pc - *`pline') if `inc'_pc > `pline'
-	*			}
-	*		}
-	*	}
-	*}
+	assert end_y!=. & sd==.
+	gen value_mc = (value - end_y) 
 	
 
-}
+	*3.Computing total impact 
+	foreach inc in ym yd yc yf {
+		gen aux_`inc'_lvl=end_y if income_concept=="`inc'"
+		bysort indicator reference: egen `inc'_lvl=mean(aux_`inc'_lvl) 
+		bysort indicator reference: egen sd_`inc'_lvl=sd(aux_`inc'_lvl)
+		assert `inc'_lvl!=. 
+		assert sd_`inc'_lvl==0 | sd_`inc'_lvl==.
+	}
+	gen value_totimp = ym_lvl - yc_lvl if inlist(indicator,"fgt0" "fgt1" "fgt2")
+	replace value_totimp = ym_lvl - yf_lvl if inlist(indicator,"gini" "theil")
+	
 
-exit 
+	*Eliminating MC that does not make sense
+	foreach policy in  `indtax' `Subsidies'   {
+		replace value_mc=. if policy=="`policy'" &  inlist(income_concept, "yd") // all indirect taxes, subssidies and inkind with disposable income
+	}
 
+	foreach policy in  `inkind'  {
+		replace value_mc=. if policy=="`policy'" &  inlist(income_concept, "yd" "yc" ) // all contribution of inkind with consumable income 
+		replace value_mc=. if inlist(indicator, "fgt0" "fgt1" "fgt2") & inlist(income_concept, "yf") // all mc to poverty with final income
+	}
+
+	assert abs(value_mc)<0.0001 | value_mc==. if income_concept+"_pc"==long_variable
+	replace value_mc=. if ( income_concept+"_pc"==long_variable) // marginal contributions of income concepts  
+
+	*Eliminating levels that are not useful now: all policy counterfactuals 
+	replace value_level=. if ( income_concept+"_pc"!=long_variable)
+
+
+	
 *---> D.2 Generate decomposition by taxonomy items (4 levels)
-
 *NOTE, WE EXCLUDE FOR NOW INDICATORS THAT ALLOW US TO ESTIMATE MARGINAL CONTRIBUTION
 
-global codes    "yd_pc yf_pc ymp_pc yc_pc yn_pc" 
+*indicator, income were defined above 		
+gen category = "CAT_NA"
+rename policy instrument
+replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & inlist(long_variable,"ym_pc" "yn_pc" "yd_pc" "yc_pc" "yf_pc")
 
-gen income = ""
-forvalues k = 1/5 {
-    local code  : word `k' of ${codes}
-    replace income = "`code'" if variable == "`code'"
+rename income_concept income
+rename reference povertyline
+replace povertyline = "PL_NONE_N" if inlist(indicator, "gini" "theil")
+gen partition = "PV_NA_NONE"
+gen pension = "PEN_PDI"
+gen country= substr("${fname_`i'}", 1, 3)
+gen dataset = "${fname_`i'}"
+
+
+replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & country=="ECU" // @jmmonroyb, thre is a weird reason why the conditional of line 452 is not working,so I am making an exception here, please check  "replace instrument = "INS_NA_N_N" if instrumen  ..."  
+
+save "$dataaux/pov_ineq_debug_`i'.dta", replace 
+
+drop _population long_variable  value sd aux_* end_y all ym_lvl sd_ym_lvl yd_lvl sd_yd_lvl yc_lvl sd_yc_lvl yf_lvl sd_yf_lvl
+
+reshape long value_, i(indicator category instrument income povertyline partition pension country dataset) j(indicator2) string
+
+drop if value_==.
+ren (indicator indicator2) (aux_indicator indicator )
+
+replace indicator ="mcp" if indicator=="mc" & inlist(aux_indicator,"fgt0" "fgt1" "fgt2")
+replace indicator ="mci" if indicator=="mc" & inlist(aux_indicator,"gini" "theil") 
+replace indicator ="tpi" if indicator=="totimp" & inlist(aux_indicator,"fgt0" "fgt1" "fgt2")
+replace indicator ="tri" if indicator=="totimp" & inlist(aux_indicator,"gini" "theil")
+
+replace indicator ="hcr" if indicator=="level" & inlist(aux_indicator,"fgt0")
+replace indicator ="gni" if indicator=="level" & inlist(aux_indicator,"gini" )
+
+*temporary drop to be deleted after Pecchi includes fgt1 and fgt2 in the taxonomy
+drop if aux_indicator=="fgt1" | aux_indicator=="fgt2" | aux_indicator=="theil"
+
+order indicator category instrument income povertyline partition pension country dataset value
+save "$dataaux/pov_ineq_`i'.dta", replace
+
 }
 
+*---> D.3 Compiling and saving data
 
-drop if income ==""
-
-	save "$dataaux/poverty", replace 
-
-*---> D.3 Estimate marginal contributions.  
-
-* Indicator pending 
-
-*===============================================================================
-*---> E.  benefits, coverage beneficiaries
-*===============================================================================
-	*NOTE> Functional for ymp, all is not needed in Taxonomy framework
-*---> E.1 benefits, coverage beneficiaries by all. Is not needed now. 
-/*
-u `output', clear
-
-
-	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(all)
-	gen deciles_pc=0
-	g indicator=measure
-	tempfile theall
-	save `theall'
-*/
-
-*---> E.2 benefits, coverage beneficiaries by deciles (ymp)	
-u `output', clear
-
-	sp_groupfunction [aw=pondih], benefits(`concs_pc') mean(`concs_pc') coverage(`concs_pc') beneficiaries(`concs_pc')  by(ymp_deciles_pc)
-	ren ymp_deciles_pc deciles_pc
-   	g indicator=measure
-	
-	global codes    "yd_pc yf_pc ymp_pc yc_pc yn_pc" 
-
-	gen income = ""
-	forvalues k = 1/5 {
-    local code  : word `k' of ${codes}
-    replace income = "`code'" if variable == "`code'"
-}
-*---> E.3 Generate decomposition by taxonomy items (3 levels)
-
-	*In coverage income variables does not have any sense. We drop it 
-	drop if  indicator=="coverage" &  income!=""
-	* Mean for each instrument or policy is nor asked. We drop it
-	drop if indicator=="mean" &  income == ""
-	*Beneficiaries is not asked. We drop it
-	drop if  indicator=="beneficiaries" 
-	*NOTE. With benefits we estimate concentration shares. For now, it is ignored. 
-		drop if  indicator=="benefits" 
-	* Creating instrument variable	
-	g instrument=variable if  income == ""
-	
-	save "$dataaux\theall_ymp", replace
-
+forvalues i = 1/$n_datasets {	
+			
+			use "$dataaux/pov_ineq_`i'.dta", clear
+			
+			if `i'==1 {
+				save "$dataaux/final_pov_ineq.dta", replace
+			}
+			else {
+				append using "$dataaux/final_pov_ineq.dta"
+				save "$dataaux/final_pov_ineq.dta", replace
+				isid indicator category instrument income povertyline partition pension country dataset, sort
+			}	
+			
+} // eo foreach country
 
 
 *===============================================================================
