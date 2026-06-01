@@ -98,13 +98,15 @@ if "`c(username)'"=="wb527706" {
 	
 *---> A.6 Other macros. Taxonomy equivalence 
 	
-gl taxonomy_components context indicator instrument income povertyline partition pension 
+gl taxonomy_components context indicator category instrument income povertyline partition pension 
 foreach j of global taxonomy_components  {
 	
 	import excel "$metadata\correlative_2.xlsx", sheet("`j'") firstrow clear
 	drop if  `j' ==""
-	tempfile `j'
-	save ``j'', replace 
+	*tempfile `j'
+	*save ``j'', replace 
+	save "$dataaux/dict_`j'.dta", replace
+
 }
 
 
@@ -144,6 +146,7 @@ foreach subf of local dirs1 {
     }
 }
 
+
 *===============================================================================
 *---> C. Netcash Position for ymp and yd.
 *        Generating incidence (relative) by decil (pre-fiscal and disposable)
@@ -155,6 +158,7 @@ foreach subf of local dirs1 {
 
 *@jmmonroyb, to debug we run with one data and call with a loop all the entire master file to run across countries 
 
+/*
 local j=0
 forvalues i = 1/$n_datasets {
 local ++j
@@ -172,7 +176,9 @@ local ++j
     	cap  drop *`bins'_pc* 
 	}
 
-	foreach y in ymp yd {
+	rename (ymp_pc ) (ym_pc )
+	
+	foreach y in ym yd {
 		quantiles `y'_pc [w=pondih], gen(`y'_millile_pc) nq(1000) stable
 		quantiles `y'_pc [w=pondih], gen(`y'_centile_pc) nq(100) stable
 		quantiles `y'_pc [w=pondih], gen(`y'_decile_pc) nq(10) stable
@@ -192,7 +198,7 @@ local ++j
 *---> C.1  define indicators (by income in incidence), partitions 
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
 set seed 80292367
-foreach y in ymp yd {
+foreach y in ym yd {
 		foreach x in `tax' `indtax' `transfer' `inkind' `Subsidies' {
 			
 			if strpos("`taxes'", "`x'") {
@@ -205,7 +211,7 @@ foreach y in ymp yd {
 			gen uinc_`y'_pc_`x' = `x'_pc / `y'_pc
 			gen cinc_`y'_pc_`x' = `x'_pc / `y'_pc  if (`x'_pc > 0)
 			gen cov_`y'_pc_`x'  = (`x'_pc > 0)
-			gen abs_`y'_pc_`x'  = `x'_pc
+			
 		
 		} // eo foreach x
 }
@@ -216,11 +222,11 @@ save `output_quantiles', replace
 
 *Prepare microdata : milliles and variable that allowed that means compute them 
 
-	foreach y in ymp yd {
+	foreach y in ym yd {
 
 		u `output_quantiles', clear	
 		
-		keep `y'_millile_pc `y'_centile_pc `y'_decile_pc share_`y'* uinc_`y'* cinc_`y'* cov_`y'* abs_`y'* pondih	
+		keep `y'_millile_pc `y'_centile_pc `y'_decile_pc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  pondih	
 
 		* --- Single pass: millile-level weighted means (only full-data operation) ---
 		*groupfunction [aw=pondih], mean(share_`y'* uinc_`y'* cinc_`y'* cov_`y'*) sum(abs_`y'* pondih) by(`y'_millile_pc)
@@ -234,7 +240,7 @@ save `output_quantiles', replace
 		frame copy default fr_wide, replace
 
 		* --- Loop over each indicator: reshape to long at 3 levels ---
-		foreach indicator in share uinc cinc cov abs {
+		foreach indicator in share uinc cinc cov  {
 
 		* --- Decile level (work inside a copy frame, no touch on default) ---
 		
@@ -296,7 +302,7 @@ save `output_quantiles', replace
 			rename variable instrument
 			gen category = "CAT_NA"
 			gen povertyline = "PL_NONE_N"
-			gen pension = "PEN_PDI"
+			gen pension = "pdi"
 			gen country= substr("${fname_`i'}", 1, 3)
 			gen dataset = "${fname_`i'}"
 
@@ -313,13 +319,13 @@ save `output_quantiles', replace
 } // eo foreach dataset
 
 *---> C.3 Compiling and saving data 
-foreach indicator in share uinc cinc cov abs {
-	foreach y in ymp yd {
+foreach indicator in share uinc cinc cov  {
+	foreach y in ym yd {
 		forvalues i = 1/$n_datasets {	
 			
 			use "$dataaux/`indicator'_`y'_`i'", clear
 			
-			if `i'==1 & "`y'"=="ymp" & "`indicator'"=="share" {
+			if `i'==1 & "`y'"=="ym" & "`indicator'"=="share" {
 				save "$dataaux/final_dist.dta", replace
 			}
 			else {
@@ -333,9 +339,7 @@ foreach indicator in share uinc cinc cov abs {
 	} // eo foreach y
 } // eo foreach indicator
 
-exit
-
-
+*/
 
 *===============================================================================
 *---> D. Distributional indicators International values Gini, Theil, and FGT measures
@@ -416,19 +420,22 @@ local ++j
 		bysort indicator reference: egen sd_`inc'_lvl=sd(aux_`inc'_lvl)
 		assert `inc'_lvl!=. 
 		assert sd_`inc'_lvl==0 | sd_`inc'_lvl==.
-	}
-	gen value_totimp = ym_lvl - yc_lvl if inlist(indicator,"fgt0" "fgt1" "fgt2")
-	replace value_totimp = ym_lvl - yf_lvl if inlist(indicator,"gini" "theil")
-	
 
+	}
+
+	*Eliminating the calculation of total impact to have only one indicator (trick: using ym)
+	gen value_totimp = ym_lvl - yc_lvl if inlist(indicator,"fgt0", "fgt1", "fgt2") & income_concept=="ym"
+	replace value_totimp = ym_lvl - yf_lvl if inlist(indicator,"gini", "theil") & income_concept=="ym"
+
+	
 	*Eliminating MC that does not make sense
 	foreach policy in  `indtax' `Subsidies'   {
 		replace value_mc=. if policy=="`policy'" &  inlist(income_concept, "yd") // all indirect taxes, subssidies and inkind with disposable income
 	}
 
 	foreach policy in  `inkind'  {
-		replace value_mc=. if policy=="`policy'" &  inlist(income_concept, "yd" "yc" ) // all contribution of inkind with consumable income 
-		replace value_mc=. if inlist(indicator, "fgt0" "fgt1" "fgt2") & inlist(income_concept, "yf") // all mc to poverty with final income
+		replace value_mc=. if policy=="`policy'" &  inlist(income_concept, "yd", "yc" ) // all contribution of inkind with consumable income 
+		replace value_mc=. if inlist(indicator, "fgt0", "fgt1", "fgt2") & inlist(income_concept, "yf") // all mc to poverty with final income
 	}
 
 	assert abs(value_mc)<0.0001 | value_mc==. if income_concept+"_pc"==long_variable
@@ -445,13 +452,13 @@ local ++j
 *indicator, income were defined above 		
 gen category = "CAT_NA"
 rename policy instrument
-replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & inlist(long_variable,"ym_pc" "yn_pc" "yd_pc" "yc_pc" "yf_pc")
+replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & inlist(long_variable,"ym_pc", "yn_pc", "yd_pc", "yc_pc", "yf_pc")
 
 rename income_concept income
 rename reference povertyline
-replace povertyline = "PL_NONE_N" if inlist(indicator, "gini" "theil")
+replace povertyline = "PL_NONE_N" if inlist(indicator, "gini", "theil")
 gen partition = "PV_NA_NONE"
-gen pension = "PEN_PDI"
+gen pension = "pdi"
 gen country= substr("${fname_`i'}", 1, 3)
 gen dataset = "${fname_`i'}"
 
@@ -467,16 +474,28 @@ reshape long value_, i(indicator category instrument income povertyline partitio
 drop if value_==.
 ren (indicator indicator2) (aux_indicator indicator )
 
-replace indicator ="mcp" if indicator=="mc" & inlist(aux_indicator,"fgt0" "fgt1" "fgt2")
-replace indicator ="mci" if indicator=="mc" & inlist(aux_indicator,"gini" "theil") 
-replace indicator ="tpi" if indicator=="totimp" & inlist(aux_indicator,"fgt0" "fgt1" "fgt2")
-replace indicator ="tri" if indicator=="totimp" & inlist(aux_indicator,"gini" "theil")
+*Marginal contributions only for headcount and Gini 
+replace indicator ="mcp" if indicator=="mc" & inlist(aux_indicator,"fgt0")
+replace indicator ="mci" if indicator=="mc" & inlist(aux_indicator,"gini") 
+drop if indicator=="mc" & inlist(aux_indicator,"theil", "fgt1", "fgt2") 
 
+*Total change in poverty and Gini 
+replace income="INC_NA" if indicator=="totimp"
+replace indicator ="tpi" if indicator=="totimp" & inlist(aux_indicator,"fgt0")
+replace indicator ="tri" if indicator=="totimp" & inlist(aux_indicator,"gini")
+drop if indicator=="totimp" & inlist(aux_indicator,"theil", "fgt1", "fgt2")
+
+
+
+*Level for gap, theil, heacoung and gap 
 replace indicator ="hcr" if indicator=="level" & inlist(aux_indicator,"fgt0")
 replace indicator ="gni" if indicator=="level" & inlist(aux_indicator,"gini" )
-
+replace indicator ="thi" if indicator=="level" & inlist(aux_indicator,"theil" )
+replace indicator ="pgp" if indicator=="level" & inlist(aux_indicator,"fgt1" )
+drop if aux_indicator=="fgt2" & indicator=="level"
 *temporary drop to be deleted after Pecchi includes fgt1 and fgt2 in the taxonomy
-drop if aux_indicator=="fgt1" | aux_indicator=="fgt2" | aux_indicator=="theil"
+drop aux_indicator
+ren value_ value
 
 order indicator category instrument income povertyline partition pension country dataset value
 save "$dataaux/pov_ineq_`i'.dta", replace
@@ -501,10 +520,151 @@ forvalues i = 1/$n_datasets {
 } // eo foreach country
 
 
+
+
 *===============================================================================
 *---> E.  concentrations coeficients and kakwani index. To be included 
 *===============================================================================
 
+/*
+local j=0
+forvalues i = 1/$n_datasets {
+local ++j
+
+	**************Temporal subsection to be deleted after debugging, to be included in the harmonization do-file 
+	* globals to call dataset and define the spreadsheet name .
+	global sheetname    "${cty_`i'}"
+    global datasetname  "${fname_`i'}"
+	global indivname "d_`i'" // @jmmonroyb, do we need this? 
+    di "Processing: ${path_`i'} - Sheet: ${sheetname}"
+
+    use `"${path_`i'}"', clear
+
+
+	foreach y in ymp yd {
+		quantiles `y'_pc [w=pondih], gen(`y'_millile_pc) nq(1000) stable
+		quantiles `y'_pc [w=pondih], gen(`y'_centile_pc) nq(100) stable
+		quantiles `y'_pc [w=pondih], gen(`y'_decile_pc) nq(10) stable
+    }
+		* Note on bins: bins are created in the code to ensure consistent construction across countries.
+		*		quantiles correct (in a different way) than _ebin by ties between observations when defining the different bins. 
+		*      _ebin include the boundary observation above. This implies some mmistmatches, more in larger datasets like COL (66 mistmacthces)
+
+	tempfile output
+	save `output', replace 
+	
+*------------------------------Indicators --------------------------------------------
+
+*Outline, 
+*Compute mean by partition
+
+*---> C.1  define indicators (by income in incidence), partitions 
+set seed 80292367
+foreach y in ymp yd {
+		foreach x in `tax' `indtax' `transfer' `inkind' `Subsidies' {
+			
+		gen newas_`y'_`x'  = `x'_pc
+		
+		} // eo foreach x
+}
+
+tempfile output_quantiles
+save `output_quantiles', replace 
+
+
+*Prepare microdata : milliles and variable that allowed that means compute them 
+
+	foreach y in ymp yd {
+
+		u `output_quantiles', clear	
+		
+		keep `y'_millile_pc `y'_centile_pc `y'_decile_pc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  pondih	
+
+
+		* Store millile-wide data in frame (1000 rows, for centile/decile derivation)
+		cap frame drop fr_wide
+		frame copy default fr_wide, replace
+
+		* --- Loop over each indicator: reshape to long at 3 levels ---
+		foreach indicator in share uinc cinc cov  {
+
+		* --- Decile level (work inside a copy frame, no touch on default) ---
+		
+			cap frame drop fr_dec
+			frame copy fr_wide fr_dec
+			frame fr_dec {
+				drop `y'_millile_pc `y'_centile_pc
+				groupfunction [aw=pondih], mean(`indicator'*) by(`y'_decile_pc)
+				reshape long `indicator'_`y'_pc_, i(`y'_decile_pc) j(variable) string
+				tostring `y'_decile_pc, gen(partition) format(%04.0f)
+					replace partition = "pv_dc_" + partition
+					drop `y'_decile_pc
+				rename `indicator'_ value
+			}
+		
+		* --- Centile level (work inside a copy frame) ---
+			cap frame drop fr_cent
+			frame copy fr_wide fr_cent
+			frame fr_cent {
+				drop `y'_millile_pc `y'_decile_pc
+				groupfunction [aw=pondih], mean(`indicator'*) by(`y'_centile_pc)
+				reshape long `indicator'_`y'_pc_, i(`y'_centile_pc) j(variable) string
+				tostring `y'_centile_pc, gen(partition) format(%04.0f)
+					replace partition = "pv_pc_" + partition
+					drop `y'_centile_pc
+				rename `indicator'_ value
+			}
+
+		* --- Millile level (work inside a copy frame) ---
+			cap frame drop fr_mill
+			frame copy fr_wide fr_mill
+			frame fr_mill {
+				drop `y'_centile_pc `y'_decile_pc 
+				groupfunction [aw=pondih], mean(`indicator'*) by(`y'_millile_pc)
+				reshape long `indicator'_`y'_pc_, i(`y'_millile_pc) j(variable) string
+				save "${dataaux}/debugging.dta", replace
+				tostring `y'_millile_pc, gen(partition) format(%04.0f)
+					replace partition = "pv_pm_" + partition
+					drop `y'_millile_pc
+				rename `indicator'_ value
+			}
+			
+		* --- Combine all three levels into default ---
+			tempfile _tf_dec _tf_cent _tf_mill
+			frame fr_dec:  save `_tf_dec'
+			frame fr_cent: save `_tf_cent'
+			frame fr_mill: save `_tf_mill'
+			
+			use `_tf_mill', clear
+			append using `_tf_dec'
+			append using `_tf_cent'
+			*cap frame drop fr_dec fr_cent fr_mill
+
+
+*---> C.2 Generate decomposition by taxonomy items (3 levels)
+			
+			gen indicator = "`indicator'"
+			gen income = "`y'"
+			rename variable instrument
+			gen category = "CAT_NA"
+			gen povertyline = "PL_NONE_N"
+			gen pension = "pdi"
+			gen country= substr("${fname_`i'}", 1, 3)
+			gen dataset = "${fname_`i'}"
+
+			order indicator category instrument income povertyline partition pension country dataset value
+			save "$dataaux/`indicator'_`y'_`i'", replace
+
+		}	  // eo foreach indicator
+		
+		* Drop fr_wide after all indicators are done for this y
+		cap frame drop fr_wide
+
+	} // eo foreach y
+
+} // eo foreach dataset
+
+**********************
 local j=0
 forvalues i = 1/$n_datasets {
 local ++j
@@ -561,7 +721,7 @@ preserve
 restore
 
 *===============================================================================
-*---> B. Concentration Shares by Poor & Non-Poor (id=40)
+*---> E1b. Concentration Shares by Poor & Non-Poor (id=40)
 *     Same as above but by poverty status instead of decile
 *===============================================================================
 
@@ -602,7 +762,7 @@ preserve
 restore
 
 *===============================================================================
-*---> C. Concentration Coefficients (id=43) and Kakwani Index (id=42)
+*---> E1c. Concentration Coefficients (id=43) and Kakwani Index (id=42)
 *     CC = 2*cov(X, F(Y)) / mean(X)
 *     Kakwani = CC - Gini(Y)
 *===============================================================================
@@ -677,7 +837,7 @@ tempfile cc_kakwani
 save `cc_kakwani'
 
 *===============================================================================
-*---> D. Append all concentration indicators
+*---> E1d. Append all concentration indicators
 *===============================================================================
 
 u `conc_shares_dec', clear
@@ -686,97 +846,42 @@ append using `cc_kakwani'
 
 tempfile ind_3_13
 save `ind_3_13'
-
+*/
 
 
 *===============================================================================
-*---> F. Exporing finaldatasets
+*---> F. Exporing finaldatasets | Taxonomy  Unique ID
 *===============================================================================	
 *---> F.1 adding previous ones and generating aux output 
 
-    u "$dataaux\theall_ymp", clear
-	append using "$dataaux\poverty"
-	append using "$dataaux\netcash_ymp" 
+    u "$dataaux/final_dist.dta" , clear
+	append using "$dataaux\final_pov_ineq"
+	
+	*Temporal indicators dropped until Pecchi add them 
+	drop if indicator=="share" | indicator=="mean"
+	drop if instrument=="inktransf_total"
+
+	*Adding up dictionary names (softcoded)
+	merge m:1 indicator using "$dataaux\dict_indicator.dta", keepusing(INDICATOR_ID) assert(match using) keep(match) nogen
+	
+	merge m:1 category using "$dataaux\dict_category.dta", keepusing(CATEGORY_ID) assert(match using) keep(match) nogen
+	
+	merge m:1 instrument using "$dataaux\dict_instrument.dta", keepusing(INSTRUMENT_ID) assert(match using) keep(match) nogen
 		
-	gen concat = variable +"_"+ measure+"_" +reference+"_ymp_"+string(deciles_pc)
-	order concat, first
+	merge m:1 income using "$dataaux\dict_income.dta", keepusing(INCOME_ID)  assert(match using) keep(match) nogen
 	
-	tempfile aux1
-	save `aux1'
+	merge m:1 povertyline using "$dataaux\dict_povertyline.dta", keepusing(POVERTY_LINE_ID) assert(match using) keep(match) nogen
+
+	merge m:1 partition using "$dataaux\dict_partition.dta", keepusing(PARTITION_VALUE_ID) assert(match using) keep(match) nogen
+
+	merge m:1 pension using "$dataaux\dict_pension.dta", keepusing(PENSION_ID) assert(match using) keep(match) nogen
 	
-	drop if indicator=="fgt2"
-	g context="equity"
+	keep INDICATOR_ID CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset value
 
-*===============================================================================
-*---> G.  Taxonomy  Unique ID
-*===============================================================================	
+	export excel "$dataout\01-Cleaned-FIA-Indicators.dta", sheet("all${sheetname}") replace first(variable)
+	save "$dataaux\01-Cleaned-FIA-Indicators.dta", replace
+
 	
-*---> G.2 merging taxonomy 
-
-  foreach j of global taxonomy_components  {
-	
-
-	merge m:m `j' using ``j''  
-	drop if _merge==2
-	drop _merge
-}
-
-*---> G.3 cleaning final dataset and generating unique ID (symetric) 
-
-    order value id*	
-	
-	  foreach id in id_context id_indicator id_BIID id_income id_pline {
-	  	
-		tostring  `id', replace 
-		replace `id'="99" if `id'==""
-		replace `id'="99" if `id'=="."
-
-		
-	  } 
-	
-	tostring deciles_pc, replace 
-    replace deciles_pc="99" if deciles_pc=="."
-	
-	
-	gen UniqueID_s = id_context +"_"+ id_indicator+"_" +id_BIID+"_"+id_pline+"_"+deciles_pc
-	
-
-	*u `theall_yd', clear 
-	*append using `netcash_yd'
-	
-	*gen concat = variable +"_"+ measure+"_"+"_yd_"+string(deciles_pc)
-	*order concat, first
-	
-	*append using `aux1'
-	
-
-	gen dataset = "${datasetname}"
-
-	order dataset UniqueID_s concat value TYPE INDICATOR BUDGETLINEITEM INCOMECONCEPT POVERTYLINE
-	keep dataset UniqueID_s concat value TYPE INDICATOR BUDGETLINEITEM INCOMECONCEPT POVERTYLINE
-	
-	export excel "$dataout\01-Cleaned-FIA-Indicators", sheet("all${sheetname}") sheetreplace first(variable)
-	
-*	tempfile all_${sheetname}
-	
-*	global tmppath_`i' `"`all_${sheetname}'"'
-	save "$dataaux\_$indivname", replace
-}
-
-
-*===============================================================================
-*---> H.  Cross-country dataset 
-*===============================================================================
-
-
-* Append all datasets into one
-use  "$dataaux\_d_1" , clear
-forvalues i = 2/$n_datasets {
-    append using  "$dataaux\_d_`i'"
-}
-
-save "$dataout\FIA_Indicators.dta", replace
-
 
 
 *===============================================================================
@@ -784,23 +889,7 @@ save "$dataout\FIA_Indicators.dta", replace
 *     ID from Original Taxonomy that matches the taxonomy by decomposition. 
 *===============================================================================
 
-	import excel "$metadata\IndicatorsDatabase_v1.xlsx", sheet("INDICATORS") firstrow clear
-
-
-	order Indicatortypecode Indicatorcode Categorycode Instrumentcode Incomecode Povertylinecode
-	
-	foreach k in Categorycode Indicatorcode Incomecode Povertylinecode {
-		
-		replace `k'=99 if `k'==.
-		tostring `k' , replace 
-	}
-	
-	replace Instrumentcode="99" if Instrumentcode==""
-	
-	drop if Indicatortypecode==""
-	
-		gen UniqueID_s = Indicatortypecode +"_"+ Indicatorcode+"_" +Categorycode+"_"+Instrumentcode+"_"+Incomecode +"_"+Povertylinecode
-
+	@jmmonroyb, we want to track the Pecchi database stats, share of progress and publish it online and validate by the country teams 
 
 	*Create System for statistic of indicator coverage 
 timer off 1
