@@ -520,6 +520,63 @@ forvalues i = 1/$n_datasets {
 } // eo foreach country
 
 
+*===============================================================================
+*---> F. Exporing finaldatasets | Taxonomy  Unique ID
+*===============================================================================	
+*---> F.1 adding previous ones and generating aux output 
+
+    u "$dataaux/final_dist.dta" , clear
+	append using "$dataaux\final_pov_ineq"
+	
+	*Temporal indicators dropped until Pecchi add them 
+	drop if indicator=="share" | indicator=="mean"
+	drop if instrument=="inktransf_total"
+
+	*Adding up dictionary names (softcoded)
+	merge m:1 indicator using "$dataaux\dict_indicator.dta", keepusing(INDICATOR_ID) assert(match using) keep(match) nogen
+	
+	merge m:1 category using "$dataaux\dict_category.dta", keepusing(CATEGORY_ID) assert(match using) keep(match) nogen
+	
+	merge m:1 instrument using "$dataaux\dict_instrument.dta", keepusing(INSTRUMENT_ID) assert(match using) keep(match) nogen
+		
+	merge m:1 income using "$dataaux\dict_income.dta", keepusing(INCOME_ID)  assert(match using) keep(match) nogen
+	
+	merge m:1 povertyline using "$dataaux\dict_povertyline.dta", keepusing(POVERTY_LINE_ID) assert(match using) keep(match) nogen
+
+	merge m:1 partition using "$dataaux\dict_partition.dta", keepusing(PARTITION_VALUE_ID) assert(match using) keep(match) nogen
+
+	merge m:1 pension using "$dataaux\dict_pension.dta", keepusing(PENSION_ID) assert(match using) keep(match) nogen
+	
+	keep INDICATOR_ID CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset value
+
+	export excel "$dataout\01-Cleaned-FIA-Indicators.dta", sheet("all${sheetname}") replace first(variable)
+	save "$dataaux\01-Cleaned-FIA-Indicators.dta", replace
+
+	
+
+
+*===============================================================================
+*---> This sections in under construction. It consists in generating an Unique 
+*     ID from Original Taxonomy that matches the taxonomy by decomposition. 
+*===============================================================================
+
+	@jmmonroyb, we want to track the Pecchi database stats, share of progress and publish it online and validate by the country teams 
+
+	*Create System for statistic of indicator coverage 
+timer off 1
+timer list 1
+
+
+
+
+
+
+
+
+
+
+exit 
+
 
 
 *===============================================================================
@@ -847,60 +904,3 @@ append using `cc_kakwani'
 tempfile ind_3_13
 save `ind_3_13'
 */
-
-
-*===============================================================================
-*---> F. Exporing finaldatasets | Taxonomy  Unique ID
-*===============================================================================	
-*---> F.1 adding previous ones and generating aux output 
-
-    u "$dataaux/final_dist.dta" , clear
-	append using "$dataaux\final_pov_ineq"
-	
-	*Temporal indicators dropped until Pecchi add them 
-	drop if indicator=="share" | indicator=="mean"
-	drop if instrument=="inktransf_total"
-
-	*Adding up dictionary names (softcoded)
-	merge m:1 indicator using "$dataaux\dict_indicator.dta", keepusing(INDICATOR_ID) assert(match using) keep(match) nogen
-	
-	merge m:1 category using "$dataaux\dict_category.dta", keepusing(CATEGORY_ID) assert(match using) keep(match) nogen
-	
-	merge m:1 instrument using "$dataaux\dict_instrument.dta", keepusing(INSTRUMENT_ID) assert(match using) keep(match) nogen
-		
-	merge m:1 income using "$dataaux\dict_income.dta", keepusing(INCOME_ID)  assert(match using) keep(match) nogen
-	
-	merge m:1 povertyline using "$dataaux\dict_povertyline.dta", keepusing(POVERTY_LINE_ID) assert(match using) keep(match) nogen
-
-	merge m:1 partition using "$dataaux\dict_partition.dta", keepusing(PARTITION_VALUE_ID) assert(match using) keep(match) nogen
-
-	merge m:1 pension using "$dataaux\dict_pension.dta", keepusing(PENSION_ID) assert(match using) keep(match) nogen
-	
-	keep INDICATOR_ID CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset value
-
-	export excel "$dataout\01-Cleaned-FIA-Indicators.dta", sheet("all${sheetname}") replace first(variable)
-	save "$dataaux\01-Cleaned-FIA-Indicators.dta", replace
-
-	
-
-
-*===============================================================================
-*---> This sections in under construction. It consists in generating an Unique 
-*     ID from Original Taxonomy that matches the taxonomy by decomposition. 
-*===============================================================================
-
-	@jmmonroyb, we want to track the Pecchi database stats, share of progress and publish it online and validate by the country teams 
-
-	*Create System for statistic of indicator coverage 
-timer off 1
-timer list 1
-
-
-
-
-
-
-
-
-
-
