@@ -19,7 +19,7 @@
    
 *---> A.1 Define user paths
 if "`c(username)'"=="wb419055" {
-	global root     	"C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\Workspace\Data Hub"	
+	global root     	"C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\Workspace\Data-Hub"	
 
    global scripts		"${root}/02-Scripts/wb419055"
 }
@@ -158,7 +158,7 @@ foreach subf of local dirs1 {
 
 *@jmmonroyb, to debug we run with one data and call with a loop all the entire master file to run across countries 
 
-/*
+
 local j=0
 forvalues i = 1/$n_datasets {
 local ++j
@@ -549,8 +549,8 @@ forvalues i = 1/$n_datasets {
 	
 	keep INDICATOR_ID CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset value
 
-	export excel "$dataout\01-Cleaned-FIA-Indicators.dta", sheet("all${sheetname}") replace first(variable)
-	save "$dataaux\01-Cleaned-FIA-Indicators.dta", replace
+	export excel using "$dataout/01-Cleaned-FIA-Indicators.dta", sheet("database", replace) first(variable)  
+	save "$dataout/01-Cleaned-FIA-Indicators.dta", replace
 
 	
 
