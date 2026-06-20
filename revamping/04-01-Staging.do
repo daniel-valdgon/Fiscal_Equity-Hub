@@ -5,7 +5,7 @@
 
 capture confirm file "${revamp_scripts}/2-01-Clean_pc_ppp_lcu.do"
 if _rc {
-	di as err "Missing bridge staging file: ${revamp_scripts}/2-01-Clean_pc_ppp_lcu.do"
+ This step creates required *_pc variables before the 05-xx indicator modules.
 	exit 601
 }
 

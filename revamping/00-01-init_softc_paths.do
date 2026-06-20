@@ -3,15 +3,9 @@
  Centralizes user paths and global folders for revamp modules
 \*============================================================================*/
 
-* User-specific root
-if "`c(username)'"=="wb419055" {
-	global root "C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fiscal Equity Hub/Workspace/Data-Hub"
-}
-else if "`c(username)'"=="wb527706" {
-	global root "C:/Users/wb527706/OneDrive - WBG/GSG Fiscal Equity - WB Group - Data Hub"
-}
-else {
-	di as err "Unsupported user for revamp setup: `c(username)'"
+* Root path must be set once in trunk before including this setup file.
+if "$root"=="" {
+	di as err "Missing required global root in setup. Define root in 00-Trunk_Revamp.do before include."
 	exit 198
 }
 
@@ -24,9 +18,15 @@ global rawdata "${root}/01-Data/01-01-FRP"
 global microdata "${root}/01-Data/01-02-FIA_Microdata"
 global template "${root}/01-Data/01-03-FIA_Core Indicators"
 global tempsim "${root}/01-Data/3_temp_sim"
+
+
 global metadata "${root}/01-Data/00-Aux"
+global FEH_dictionary "correlative_3" // excel file with canonical policy registry and metadata
+
 global dataout "${root}/03-Outputs/01-Cleaned-FIA-Indicators/01-Cleaned-FIA-Indicators"
 global core_database "${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
+
+
 
 * Revamp artifacts
 global revamp_output "${root}/03-Outputs/02-Quality-Checks/revamping"

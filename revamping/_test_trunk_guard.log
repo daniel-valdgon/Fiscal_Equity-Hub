@@ -1,0 +1,2444 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group
+>  - Fiscal Equity Hub\Workspace\Data-Hub\02-Scripts/wb419055/revamping/_test_t
+> runk_guard.log
+  log type:  text
+ opened on:  19 Jun 2026, 17:29:24
+
+. 
+. * Run only setup + guard by calling trunk; downstream may stop on data checks
+> ,
+. * but the include guard executes before the rest of the pipeline.
+. do "02-Scripts/wb419055/revamping/00-Trunk_Revamp.do"
+
+. /*===========================================================================
+> =*\
+>  Revamp trunk scaffold - Fiscal Equity Hub
+>  Purpose: Define target orchestration with real and to-be-built modules
+>  Version: 0.1 (scaffold)
+> \*===========================================================================
+> =*/
+. 
+. clear all
+
+. timer clear 1
+
+. timer on 1
+
+. 
+. * 1) Bootstrap paths and environment
+. if "`c(username)'"=="wb419055" {
+.         global revamp_scripts "C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fisc
+> al Equity - WB Group - Fiscal Equity Hub/Workspace/Data-Hub/02-Scripts/wb4190
+> 55/revamping"
+. }
+
+. else if "`c(username)'"=="wb527706" {
+.         global revamp_scripts "C:/Users/wb527706/OneDrive - WBG/GSG Fiscal Eq
+> uity - WB Group - Data Hub/02-Scripts/wb419055/revamping"
+. }
+
+. else {
+.         di as err "Unsupported user for revamp trunk: `c(username)'"
+.         exit 198
+. }
+
+. 
+. include "${revamp_scripts}/01-00-Setup.do"
+
+. /*===========================================================================
+> =*\
+>  Revamp setup
+>  Centralizes user paths and global folders for revamp modules
+> \*===========================================================================
+> =*/
+. 
+. * User-specific root
+. if "`c(username)'"=="wb419055" {
+.         global root "C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity 
+> - WB Group - Fiscal Equity Hub/Workspace/Data-Hub"
+. }
+
+. else if "`c(username)'"=="wb527706" {
+.         global root "C:/Users/wb527706/OneDrive - WBG/GSG Fiscal Equity - WB 
+> Group - Data Hub"
+. }
+
+. else {
+.         di as err "Unsupported user for revamp setup: `c(username)'"
+.         exit 198
+. }
+
+. 
+. * Script roots
+. global scripts "${root}/02-Scripts/wb419055"
+
+. global revamp_scripts "${scripts}/revamping"
+
+. 
+. * Data and product folders
+. global rawdata "${root}/01-Data/01-01-FRP"
+
+. global microdata "${root}/01-Data/01-02-FIA_Microdata"
+
+. global template "${root}/01-Data/01-03-FIA_Core Indicators"
+
+. global tempsim "${root}/01-Data/3_temp_sim"
+
+. global metadata "${root}/01-Data/00-Aux"
+
+. global dataout "${root}/03-Outputs/01-Cleaned-FIA-Indicators/01-Cleaned-FIA-I
+> ndicators"
+
+. global core_database "${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
+
+. 
+. * Revamp artifacts
+. global revamp_output "${root}/03-Outputs/02-Quality-Checks/revamping"
+
+. cap mkdir "${tempsim}"
+
+. cap mkdir "${root}/03-Outputs/02-Quality-Checks"
+
+. cap mkdir "${revamp_output}"
+
+. 
+. di as txt "Revamp setup loaded"
+Revamp setup loaded
+
+. di as txt "root      : ${root}"
+root      : C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub/Workspace/Data-Hub
+
+. di as txt "microdata : ${microdata}"
+microdata : C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group 
+> - Fiscal Equity Hub/Workspace/Data-Hub/01-Data/01-02-FIA_Microdata
+
+. 
+. 
+. * Preflight: enforce local include policy for revamp modules.
+. * Any include that points to ${scripts}/... or ${root}/02-Scripts/wb419055/..
+> . is disallowed.
+. mata:
+------------------------------------------------- mata (type end to exit) -----
+: violations = 0
+
+: base = st_global("revamp_scripts")
+
+: files = dir(base, "files", "*.do")
+
+: 
+: for (i=1; i<=rows(files); i++) {
+>         fh = fopen(base + "/" + files[i], "r")
+>         ln = 0
+>         if (fh<0) continue
+>         while ((line = fget(fh)) != J(0,0,"")) {
+>                 ln = ln + 1
+>                 low = strlower(line)
+>                 if (regexm(low, "^[ \t]*((qui|quietly)[ \t]+)?include[ \t]+")
+>  & (strpos(low, "${scripts}/")>0 | strpos(low, "${root}/02-scripts/wb419055/"
+> )>0)) {
+>                         violations = violations + 1
+>                         printf("{err}Include policy violation: %s:%g -> %s\n"
+> , files[i], ln, line)
+>                 }
+>         }
+>         fclose(fh)
+> }
+
+: 
+: st_numscalar("r_revamp_include_viol", violations)
+
+: end
+-------------------------------------------------------------------------------
+
+. 
+. if scalar(r_revamp_include_viol)>0 {
+.         di as err "Include policy violation(s) found in revamping folder."
+.         exit 459
+. }
+
+. 
+. * 2) Canonical policy registry (adapted from current aux list)
+. include "${revamp_scripts}/01-01-Policy_Registry.do"
+
+. /*===========================================================================
+> =*\
+>  Revamp policy registry
+>  Adapted from 0-01-aux_policy_list.do, exported as globals for cross-file use
+> \*===========================================================================
+> =*/
+. 
+. di as txt "Loading revamp policy registry"
+Loading revamp policy registry
+
+. 
+. * Canonical fiscal policy families
+. global Directaxes "PIT BIT PropertyTax FinancialTax"
+
+. global Contributions "sscontribs_total"
+
+. global DirectTransfers "am_prog_1 am_prog_2 am_prog_3 am_prog_other"
+
+. global Subsidies "subsidy_elec_direct subsidy_elec_indirect subsidy_fuel_dire
+> ct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect subsidy_
+> agric"
+
+. global Indtaxes "CD_direct excise_taxes VAT_direct VAT_indirect"
+
+. global InKindTransfers "education_inKind am_health"
+
+. 
+. * Convenience sets used in validation scripts
+. global var_dtr "${Directaxes} ${Contributions} ${DirectTransfers} ${Subsidies
+> } ${Indtaxes} ${InKindTransfers}"
+
+. 
+. * Income concepts expected in active pipeline
+. global IncomeConcepts "ymp yn yd yc yf"
+
+. 
+. 
+. * 3) Inventory + manifest build (adapted from current inventory logic)
+. include "${revamp_scripts}/02-01-Inventory_Manifest.do"
+
+. /*===========================================================================
+> =*\
+>  Revamp inventory + manifest
+>  Adapted from 1-01-Inventory.do and 3-00-Setup.do discovery logic
+>  Output: ${tempsim}/manifest_projects.dta
+> \*===========================================================================
+> =*/
+. 
+. tempname ph
+
+. tempfile manifest
+
+. 
+. postfile `ph' str12 country str120 project str244 folder str120 expected_file
+>  str120 detected_file int filecount byte naming_ok byte level using `manifest
+> ', replace
+(file C:\Users\wb419055\AppData\Local\Temp\ST_8578_000001.tmp not found)
+
+. 
+. local dirs1 : dir "${microdata}" dirs "*"
+
+. 
+. foreach cty_dir of local dirs1 {
+  2.         if substr("`cty_dir'",1,1)=="_" continue
+  3. 
+.         local cty : di strupper("`cty_dir'")
+  4.         local cty_path "${microdata}/`cty_dir'"
+  5.         local dirs2 : dir "`cty_path'" dirs "*"
+  6. 
+.         foreach proj2 of local dirs2 {
+  7.                 local path2 "`cty_path'/`proj2'"
+  8.                 local files2 : dir "`path2'" files "*.dta"
+  9.                 local n2 : word count `files2'
+ 10.                 local expected2 "`proj2'.dta"
+ 11. 
+.                 if `n2'==0 {
+ 12.                         post `ph' ("`cty'") ("`proj2'") ("`path2'") ("`exp
+> ected2'") ("") (0) (0) (2)
+ 13.                 }
+ 14.                 else {
+ 15.                         foreach f of local files2 {
+ 16.                                 local ok = lower("`f'")==lower("`expected2
+> '")
+ 17.                                 post `ph' ("`cty'") ("`proj2'") ("`path2'"
+> ) ("`expected2'") ("`f'") (`n2') (`ok') (2)
+ 18.                         }
+ 19.                 }
+ 20. 
+.                 local dirs3 : dir "`path2'" dirs "*"
+ 21.                 foreach proj3 of local dirs3 {
+ 22.                         local path3 "`path2'/`proj3'"
+ 23.                         local files3 : dir "`path3'" files "*.dta"
+ 24.                         local n3 : word count `files3'
+ 25.                         local expected3 "`proj3'.dta"
+ 26. 
+.                         if `n3'==0 {
+ 27.                                 post `ph' ("`cty'") ("`proj3'") ("`path3'"
+> ) ("`expected3'") ("") (0) (0) (3)
+ 28.                         }
+ 29.                         else {
+ 30.                                 foreach f3 of local files3 {
+ 31.                                         local ok3 = lower("`f3'")==lower("
+> `expected3'")
+ 32.                                         post `ph' ("`cty'") ("`proj3'") ("
+> `path3'") ("`expected3'") ("`f3'") (`n3') (`ok3') (3)
+ 33.                                 }
+ 34.                         }
+ 35.                 }
+ 36.         }
+ 37. }
+
+. 
+. postclose `ph'
+
+. use `manifest', clear
+
+. 
+. gen structure_ok = (filecount==1 & naming_ok==1)
+
+. order country project level folder detected_file expected_file filecount nami
+> ng_ok structure_ok
+
+. 
+. save "${tempsim}/manifest_projects.dta", replace
+file C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group -
+    Fiscal Equity
+    Hub/Workspace/Data-Hub/01-Data/3_temp_sim/manifest_projects.dta saved
+
+. 
+. count
+  143
+
+. global n_manifest = r(N)
+
+. count if structure_ok==0
+  143
+
+. global n_manifest_fail = r(N)
+
+. 
+. di as txt "Manifest rows      : ${n_manifest}"
+Manifest rows      : 143
+
+. di as txt "Structure failures : ${n_manifest_fail}"
+Structure failures : 143
+
+. 
+. 
+. * 4) Validation gates before indicators
+. include "${revamp_scripts}/03-01-Validate_Structure.do"
+
+. /*===========================================================================
+> =*\
+>  Structural validation gate
+>  Uses manifest_projects.dta from revamp inventory
+> \*===========================================================================
+> =*/
+. 
+. use "${tempsim}/manifest_projects.dta", clear
+
+. 
+. count if structure_ok==0
+  143
+
+. if r(N)>0 {
+.         global validation_structure_pass 0
+.         di as err "Structural validation failed for " r(N) " project folder(s
+> )."
+Structural validation failed for 143 project folder(s).
+.         list country project level folder expected_file detected_file filecou
+> nt naming_ok if structure_ok==0, noobs abbreviate(24)
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             gk     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           gk.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                          hooks     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                        hooks.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           info     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         info.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           logs     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         logs.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           refs     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         refs.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                        objects     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                      objects.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             06     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           06.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             0c     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           0c.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             0e     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           0e.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             10     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           10.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             17     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           17.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             19     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           19.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             1a     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           1a.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             1b     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           1b.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             1c     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           1c.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             1d     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           1d.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             21     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           21.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             27     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           27.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             28     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           28.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             29     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           29.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             2c     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           2c.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             30     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           30.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             36     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           36.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             43     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           43.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             46     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           46.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             49     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           49.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             4c     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           4c.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             4e     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           4e.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             4f     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           4f.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             50     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           50.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             55     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           55.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             59     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           59.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             5f     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           5f.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             61     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           61.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             65     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           65.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             69     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           69.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             6b     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           6b.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             6f     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           6f.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             70     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           70.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             76     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           76.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             78     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           78.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             7d     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           7d.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             7e     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           7e.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             87     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           87.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             88     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           88.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             94     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           94.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             95     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           95.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             99     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           99.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             9a     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           9a.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             9f     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           9f.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             a1     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           a1.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             a2     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           a2.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             a3     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           a3.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             ad     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           ad.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             b0     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           b0.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             b2     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           b2.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             b4     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           b4.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             ba     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           ba.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             bb     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           bb.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             bf     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           bf.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             c1     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           c1.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             c4     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           c4.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             c9     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           c9.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             cc     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           cc.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             cf     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           cf.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             d1     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           d1.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             d6     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           d6.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             d8     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           d8.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             d9     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           d9.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             da     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           da.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             de     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           de.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             e3     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           e3.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             e4     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           e4.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             ec     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           ec.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             f2     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           f2.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             f5     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           f5.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             f7     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           f7.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             f9     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           f9.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             fb     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           fb.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             fd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           fd.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                             fe     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                           fe.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           info     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         info.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           pack     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         pack.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           refs     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         refs.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                          heads     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                        heads.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                        remotes     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                      remotes.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |             .GIT     |                           tags     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         tags.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              AGO     |      ago_idrea_s2018_p2023_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |    ago_idrea_s2018_p2023_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              AGO     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              AGO     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_ago_s2018_p2023_v01_h.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      1              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              AGO     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              COL     |       col_geih_s2021_p2021_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |     col_geih_s2021_p2021_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              COL     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              COL     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |     col_geih_s2021_p2021_v01.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      1              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              COL     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              ECU     |     ecu_enemdu_s2024_p2024_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |   ecu_enemdu_s2024_p2024_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              ECU     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              ECU     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   ecu_enemdu_s2024_p2024_v01.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      1              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              ECU     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GMB     |        gmb_ihs_s2020_p2020_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |      gmb_ihs_s2020_p2020_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GMB     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GMB     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |      gmb_ihs_s2020_p2020_v01.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GMB     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_gmb_s2020_p2020_v01_h.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GMB     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_gmb_s2020_p2020_v01_i.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GMB     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GNQ     |       gnq_enh2_s2022_p2022_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |     gnq_enh2_s2022_p2022_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GNQ     |      harmonizanization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |    harmonizanization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GNQ     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_gnq_s2022_p2022_v01_h.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      2              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GNQ     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_gnq_s2022_p2022_v01_i.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      2              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              GNQ     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              LKR     |       lkr_hies_s2019_p2022_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |     lkr_hies_s2019_p2022_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              LKR     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              LKR     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              LKR     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MNG     |       mng_hses_s2022_p2022_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |     mng_hses_s2022_p2022_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MNG     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MNG     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |                       hfmd_h.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      2              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MNG     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |                       hfmd_i.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      2              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MNG     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MRT     |       mrt_epcv_s2019_p2019_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |     mrt_epcv_s2019_p2019_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MRT     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MRT     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_mrt_s2019_p2019_v01_h.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MRT     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_mrt_s2019_p2019_v01_i.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MRT     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |     mrt_ecpv_s2019_p2019_v01.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              MRT     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              PHL     |       phl_fies_s2023_p2023_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |     phl_fies_s2023_p2023_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              PHL     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              PHL     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              PHL     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |      sen_ehcvm_s2018_p2018_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |    sen_ehcvm_s2018_p2018_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |    sen_ehcvm_s2018_p2018_v01.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      1              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |      sen_ehcvm_s2021_p2021_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |    sen_ehcvm_s2021_p2021_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_sen_s2021_p2021_v01_h.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |   hfmd_sen_s2021_p2021_v01_i.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |    sen_ehcvm_s2021_p2021_v01.dta    |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      3              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |              SEN     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |     TEMPLATE FOL     |               xxx_xxxx_s_p_v01     |         2     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |             xxx_xxxx_s_p_v01.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |     TEMPLATE FOL     |          harmonization_scripts     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |        harmonization_scripts.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |     TEMPLATE FOL     |                           hfmd     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                         hfmd.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+
+  +---------------------------------------------------------------------------+
+  |          country     |                        project     |     level     |
+  |     TEMPLATE FOL     |                    master_data     |         3     |
+  |---------------------------------------------------------------------------|
+  | folder                                                                    |
+  | C:/Users/wb419055/OneDrive - WBG/GSG3/GSG Fiscal Equity - WB Group - Fi.. |
+  |---------------------------------------------------------------------------|
+  |                    expected_file    |                    detected_file    |
+  |                  master_data.dta    |                                     |
+  |-------------------------------------+-------------------------------------|
+  |              filecount              |              naming_ok              |
+  |                      0              |                      0              |
+  +---------------------------------------------------------------------------+
+. }
+
+. else {
+.         global validation_structure_pass 1
+.         di as txt "Structural validation passed"
+. }
+
+. 
+. include "${revamp_scripts}/03-02-Validate_Schema.do"
+
+. /*===========================================================================
+> =*\
+>  Schema validation gate (placeholder)
+>  TODO: validate required variables, types, key uniqueness, and weight integri
+> ty
+> \*===========================================================================
+> =*/
+. 
+. global validation_schema_pass 1
+
+. di as txt "Schema validation placeholder: not implemented yet"
+Schema validation placeholder: not implemented yet
+
+. 
+. include "${revamp_scripts}/03-03-Validate_Harmonization.do"
+
+. /*===========================================================================
+> =*\
+>  Harmonization validation gate (placeholder)
+>  TODO: fiscal aggregates, sign conventions, and income reconstruction checks
+> \*===========================================================================
+> =*/
+. 
+. global validation_harmonization_pass 1
+
+. di as txt "Harmonization validation placeholder: not implemented yet"
+Harmonization validation placeholder: not implemented yet
+
+. 
+. include "${revamp_scripts}/03-04-Validate_Metadata.do"
+
+. /*===========================================================================
+> =*\
+>  Metadata reconciliation gate (placeholder)
+>  TODO: compare survey metadata and benchmark values with reference files
+> \*===========================================================================
+> =*/
+. 
+. global validation_metadata_pass 1
+
+. di as txt "Metadata validation placeholder: not implemented yet"
+Metadata validation placeholder: not implemented yet
+
+. 
+. 
+. * 5) Staging layer (reuse existing script now, replace later)
+. include "${revamp_scripts}/04-01-Staging.do"
+
+. /*===========================================================================
+> =*\
+>  Staging layer (bridge)
+>  Reuse existing clean/staging script while revamp modules are built
+> \*===========================================================================
+> =*/
+. 
+. capture confirm file "${revamp_scripts}/2-01-Clean_pc_ppp_lcu.do"
+
+. if _rc {
+.         di as err "Missing bridge staging file: ${revamp_scripts}/2-01-Clean_
+> pc_ppp_lcu.do"
+.         exit 601
+. }
+
+. 
+. include "${revamp_scripts}/2-01-Clean_pc_ppp_lcu.do"
+
+. 
+. *============================================================================
+> *
+. //      Preparing data
+. *============================================================================
+> *
+. 
+. foreach x in `dirtax' `ssc' `dirtra' `subs' `indtax' `inktra' { // all countr
+> ies 
+  2.         local x_total
+  3.         foreach y of local x { // all policies
+  4.                 local x_total `x_total' `y'
+  5. 
+.                 foreach z in pc { // all indicators 
+  6.                         local y_`z' = `y' / hhsize
+  7.                         local x_total_`z' = `x_total' / hhsize
+  8.                 }
+  9.         }
+ 10.         local `x'_total `x_total'
+ 11. 
+unexpected end of file
+r(612);
+r(612);
+r(612);
+
+end of do-file
+r(612);
+
+end of do-file
+r(612);
