@@ -1,0 +1,43 @@
+*---------------------------------------------------------------
+**# Check that income concepts can be replicated using disposable
+* income and fiscal instruments
+*---------------------------------------------------------------
+
+* Reverse sign convention for instruments stored as negative flows
+foreach var of varlist dirtransf_total indtax_total {
+    replace `var' = `var' * (-1)
+}
+
+* Reconstruct income concepts
+capture drop yn_check yp_check yc_check yf_check
+
+egen yn_check = rowtotal(yd dirtransf_total)
+egen yp_check = rowtotal(yn dirtax_total sscontribs_nopensions)
+egen yc_check = rowtotal(yd subsidy_total indtax_total)
+egen yf_check = rowtotal(yc health_inKind education_inKind)
+
+* Validate reconstructed income concepts
+* Note: A relative difference of less than 1 percent is tolerated
+* to account for rounding, precision, or minor aggregation differences.
+assert abs((yn / yn_check) - 1) < 0.01 if !missing(yn, yn_check) & yn_check != 0
+di as result "Check passed: yn replicated from yd and direct transfers."
+
+assert abs((yp / yp_check) - 1) < 0.01 if !missing(yp, yp_check) & yp_check != 0
+di as result "Check passed: yp replicated from yn, direct taxes, and social contributions."
+
+assert abs((yc / yc_check) - 1) < 0.01 if !missing(yc, yc_check) & yc_check != 0
+di as result "Check passed: yc replicated from yd, subsidies, and indirect taxes."
+
+assert abs((yf / yf_check) - 1) < 0.01 if !missing(yf, yf_check) & yf_check != 0
+di as result "Check passed: yf replicated from yc and in-kind transfers."
+
+* Clean check variables
+drop yn_check yp_check yc_check yf_check
+
+* Restore original sign convention
+foreach var of varlist dirtransf_total indtax_total {
+    replace `var' = `var' * (-1)
+}
+
+di as result "All income concepts were successfully replicated using disposable income and fiscal instruments."
+sleep 1000
