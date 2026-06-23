@@ -41,23 +41,46 @@ global fia-data			"${root}/04-Products/00-FIA-Database/AFW_Sim_tool_Output.csv"
 global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
-* Country to evaluate
-global country "GNQ"
-global survey_year 2022
-global survey "ENH2"
+* Country-survey configuration
+global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
+foreach config of global run_countries {
+
+global run_country "`config'"
+
+    global country     : word 1 of $run_country
+    global survey_year : word 2 of $run_country
+    global survey      : word 3 of $run_country
+
+    di as result "Running ${run_country}"
+	sleep 3000
 
 if "${country}"=="GNQ" & "$survey_year" =="2022" & "$survey" =="ENH2"{
 	global country_data "${microdata}/${country}/GNQ_ENH2_S2022_P2022_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_GNQ_S2022_P2022_v01"
 }
+else if "${country}"=="SEN" & "$survey_year" =="2021" & "$survey" =="EHCVM"{
+	global country_data "${microdata}/${country}/SEN_EHCVM_S2021_P2021_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD_SEN_S2021_P2021_v01"
+}
+else if "${country}"=="MRT" & "$survey_year" =="2019" & "$survey" =="EPCV"{
+	global country_data "${microdata}/${country}/MRT_EPCV_S2019_P2019_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD_MRT_S2019_P2019_v01"
+}
+else if "${country}"=="GMB" & "$survey_year" =="2020" & "$survey" =="IHS"{
+	global country_data "${microdata}/${country}/GMB_IHS_S2020_P2020_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD_GMB_S2020_P2020_v01"
+}
 
 *============================================================================*
-//	1. Data infrastrucure
+**# 1. Data infrastrucure
 *============================================================================*
+
 * Obj: This section will include protocols to revise the databases, q-check over the FIA data
 
-* A. Creat percapita/peradul equivalent, y versiones national in real terms e international in real terms  
 * It create a dataset with information available in the datalab and save it
 * It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
 * Name of files should adapt to the ID shared by Pechi (Now)
@@ -66,41 +89,48 @@ qui: include "${scripts}/1-01-Inventory.do"
 *dis `"`file_list'"'
 
 * A. Policy List  & income concept
-/*Loading list of policies*/ include "${scripts}/0-01-aux_policy_list.do"
+/*Loading list of policies*/ 
+include "${scripts}/0-01-aux_policy_list.do"
 *local misscellaneuos "hhweight deciles_pc hhsize"
 
-*Todas las variables del fiscal instrument, y o la variable tiene todo en numeros o todo en missing 
 
-
-* C. Sp_temp deflato is the multiplication of spatial and temp t
-
-
-*============================================================================*
-//	2. Reproducibility Harmonize Fiscal Microdata (only needed once, create a log that validates if data was replaced or not, if it was replaced, create a log with the changes and the reason for the change)
-*============================================================================*
 use "$HFMD_data/${file}_h", clear
+* B. Verifies that all expected variables are present, drops extra variables, and checks that variables are either populated or completely empty. Completely missing fiscal instrument variables indicate that the instrument or program was not simulated.
+include "${scripts}/1-02-datastructure_complete_variables.do"
 
+* C. Verifies that combined spatial-temporal deflators are equal to the product of the corresponding spatial and temporal deflators.
+display as error "REVISAR CONSISTENCIA DE DEFLACTORES"
+*include "${scripts}/1-03-datastructure_deflators_check.do"
 
-* A. Checking consistency between different levels of fiscal instruments, for example: total electricity should be equal to direct and indirect effect of electricity 
+* D. Applies the official household size adjustment, either per capita or adult equivalent, and creates income variables in real terms for national and international poverty measurement.
+include "${scripts}/1-04-datastructure_unit_adjust_real_terms.do"
+
+*============================================================================*
+**# 2. Reproducibility Harmonize Fiscal Microdata (only needed once, create a log that validates if data was replaced or not, if it was replaced, create a log with the changes and the reason for the change)
+*============================================================================*
+
+* A. Verifies that each fiscal instrument total is equal to the sum of its lower-level components. For example, total electricity subsidies should equal the sum of direct and indirect electricity subsidies.
 include "${scripts}/2-01-datacheck_fiscal_instruments.do"
 
-* B. Checking income concept 
+* B. Verifies that income concepts can be reconstructed from disposable income and the corresponding fiscal instruments, using a small tolerance for rounding and aggregation differences.
 include "${scripts}/2-02-datacheck_incomes.do"
 
-* C. Poverty and Inequality indicators from FIA background report (National poverty line)
-   * Load metadata FIA excel file, filled by the poverty economist 
-   * Compare the results in the report with the resutls from the microdata, minimal tolerance for differences 
-
+* C. Loads selected poverty and inequality indicators from the FIA metadata file filled by the poverty economist, and compares them against indicators replicated from the microdata using the national poverty line.
 include "${scripts}/2-03-datacheck_fia_metadata.do"
 
 * D. International poverty line
-   * Load poverty and inequality from PIP, ensure is the same household survey than the one used in the FIA, 
-   * Test poverty with all PPP values available in PIP an dll poverty lines for disposable income
-   *allow for 1 percentage points difference, if the test fails bit input 19 from FIA MEtada is different from missing then continue bubt document the percentage point difference for PPP 2021, average across thre three lines
-
+   * Loads international poverty estimates from PIP for the same country, survey year, and survey acronym used in the FIA.
+   * Replicates international poverty rates from the microdata using disposable income and the available PPP poverty lines.
+   * Allows a maximum difference of 1 percentage point. 
+   * PENDING: If the check fails but FIA metadata input 19 is not missing, the code continues and documents the average percentage-point difference for 2021 PPP across the three poverty lines.
 include "${scripts}/2-04-data_check_report.do"
+
+ di as result "Ended ${run_country}"
+	sleep 3000
+
+}
 *============================================================================*
-//	3. Calculations and data checks on Indicators 
+**# 3. Calculations and data checks on Indicators 
 *============================================================================*
 *all indicators computed here separated in different groups but not more validation checks
 include "${scripts}/3-01-Incidences.do"
