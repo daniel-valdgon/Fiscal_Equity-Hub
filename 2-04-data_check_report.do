@@ -32,7 +32,8 @@ restore
 *---------------------------------------------------------------
 preserve
 if "$country" == "SEN" {
-    di as result "Senegal omitted since PIP results are not updated to the latest changes."
+    di as error "Senegal omitted since PIP results are not updated to the latest changes."
+	sleep 2000
 }
 
 else {   

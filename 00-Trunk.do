@@ -85,12 +85,12 @@ else if "${country}"=="GMB" & "$survey_year" =="2020" & "$survey" =="IHS"{
 * It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
 * Name of files should adapt to the ID shared by Pechi (Now)
 
-qui: include "${scripts}/1-01-Inventory.do"
+*qui: include "${scripts}/1-01-Inventory.do"
 *dis `"`file_list'"'
 
 * A. Policy List  & income concept
 /*Loading list of policies*/ 
-include "${scripts}/0-01-aux_policy_list.do"
+*include "${scripts}/0-01-aux_policy_list.do"
 *local misscellaneuos "hhweight deciles_pc hhsize"
 
 
