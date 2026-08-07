@@ -42,7 +42,8 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 * Country-survey configuration
-global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
+*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
+global run_countries `" "LKA 2019 HIES" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -74,7 +75,26 @@ else if "${country}"=="GMB" & "$survey_year" =="2020" & "$survey" =="IHS"{
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_GMB_S2020_P2020_v01"
 }
-
+else if "${country}"=="COL" & "$survey_year" =="2021" & "$survey" =="GEIH"{
+	global country_data "${microdata}/${country}/COL_GEIH_S2021_P2021_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "COL_GEIH_S2021_P2021_v01"
+}
+else if "${country}"=="AGO" & "$survey_year" =="2018" & "$survey" =="IDREA"{
+	global country_data "${microdata}/${country}/AGO_IDREA_S2018_P2023_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD_AGO_S2018_P2023_v01"
+}
+else if "${country}"=="LKA" & "$survey_year" =="2019" & "$survey" =="HIES"{
+	global country_data "${microdata}/${country}/LKA_HIES_S2019_P2024_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD"
+}
+else if "${country}"=="MNG" & "$survey_year" =="2022" & "$survey" =="HSES"{
+	global country_data "${microdata}/${country}/MNG_HSES_S2022_P2022_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD"
+}
 *============================================================================*
 **# 1. Data infrastrucure
 *============================================================================*
@@ -95,7 +115,9 @@ else if "${country}"=="GMB" & "$survey_year" =="2020" & "$survey" =="IHS"{
 
 
 use "$HFMD_data/${file}_h", clear
-* B. Verifies that all expected variables are present, drops extra variables, and checks that variables are either populated or completely empty. Completely missing fiscal instrument variables indicate that the instrument or program was not simulated.
+
+
+* B. Verifies that all expected variables are present, drops extra variables, and checks that variables are either populated or completely empty. Completely missing fiscal instrument variables indicate that the instrument or program was not simulated
 include "${scripts}/1-02-datastructure_complete_variables.do"
 
 * C. Verifies that combined spatial-temporal deflators are equal to the product of the corresponding spatial and temporal deflators.

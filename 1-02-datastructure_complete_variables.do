@@ -1,6 +1,39 @@
 *---------------------------------------------------------------
 * Check expected variable structure
 *---------------------------------------------------------------
+* Creeating sections
+cap drop section*
+
+gen section1 = .
+gen section2 = .
+gen section3 = .
+gen section4 = .
+gen section5 = .
+gen section5_1 = .
+gen section5_2 = .
+gen section5_3 = .
+gen section5_4 = .
+gen section5_5 = .
+gen section5_6 = .
+gen section5_7 = .
+
+dis "Sections to the database created"
+sleep 1000
+
+label var section1 "*** Section 1: Identification and survey design variables ***"
+label var section2 "*** Section 2: Price conversion variables ***"
+label var section3 "*** Section 3: Welfare and price variables ***"
+label var section4 "*** Section 4: Income concept variables ***"  
+label var section5 "*** Section 5: Fiscal instruments ***"
+label var section5_1 "*** Subsection 5.1: Contributory pension & contributions ***"
+label var section5_2 "*** Subsection 5.2: Direct taxes ***"
+label var section5_3 "*** Subsection 5.3: Direct transfers ***"
+label var section5_4 "*** Subsection 5.4: Subsidies ***"
+label var section5_5 "*** Subsection 5.5: Indirect taxes ***"
+label var section5_6 "*** Subsection 5.6: In-kind education ***"
+label var section5_7 "*** Subsection 5.7: In-kind health ***"
+
+
 * List of variables expected in the final HFMD database
 local expected ///
 section1 cp_model country syear_i syear_f p_year version hhid hhsize ae hhweight popweight hhweight_sy popweight_sy urban region ///
@@ -45,6 +78,8 @@ assert "`extra'" == ""
 
 di as result "Variable structure check passed: all expected variables are present and extra variables were removed if needed."
 sleep 2000
+
+order `expected'
 
 *---------------------------------------------------------------
 **# 2. Check that variables are consistently coded
