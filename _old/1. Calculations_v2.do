@@ -17,14 +17,16 @@
    timer clear 1
    timer on 1
    
-*---> A.1 Paths are defined once in revamp trunk
-if "$root"=="" {
-	di as err "Missing required global root. Define it in 00-Trunk_Revamp.do."
-	exit 198
+*---> A.1 Define user paths
+if "`c(username)'"=="wb419055" {
+	global root     	"C:\Users\wb419055\OneDrive - WBG\GSG3\GSG Fiscal Equity - WB Group - Fiscal Equity Hub\Workspace\Data-Hub"	
+
+   global scripts		"${root}/02-Scripts/wb419055"
 }
 
-if "$scripts"=="" {
-	global scripts "${root}/02-Scripts/wb419055"
+if "`c(username)'"=="wb527706" {
+	global root     	"C:\Users\wb527706\OneDrive - WBG\GSG Fiscal Equity - WB Group - Data Hub"	
+    global scripts		"${root}/02-Scripts/wb527706"
 }
 
 
@@ -109,41 +111,40 @@ foreach j of global taxonomy_components  {
 
 
 *============================================================================*
-*--->	B. Core dataset selection (single-country mode)
+*--->	B. Detecting microdata 
 *============================================================================*
 
-* This file runs one country/dataset per execution.
-* The trunk should set:
-*   - $core_dataset_path
-*   - $core_dataset_name (optional)
-*   - $core_country (optional ISO3)
+* This code explore all subfolders available within each folder and search foll
+* all dta files in there. It create asserts that the dta files have the same naming
+* structure namely. It saves a global that 
 
-if "$core_dataset_path"=="" {
-	di as err "Missing required global: core_dataset_path"
-	exit 198
+*---> B.1 Identify each dataset 
+	global n_datasets 0
+
+local dirs1 : dir `"${microdata}"' dirs "*"
+
+foreach subf of local dirs1 {
+    local cty : di strupper("`subf'")
+    local cty_path `"${microdata}/`subf'"'
+    local cty_count 0
+    local dirs2 : dir `"`cty_path'"' dirs "*"
+
+    foreach subf2 of local dirs2 {
+        * Fixed structure: CountryName/dataname/HFMD/dataname.dta
+        local hfmd_path `"`cty_path'/`subf2'/HFMD"'
+        local f_upper : di strupper("`subf2'")
+        local files : dir `"`hfmd_path'"' files "*.dta"
+
+        foreach f of local files {
+            local f_upper : di strupper("`f'")
+            local cty_count = `cty_count' + 1
+            global n_datasets   = ${n_datasets} + 1
+            global path_${n_datasets}  `"`hfmd_path'/`f_upper'"'
+            global cty_${n_datasets}   "`cty'_`cty_count'" // * @jmmonroyb, names for each country shoudl use database id SEN_S2022_P2022, so we avoid Senegal_2 that when this is scaled up create confusions 
+            global fname_${n_datasets} "`f_upper'"
+        }
+    }
 }
-
-capture confirm file "$core_dataset_path"
-if _rc {
-	di as err "core_dataset_path not found: $core_dataset_path"
-	exit 601
-}
-
-if "$core_dataset_name"=="" {
-	local _name = subinstr("$core_dataset_path", "\\", "/", .)
-	local _name = reverse(word(reverse("`_name'"),1,"/"))
-	global core_dataset_name "`_name'"
-}
-
-if "$core_country"=="" {
-	global core_country = upper(substr("$core_dataset_name",1,3))
-}
-
-* Keep existing variable references by setting one-slot globals.
-global n_datasets 1
-global path_1 "$core_dataset_path"
-global cty_1 "$core_country"
-global fname_1 "$core_dataset_name"
 
 
 *===============================================================================
@@ -320,18 +321,21 @@ save `output_quantiles', replace
 *---> C.3 Compiling and saving data 
 foreach indicator in share uinc cinc cov  {
 	foreach y in ym yd {
-		local i = 1
-		use "$dataaux/`indicator'_`y'_`i'", clear
-		
-		if "`y'"=="ym" & "`indicator'"=="share" {
-			save "$dataaux/final_dist.dta", replace
-		}
-		else {
-			append using "$dataaux/final_dist.dta"
-			save "$dataaux/final_dist.dta", replace
+		forvalues i = 1/$n_datasets {	
+			
+			use "$dataaux/`indicator'_`y'_`i'", clear
+			
+			if `i'==1 & "`y'"=="ym" & "`indicator'"=="share" {
+				save "$dataaux/final_dist.dta", replace
+			}
+			else {
+				append using "$dataaux/final_dist.dta"
+				save "$dataaux/final_dist.dta", replace
 
-			isid indicator category instrument income povertyline partition pension country dataset, sort
-		}
+				isid indicator category instrument income povertyline partition pension country dataset, sort
+			}	
+			
+		} // eo foreach country
 	} // eo foreach y
 } // eo foreach indicator
 
@@ -500,9 +504,20 @@ save "$dataaux/pov_ineq_`i'.dta", replace
 
 *---> D.3 Compiling and saving data
 
-local i = 1
-use "$dataaux/pov_ineq_`i'.dta", clear
-save "$dataaux/final_pov_ineq.dta", replace
+forvalues i = 1/$n_datasets {	
+			
+			use "$dataaux/pov_ineq_`i'.dta", clear
+			
+			if `i'==1 {
+				save "$dataaux/final_pov_ineq.dta", replace
+			}
+			else {
+				append using "$dataaux/final_pov_ineq.dta"
+				save "$dataaux/final_pov_ineq.dta", replace
+				isid indicator category instrument income povertyline partition pension country dataset, sort
+			}	
+			
+} // eo foreach country
 
 
 *===============================================================================
@@ -536,7 +551,6 @@ save "$dataaux/final_pov_ineq.dta", replace
 
 	export excel using "$dataout/01-Cleaned-FIA-Indicators.dta", sheet("database", replace) first(variable)  
 	save "$dataout/01-Cleaned-FIA-Indicators.dta", replace
-	save "$dataout/01-Cleaned-FIA-Indicators_${core_country}.dta", replace
 
 	
 
