@@ -1,33 +1,23 @@
 *---------------------------------------------------------------
-**# Load official household size adjustment from FIA metadata
+**# Official household size adjustment 
 *---------------------------------------------------------------
-preserve
-import excel "$country_data/Master_data/documentation/Metadata_FIA", clear firstrow
-
-* Keep the FIA metadata indicator for the official household size adjustment
-keep if inlist(ID, 22)
-
-* Store FIA metadata response in local response_ID
-forvalues i = 1/`=_N' {
-    
-    local id = ID[`i']
-    local response_`id' = Response[`i']
-}
-
-di as txt "Stored FIA metadata value for household size adjustment as local response_22"
+sum division_unit
+local division_unit = `r(mean)'
+dis `division_unit'
 
 * Define the adjustment factor according to the official metadata
-if "`response_22'" == "Per capita" {
+if "`division_unit'" == "2" {
     global hh_adj "hhsize"
+	local label_division_unit "Per capita"
 }
-else if "`response_22'" == "Adult equivalent" {
+else if "`division_unit'" == "1" {
     global hh_adj "ae"
+	global label_division_unit "Adult equivalent"
 }
 else {
-    di as error "ERROR: Household size adjustment not recognized: `response_22'"
+    di as error "ERROR: Household size adjustment not recognized: `division_unit'"
     exit 498
 }
-restore
 
 
 *---------------------------------------------------------------
@@ -38,15 +28,15 @@ foreach income in ym yp yn yd yc yf {
     * Convert household income aggregates into official units
     gen `income'_unit = `income' / ${hh_adj}
 		  local income_label : variable label `income'
-	 label var `income'_unit "`income_label' (`response_22')"
+	 label var `income'_unit "`income_label' (`label_division_unit')"
 	
     * Create spatial-temporal deflated income for distribution groups
     gen `income'_unit_df = `income'_unit / def_sp_tmp_nat
-	label var `income'_unit_df "`income_label' (`response_22'), deflacted"
+	label var `income'_unit_df "`income_label' (`label_division_unit'), deflacted"
 	
 }
 
-di as result "Household income aggregates have been adjusted using the official household size adjustment. (${country}: `response_22')"
+di as result "Household income aggregates have been adjusted using the official household size adjustment. (${country}: `label_division_unit')"
 sleep 2000
 
 
@@ -70,9 +60,9 @@ foreach income in ym yp yn yd yc yf {
         xtile `income'_pvpc_unit = `income'_unit_df [aw = hhweight * hhsize] if !missing(`income'_unit_df), nq(100)
     }
 
-    label var `income'_pvdc_unit "Deciles based on `income' (`response_22') spatial-temporal deflated"
+    label var `income'_pvdc_unit "Deciles based on `income' (`label_division_unit') spatial-temporal deflated"
 
-    label var `income'_pvpc_unit "Percentiles based on `income' (`response_22') spatial-temporal deflated"
+    label var `income'_pvpc_unit "Percentiles based on `income' (`label_division_unit') spatial-temporal deflated"
 
     drop `income'_unit_df
 }

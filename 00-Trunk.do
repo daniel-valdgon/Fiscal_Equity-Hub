@@ -43,7 +43,7 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 * Country-survey configuration
 *global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
-global run_countries `" "LKA 2019 HIES" "'
+global run_countries `" "MRT 2019 EPCV" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -95,6 +95,12 @@ else if "${country}"=="MNG" & "$survey_year" =="2022" & "$survey" =="HSES"{
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD"
 }
+else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
+	global country_data "${microdata}/${country}/ECU_ENEMDU_S2024_P2024_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "ECU_ENEMDU_S2024_P2024_v01"
+}
+
 *============================================================================*
 **# 1. Data infrastrucure
 *============================================================================*
@@ -113,9 +119,7 @@ else if "${country}"=="MNG" & "$survey_year" =="2022" & "$survey" =="HSES"{
 *include "${scripts}/0-01-aux_policy_list.do"
 *local misscellaneuos "hhweight deciles_pc hhsize"
 
-
 use "$HFMD_data/${file}_h", clear
-
 
 * B. Verifies that all expected variables are present, drops extra variables, and checks that variables are either populated or completely empty. Completely missing fiscal instrument variables indicate that the instrument or program was not simulated
 include "${scripts}/1-02-datastructure_complete_variables.do"
