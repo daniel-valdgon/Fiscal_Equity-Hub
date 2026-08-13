@@ -27,6 +27,13 @@ if "$scripts"=="" {
 	global scripts "${root}/02-Scripts/wb419055"
 }
 
+else if "`c(username)'"=="wb527706" {
+	global root     	"C:\Users\wb527706\OneDrive - WBG\GSG Fiscal Equity - WB Group - Data-Hub"	
+}
+
+else if "`c(username)'"=="wb527706" {
+	global scripts "${root}/02-Scripts/wb527706"
+}
 *---> A.2 Define project folder paths. 
 *         Input folders: Country economists will share either the microdata or
 *         the core indicators, if both are shared, the code should validate the
