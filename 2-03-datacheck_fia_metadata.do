@@ -2,7 +2,14 @@
 **# Load FIA metadata values for poverty and inequality checks
 *---------------------------------------------------------------
 preserve
-import excel "$country_data/Master_data/documentation/Metadata_FIA",  clear firstrow
+import excel "$country_data/Master_data/documentation/Metadata_FIA", clear 
+
+drop E F
+rename (A B C D) (ID Type Variable Response)
+drop if ID=="ID" 
+drop if Variable==""
+	destring ID, replace
+
 
 * Keep only FIA metadata indicators used in the replication checks
 keep if inlist(ID, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,18)
@@ -80,18 +87,20 @@ order label data
 * 3. Assign FIA metadata IDs to replicated indicators
 *---------------------------------------------------------------
 gen ID = .
-
+replace ID = 8  if label == "gini_ym_nat_pov"
 replace ID = 9  if label == "gini_yp_nat_pov"
 replace ID = 10  if label == "gini_yn_nat_pov"
 replace ID = 11 if label == "gini_yd_nat_pov"
 replace ID = 12 if label == "gini_yc_nat_pov"
 replace ID = 13 if label == "gini_yf_nat_pov"
 
+replace ID = 14 if label == "pov_ym_nat_pov1"
 replace ID = 15 if label == "pov_yp_nat_pov1"
 replace ID = 16 if label == "pov_yn_nat_pov1"
 replace ID = 17 if label == "pov_yd_nat_pov1"
 replace ID = 18 if label == "pov_yc_nat_pov1"
 
+drop if label =="pov_yf_nat_pov1" //not measuring poverty with the final income
 keep if !missing(ID)
 sort ID
 order ID label data
