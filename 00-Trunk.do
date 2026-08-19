@@ -17,8 +17,9 @@ if "`c(username)'"=="wb419055" {
 }
 
 else if "`c(username)'"=="wb527706" {
-	global root     	"C:\Users\wb527706\OneDrive - WBG\GSG Fiscal Equity - WB Group - Data-Hub"	
+	global root     	"C:\Users\wb527706\OneDrive - WBG\Data Hub"	
 }
+
 else if "`c(username)'"=="Silvia" {
 	global root     	"C:\Users\Silvia\OneDrive\World Bank\Projects\Data-Hub"	
    global scripts		"${root}/02-Scripts/Silvia"
@@ -41,8 +42,8 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 * Country-survey configuration
-*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
-global run_countries `" "MRT 2019 EPCV" "'
+*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "'
+global run_countries `" "MNG 2022 HSES" "'
 foreach config of global run_countries {
 
 global run_country "`config'"

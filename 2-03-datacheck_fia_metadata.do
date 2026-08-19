@@ -129,12 +129,19 @@ foreach num of local ids_to_check {
 
 foreach num of local ids_to_check {
 
-    assert abs(FIA_metadata - data) < 1 if ID == `num'
+    levelsof label if ID == `num', local(lbl) clean
 
-    di as result "Assert passed for ID `num'"
+    capture assert abs(FIA_metadata - data) < 1 if ID == `num'
+
+    if _rc == 0 {
+        di as result "`lbl': CHECK PASSED (comparing results from data with FIA metadata)"
+    }
+    else {
+        di as error "`lbl': CHECK NO PASSED (comparing results from data with FIA metadata)"
+    }
 }
 
-di "All available FIA metadata (gini/poverty) checks passed."
+di "All available FIA metadata (gini/poverty) checks done."
 sleep 2000
 restore
 

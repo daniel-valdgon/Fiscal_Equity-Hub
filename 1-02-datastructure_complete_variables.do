@@ -43,7 +43,7 @@ section2 def_sp_nat def_tmp_nat def_sp_tmp_nat cpi_2017 ppp_2017 cpi_2021 ppp_20
 section3 zref1 ///
 section4 ym yp yn yd yc yf ///
 section5 ///
-section5_1 pension_total sscontribs_pensions sscontribs_pensions_employee sscontribs_pensions_employer sscontribs_nopensions sscontribs_nopensions_employee sscontribs_nopensions_employer ///
+section5_1 pension_total ssc_pensions ssc_pensions_employee ssc_pensions_employer ssc_nopensions ssc_nopensions_employee ssc_nopensions_employer ///
 section5_2 dirtax_total dirtax_PIT dirtax_proll dirtax_property dirtax_bit dirtax_capital dirtax_other ///
 section5_3 dirtransf_total dtr_soc_ass dtr_soc_ins dtr_cash dtr_ocash dtr_wp dtr_inkind dtr_other ///
 section5_4 subsidy_total subs_elec_total subs_fuel_total subs_water_total subs_food_total subs_agric_total subs_other_total subsidy_elec_direct subsidy_elec_indirect subsidy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect subsidy_food_direct subsidy_food_indirect subsidy_agric_direct subsidy_agric_indirect ///
