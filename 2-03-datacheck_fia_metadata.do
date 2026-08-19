@@ -131,13 +131,20 @@ foreach num of local ids_to_check {
 
     levelsof label if ID == `num', local(lbl) clean
 
+    quietly summarize data if ID == `num', meanonly
+    local data_value = r(mean)
+
+    quietly summarize FIA_metadata if ID == `num', meanonly
+    local fia_value = r(mean)
+
     capture assert abs(FIA_metadata - data) < 1 if ID == `num'
 
     if _rc == 0 {
         di as result "`lbl': CHECK PASSED (comparing results from data with FIA metadata)"
     }
     else {
-        di as error "`lbl': CHECK NO PASSED (comparing results from data with FIA metadata)"
+        di as error "`lbl': CHECK NO PASSED | Data = " %6.2f `data_value' ///
+            " | FIA metadata = " %6.2f `fia_value'
     }
 }
 

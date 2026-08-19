@@ -111,40 +111,54 @@ else {
     order ID label data
 
 
-    *---------------------------------------------------------------
-    **# 5. Bring PIP values from locals and validate replication
-    *---------------------------------------------------------------
+*---------------------------------------------------------------
+**# 5. Bring PIP values from locals and validate replication
+*---------------------------------------------------------------
 
-    gen PIP_data = .
+gen PIP_data = .
 
-    forvalues i = 1/3 {
+local all_pip_passed = 1
 
-        local pip_value "`pov_`i'_PPP2021'"
+forvalues i = 1/3 {
 
-        if "`pip_value'" == "" {
-            di as error "Missing local pov_`i'_PPP2021"
-            exit 498
-        }
+    local pip_value "`pov_`i'_PPP2021'"
+    local povline : word `i' of `povlines'
+
+    if "`pip_value'" == "" {
+        di as error "PIP check for poverty line `povline': NO - PIP value missing"
+        local all_pip_passed = 0
+    }
+
+    else {
 
         replace PIP_data = `pip_value' if ID == `i'
 
         quietly count if ID == `i'
         assert r(N) == 1
 
-        capture assert abs(PIP_data - data) < 1 if ID == `i'
-        local rc = _rc
+        quietly sum data if ID == `i', meanonly
+        local data_value = r(mean)
 
-        if `rc' != 0 {
-            di as error "PIP check failed for international poverty line ID `i'"
-            list ID label data PIP_data if ID == `i', noobs
-            exit `rc'
+        capture assert abs(PIP_data - data) < 1 if ID == `i'
+
+        if _rc == 0 {
+            di as result "PIP check for poverty line `povline': PASSED"
         }
 
-        di as result "Assert passed for international poverty line ID `i' (rate: `pip_value')"
+        else {
+            di as error "PIP check for poverty line `povline': NO | Data = " %6.2f `data_value' " | PIP = " %6.2f `pip_value'
+            local all_pip_passed = 0
+        }
     }
-
-    di as result "All available PIP data checks passed."
-    sleep 2000
 }
 
+if `all_pip_passed' {
+    di as result "All available PIP data checks passed."
+}
+else {
+    di as error "Some PIP data checks did not pass."
+}
+
+sleep 2000
+}
 restore
