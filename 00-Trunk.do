@@ -47,8 +47,10 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 * Country-survey configuration
-*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "'
-global run_countries `" "MNG 2022 HSES" "'
+*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
+global run_countries `" "COL 2021 GEIH" "ECU 2023 ENEMDU" "'
+*global run_countries `" "ECU 2023 ENEMDU" "'
+*global run_countries `" "MRT 2019 EPCV" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -104,6 +106,7 @@ else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
 	global country_data "${microdata}/${country}/ECU_ENEMDU_S2024_P2024_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "ECU_ENEMDU_S2024_P2024_v01"
+}
 }
 
 *============================================================================*
@@ -164,7 +167,7 @@ include "${scripts}/2-04-data_check_report.do"
 **# 3. Calculations and data checks on Indicators 
 *============================================================================*
 *all indicators computed here separated in different groups but not more validation checks
-include "${scripts}/3-01-Incidences.do"
+*include "${scripts}/3-01-Incidences.do"
 
 
 

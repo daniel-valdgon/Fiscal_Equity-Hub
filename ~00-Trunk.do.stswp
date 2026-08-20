@@ -48,7 +48,9 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 * Country-survey configuration
 *global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
-global run_countries `" "MRT 2019 EPCV" "'
+global run_countries `" "COL 2021 GEIH" "ECU 2023 ENEMDU" "'
+*global run_countries `" "ECU 2023 ENEMDU" "'
+*global run_countries `" "MRT 2019 EPCV" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -165,7 +167,7 @@ include "${scripts}/2-04-data_check_report.do"
 **# 3. Calculations and data checks on Indicators 
 *============================================================================*
 *all indicators computed here separated in different groups but not more validation checks
-include "${scripts}/3-01-Incidences.do"
+*include "${scripts}/3-01-Incidences.do"
 
 
 

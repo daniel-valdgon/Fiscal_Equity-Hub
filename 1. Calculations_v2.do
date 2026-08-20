@@ -84,7 +84,7 @@ else if "`c(username)'"=="wb527706" {
 
 	import excel "$metadata\correlative_4.xlsx", sheet("instrument") firstrow clear
 	
-foreach i in Directaxes Contributions DirectTransfers Subsidies Indtaxes InKindTransfers {
+    foreach i in Directaxes Contributions DirectTransfers Subsidies Indtaxes InKindTransfers {
 	
     levelsof instrument if type == "`i'", local(`i') clean
 	dis "`i'"
@@ -107,33 +107,6 @@ foreach i in Directaxes Contributions DirectTransfers Subsidies Indtaxes InKindT
 		dis  `"list of `x' : ``x'_pc'"'
 	}
 	
-	*Example: 
-	*list of tax : dirtax_total_pc sscontribs_total_pc
-	*list of indtax : indtax_total_pc Tax_VAT_pc
-	*list of inkind : inktransf_total_pc education_inKind_pc
-	*list of transfer : dirtransf_total_pc
-	*list of Subsidies : subsidy_total_pc subsidy_elec_pc subsidy_fuel_pc subsidy_water_pc
-	*list of income_concepts : ymp_pc yn_pc yd_pc yc_pc yf_pc
-	*list of concs : dirtax_total_pc sscontribs_total_pc indtax_total_pc Tax_VAT_pc dirtransf_total_pc subsidy_total_pc subsidy_elec_pc subsidy_fuel_pc subsidy_water_pc inktransf_total_pc education_inKind_pc ymp_pc yn_pc yd_pc yc_pc yf_pc
-*/
-
-* Drop empty rows
-drop if missing(`col_x') | missing(`col_y')
-
-* Get the list of unique types
-levelsof `col_y', local(types)
-
-* Loop over each type and build a global
-foreach type of local types {
-
-    * Collect all instruments that belong to this type
-    levelsof `col_x' if `col_y' == "`type'", local(instruments) clean
-
-    * Store as a global named after the type itself
-    global `type' "`instruments'"
-
-    di "Global $`type' created → ${`type'}"
-}
 
 *---> A.5 Other macros. Poverty lines  
 
@@ -205,6 +178,7 @@ global fname_1 "$core_dataset_name"
 
 *@jmmonroyb, to debug we run with one data and call with a loop all the entire master file to run across countries 
 
+/* NOte> with the new structure to call datasets in the trunk, this previous version need do be checked
 
 local j=0
 forvalues i = 1/$n_datasets {
@@ -215,20 +189,25 @@ local ++j
     global datasetname  "${fname_`i'}"
 	global indivname "d_`i'" // @jmmonroyb, do we need this? 
     di "Processing: ${path_`i'} - Sheet: ${sheetname}"
+*/
 
-    use `"${path_`i'}"', clear
+
+*    use `"${path_`i'}"', clear
+
+
+use "$HFMD_data/${file}_h", clear
 
 	*General variables that could serve multiple indicators are created once here 
 	foreach bins in deciles centile millile {
     	cap  drop *`bins'_pc* 
 	}
 
-	rename (ymp_pc ) (ym_pc )
+	*rename (ymp_pc ) (ym_pc )
 	
 	foreach y in ym yd {
-		quantiles `y'_pc [w=pondih], gen(`y'_millile_pc) nq(1000) stable
-		quantiles `y'_pc [w=pondih], gen(`y'_centile_pc) nq(100) stable
-		quantiles `y'_pc [w=pondih], gen(`y'_decile_pc) nq(10) stable
+		quantiles `y'_pc [w=hhweight], gen(`y'_millile_pc) nq(1000) stable
+		quantiles `y'_pc [w=hhweight], gen(`y'_centile_pc) nq(100) stable
+		quantiles `y'_pc [w=hhweight], gen(`y'_decile_pc) nq(10) stable
     }
 		* Note on bins: bins are created in the code to ensure consistent construction across countries.
 		*		quantiles correct (in a different way) than _ebin by ties between observations when defining the different bins. 
