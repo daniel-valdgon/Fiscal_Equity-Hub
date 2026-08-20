@@ -105,6 +105,7 @@ else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
 	global HFMD_data "${country_data}/HFMD"
 	global file "ECU_ENEMDU_S2024_P2024_v01"
 }
+}
 
 *============================================================================*
 **# 1. Data infrastrucure
