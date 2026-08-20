@@ -2,7 +2,14 @@
 **# Load FIA metadata values for poverty and inequality checks
 *---------------------------------------------------------------
 preserve
-import excel "$country_data/Master_data/documentation/Metadata_FIA",  clear firstrow
+import excel "$country_data/Master_data/documentation/Metadata_FIA", clear 
+
+drop E F
+rename (A B C D) (ID Type Variable Response)
+drop if ID=="ID" 
+drop if Variable==""
+	destring ID, replace
+
 
 * Keep only FIA metadata indicators used in the replication checks
 keep if inlist(ID, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,18)
@@ -80,18 +87,20 @@ order label data
 * 3. Assign FIA metadata IDs to replicated indicators
 *---------------------------------------------------------------
 gen ID = .
-
+replace ID = 8  if label == "gini_ym_nat_pov"
 replace ID = 9  if label == "gini_yp_nat_pov"
 replace ID = 10  if label == "gini_yn_nat_pov"
 replace ID = 11 if label == "gini_yd_nat_pov"
 replace ID = 12 if label == "gini_yc_nat_pov"
 replace ID = 13 if label == "gini_yf_nat_pov"
 
+replace ID = 14 if label == "pov_ym_nat_pov1"
 replace ID = 15 if label == "pov_yp_nat_pov1"
 replace ID = 16 if label == "pov_yn_nat_pov1"
 replace ID = 17 if label == "pov_yd_nat_pov1"
 replace ID = 18 if label == "pov_yc_nat_pov1"
 
+drop if label =="pov_yf_nat_pov1" //not measuring poverty with the final income
 keep if !missing(ID)
 sort ID
 order ID label data
@@ -120,12 +129,26 @@ foreach num of local ids_to_check {
 
 foreach num of local ids_to_check {
 
-    assert abs(FIA_metadata - data) < 1 if ID == `num'
+    levelsof label if ID == `num', local(lbl) clean
 
-    di as result "Assert passed for ID `num'"
+    quietly summarize data if ID == `num', meanonly
+    local data_value = r(mean)
+
+    quietly summarize FIA_metadata if ID == `num', meanonly
+    local fia_value = r(mean)
+
+    capture assert abs(FIA_metadata - data) < 1 if ID == `num'
+
+    if _rc == 0 {
+        di as result "`lbl': CHECK PASSED (comparing results from data with FIA metadata)"
+    }
+    else {
+        di as error "`lbl': CHECK NO PASSED | Data = " %6.2f `data_value' ///
+            " | FIA metadata = " %6.2f `fia_value'
+    }
 }
 
-di "All available FIA metadata (gini/poverty) checks passed."
+di "All available FIA metadata (gini/poverty) checks done."
 sleep 2000
 restore
 

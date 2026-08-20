@@ -12,7 +12,7 @@ if "`division_unit'" == "2" {
 }
 else if "`division_unit'" == "1" {
     global hh_adj "ae"
-	global label_division_unit "Adult equivalent"
+	local label_division_unit "Adult equivalent"
 }
 else {
     di as error "ERROR: Household size adjustment not recognized: `division_unit'"
