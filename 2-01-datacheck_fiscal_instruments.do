@@ -205,6 +205,10 @@ else{
 *---------------------------------------------------------------
 * In-kind transfers
 *---------------------------------------------------------------
+foreach x in education_copay health_copay{
+	replace `x' = `x'*-1
+}
+
 if !missing(education_inKind) | !missing(health_inKind){
 egen inktransf_total_check = rowtotal(education_inKind health_inKind), missing
 
@@ -242,6 +246,10 @@ drop inkeduc_total_check
 else{
 	dis as error "No disaggregation to check education_inKind"
 	sleep 1000
+}
+
+foreach x in education_copay health_copay{
+	replace `x' = `x'*-1
 }
 
 di as result "Fiscal instruments organized, standardized, and checked to sum to totals."
