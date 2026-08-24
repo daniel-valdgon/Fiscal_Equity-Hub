@@ -139,7 +139,7 @@ forvalues i = 1/3 {
         quietly sum data if ID == `i', meanonly
         local data_value = r(mean)
 
-        capture assert abs(PIP_data - data) < 1 if ID == `i'
+        capture assert abs(PIP_data - data) < 0.5 if ID == `i'
 
         if _rc == 0 {
             di as result "PIP check for poverty line `povline': PASSED"
