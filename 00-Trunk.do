@@ -47,10 +47,8 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 * Country-survey configuration
-*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "'
-global run_countries `" "COL 2021 GEIH" "ECU 2023 ENEMDU" "'
-*global run_countries `" "ECU 2023 ENEMDU" "'
-*global run_countries `" "MRT 2019 EPCV" "'
+*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "'
+global run_countries `" "AGO 2018 IDREA" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -86,11 +84,13 @@ else if "${country}"=="COL" & "$survey_year" =="2021" & "$survey" =="GEIH"{
 	global country_data "${microdata}/${country}/COL_GEIH_S2021_P2021_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "COL_GEIH_S2021_P2021_v01"
+	global GMD_file  "${country_data}\Master_data\data_raw\other_harmonization\GMD\COL_2021_GEIH_V02_M_V01_A_GMD_ALL.dta"
 }
 else if "${country}"=="AGO" & "$survey_year" =="2018" & "$survey" =="IDREA"{
 	global country_data "${microdata}/${country}/AGO_IDREA_S2018_P2023_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_AGO_S2018_P2023_v01"
+	global GMD_file 	"${country_data}\Master_data\data_raw\other_harmonization\GMD\AGO_2018_IDREA_V01_M_V01_A_GMD_GPWG.dta"
 }
 else if "${country}"=="LKA" & "$survey_year" =="2019" & "$survey" =="HIES"{
 	global country_data "${microdata}/${country}/LKA_HIES_S2019_P2024_v01"
@@ -106,8 +106,9 @@ else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
 	global country_data "${microdata}/${country}/ECU_ENEMDU_S2024_P2024_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "ECU_ENEMDU_S2024_P2024_v01"
+	global GMD_file "${country_data}\Master_data\data_raw\other_harmonization\GMD\ECU_2024_ENEMDU_V01_M_V01_A_GMD_ALL.dta"
 }
-}
+
 
 *============================================================================*
 **# 1. Data infrastrucure
@@ -159,9 +160,17 @@ include "${scripts}/2-03-datacheck_fia_metadata.do"
    * PENDING: If the check fails but FIA metadata input 19 is not missing, the code continues and documents the average percentage-point difference for 2021 PPP across the three poverty lines.
 include "${scripts}/2-04-data_check_report.do"
 
- di as result "Ended ${run_country}"
-	sleep 3000
 
+tempfile ${country}_${survey_year}_${survey}
+save `${country}_${survey_year}_${survey}', replace
+
+* E- Merge with GMD database
+*include "${scripts}/2-05-data_check_GMDmerge.do"
+
+
+di as result "Ended ${run_country}"
+	sleep 3000
+	
 }
 *============================================================================*
 **# 3. Calculations and data checks on Indicators 
