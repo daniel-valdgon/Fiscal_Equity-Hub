@@ -48,7 +48,7 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 * Country-survey configuration
 *global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "'
-global run_countries `" "AGO 2018 IDREA" "'
+global run_countries `" "SEN 2021 EHCVM" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -57,57 +57,11 @@ global run_country "`config'"
     global survey_year : word 2 of $run_country
     global survey      : word 3 of $run_country
 
+	include "${scripts}/1-01-paths_country_cases.do"
+	
     di as result "Running ${run_country}"
+	di as result "---------------------------"
 	sleep 3000
-
-if "${country}"=="GNQ" & "$survey_year" =="2022" & "$survey" =="ENH2"{
-	global country_data "${microdata}/${country}/GNQ_ENH2_S2022_P2022_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD_GNQ_S2022_P2022_v01"
-}
-else if "${country}"=="SEN" & "$survey_year" =="2021" & "$survey" =="EHCVM"{
-	global country_data "${microdata}/${country}/SEN_EHCVM_S2021_P2021_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD_SEN_S2021_P2021_v01"
-}
-else if "${country}"=="MRT" & "$survey_year" =="2019" & "$survey" =="EPCV"{
-	global country_data "${microdata}/${country}/MRT_EPCV_S2019_P2019_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD_MRT_S2019_P2019_v01"
-}
-else if "${country}"=="GMB" & "$survey_year" =="2020" & "$survey" =="IHS"{
-	global country_data "${microdata}/${country}/GMB_IHS_S2020_P2020_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD_GMB_S2020_P2020_v01"
-}
-else if "${country}"=="COL" & "$survey_year" =="2021" & "$survey" =="GEIH"{
-	global country_data "${microdata}/${country}/COL_GEIH_S2021_P2021_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "COL_GEIH_S2021_P2021_v01"
-	global GMD_file  "${country_data}\Master_data\data_raw\other_harmonization\GMD\COL_2021_GEIH_V02_M_V01_A_GMD_ALL.dta"
-}
-else if "${country}"=="AGO" & "$survey_year" =="2018" & "$survey" =="IDREA"{
-	global country_data "${microdata}/${country}/AGO_IDREA_S2018_P2023_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD_AGO_S2018_P2023_v01"
-	global GMD_file 	"${country_data}\Master_data\data_raw\other_harmonization\GMD\AGO_2018_IDREA_V01_M_V01_A_GMD_GPWG.dta"
-}
-else if "${country}"=="LKA" & "$survey_year" =="2019" & "$survey" =="HIES"{
-	global country_data "${microdata}/${country}/LKA_HIES_S2019_P2024_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD"
-}
-else if "${country}"=="MNG" & "$survey_year" =="2022" & "$survey" =="HSES"{
-	global country_data "${microdata}/${country}/MNG_HSES_S2022_P2022_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD"
-}
-else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
-	global country_data "${microdata}/${country}/ECU_ENEMDU_S2024_P2024_v01"
-	global HFMD_data "${country_data}/HFMD"
-	global file "ECU_ENEMDU_S2024_P2024_v01"
-	global GMD_file "${country_data}\Master_data\data_raw\other_harmonization\GMD\ECU_2024_ENEMDU_V01_M_V01_A_GMD_ALL.dta"
-}
 
 
 *============================================================================*
@@ -118,26 +72,17 @@ else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
 
 * It create a dataset with information available in the datalab and save it
 * It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
-* Name of files should adapt to the ID shared by Pechi (Now)
 
-*qui: include "${scripts}/1-01-Inventory.do"
-*dis `"`file_list'"'
-
-* A. Policy List  & income concept
-/*Loading list of policies*/ 
-*include "${scripts}/0-01-aux_policy_list.do"
-*local misscellaneuos "hhweight deciles_pc hhsize"
-
+* Household database
 use "$HFMD_data/${file}_h", clear
 
-* B. Verifies that all expected variables are present, drops extra variables, and checks that variables are either populated or completely empty. Completely missing fiscal instrument variables indicate that the instrument or program was not simulated
+* A. Verifies that all expected variables are present, drops extra variables, and checks that variables are either populated or completely empty. Completely missing fiscal instrument variables indicate that the instrument or program was not simulated
 include "${scripts}/1-02-datastructure_complete_variables.do"
 
-* C. Verifies that combined spatial-temporal deflators are equal to the product of the corresponding spatial and temporal deflators.
-display as error "REVISAR CONSISTENCIA DE DEFLACTORES"
-*include "${scripts}/1-03-datastructure_deflators_check.do"
+* B. Verifies that combined spatial-temporal deflators are equal to the product of the corresponding spatial and temporal deflators.
+include "${scripts}/1-03-datastructure_deflators_check.do"
 
-* D. Applies the official household size adjustment, either per capita or adult equivalent, and creates income variables in real terms for national and international poverty measurement.
+* C. Applies the official household size adjustment, either per capita or adult equivalent, and creates income variables in real terms for national and international poverty measurement.
 include "${scripts}/1-04-datastructure_unit_adjust_real_terms.do"
 
 *============================================================================*
@@ -156,31 +101,19 @@ include "${scripts}/2-03-datacheck_fia_metadata.do"
 * D. International poverty line
    * Loads international poverty estimates from PIP for the same country, survey year, and survey acronym used in the FIA.
    * Replicates international poverty rates from the microdata using disposable income and the available PPP poverty lines.
-   * Allows a maximum difference of 1 percentage point. 
-   * PENDING: If the check fails but FIA metadata input 19 is not missing, the code continues and documents the average percentage-point difference for 2021 PPP across the three poverty lines.
 include "${scripts}/2-04-data_check_report.do"
-
 
 tempfile ${country}_${survey_year}_${survey}
 save `${country}_${survey_year}_${survey}', replace
 
-* E- Merge with GMD database
-*include "${scripts}/2-05-data_check_GMDmerge.do"
-
+* E. Merge with GMD database
+include "${scripts}/2-05-data_check_GMDmerge.do"
 
 di as result "Ended ${run_country}"
+di as result "---------------------------"
 	sleep 3000
 	
 }
-*============================================================================*
-**# 3. Calculations and data checks on Indicators 
-*============================================================================*
-*all indicators computed here separated in different groups but not more validation checks
-*include "${scripts}/3-01-Incidences.do"
-
-
-
-
 exit
 
 	

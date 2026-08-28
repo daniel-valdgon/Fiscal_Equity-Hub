@@ -31,12 +31,6 @@ restore
 * using HFMD data and compare against PIP results
 *---------------------------------------------------------------
 preserve
-if "$country" == "SEN" {
-    di as error "Senegal omitted since PIP results are not updated to the latest changes."
-	sleep 2000
-}
-
-else {   
     *---------------------------------------------------------------
     **# 1. Check required variables
     *---------------------------------------------------------------
@@ -160,5 +154,5 @@ else {
 }
 
 sleep 2000
-}
+
 restore
