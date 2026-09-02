@@ -137,14 +137,14 @@ foreach j of global taxonomy_components  {
 *   - $core_dataset_path
 *   - $core_dataset_name (optional)
 *   - $core_country (optional ISO3)
-
+/*
 
 if "$core_dataset_path"=="" {
 	di as err "Missing required global: core_dataset_path"
 	exit 198
 }
-
-capture confirm file "$core_dataset_path"
+*/
+/*capture confirm file "$core_dataset_path"
 if _rc {
 	di as err "core_dataset_path not found: $core_dataset_path"
 	exit 601
@@ -166,7 +166,7 @@ global path_1 "$core_dataset_path"
 global cty_1 "$core_country"
 global fname_1 "$core_dataset_name"
 
-
+*/
 *===============================================================================
 *---> C. Netcash Position for ymp and yd.
 *        Generating incidence (relative) by decil (pre-fiscal and disposable)
@@ -187,7 +187,7 @@ local ++j
 	* globals to call dataset and define the spreadsheet name .
 	global sheetname    "${cty_`i'}"
     global datasetname  "${fname_`i'}"
-	global indivname "d_`i'" // @jmmonroyb, do we need this? 
+	global indivname "d_`i'" // @jmmonroyb, do we need this? No given a chance in the way we call datasets 
     di "Processing: ${path_`i'} - Sheet: ${sheetname}"
 */
 
@@ -195,23 +195,31 @@ local ++j
 *    use `"${path_`i'}"', clear
 
 
+global run_countries `" "ECU 2024 ENEMDU" "'
+foreach config of global run_countries {
+
+global run_country "`config'"
+
+    global country     : word 1 of $run_country
+    global survey_year : word 2 of $run_country
+    global survey      : word 3 of $run_country
+
+	include "${scripts}/1-01-paths_country_cases.do"
+	
+    di as result "Running ${run_country}"
+	di as result "---------------------------"
+	sleep 3000
+
+
+* Obj: This section will include protocols to revise the databases, q-check over the FIA data
+
+* It create a dataset with information available in the datalab and save it
+* It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
+
+* Household database
 use "$HFMD_data/${file}_h", clear
 
-	*General variables that could serve multiple indicators are created once here 
-	foreach bins in deciles centile millile {
-    	cap  drop *`bins'_pc* 
-	}
 
-	*rename (ymp_pc ) (ym_pc )
-	
-	foreach y in ym yd {
-		quantiles `y'_pc [w=hhweight], gen(`y'_millile_pc) nq(1000) stable
-		quantiles `y'_pc [w=hhweight], gen(`y'_centile_pc) nq(100) stable
-		quantiles `y'_pc [w=hhweight], gen(`y'_decile_pc) nq(10) stable
-    }
-		* Note on bins: bins are created in the code to ensure consistent construction across countries.
-		*		quantiles correct (in a different way) than _ebin by ties between observations when defining the different bins. 
-		*      _ebin include the boundary observation above. This implies some mmistmatches, more in larger datasets like COL (66 mistmacthces)
 
 	tempfile output
 	save `output', replace 
@@ -225,12 +233,16 @@ use "$HFMD_data/${file}_h", clear
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
 set seed 80292367
 foreach y in ym yd {
-		foreach x in `tax' `indtax' `transfer' `inkind' `Subsidies' {
+					gen `y'_pc=`y' /hhsize   //need to check with Daniel
+
+		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 			
 			if strpos("`taxes'", "`x'") {
+				gen `x'_pc=`x' /hhsize   //need to check with Daniel
 				gen share_`y'_pc_`x' = - `x'_pc / `y'_pc
 			}
 			else if strpos("`spending'", "`x'") {	
+				gen `x'_pc=`x' /hhsize   //need to check with Daniel
 				gen share_`y'_pc_`x' = `x'_pc / `y'_pc
 			}
 
@@ -244,8 +256,10 @@ foreach y in ym yd {
 
 tempfile output_quantiles
 save `output_quantiles', replace 
+}
 
 
+/*
 *Prepare microdata : milliles and variable that allowed that means compute them 
 
 	foreach y in ym yd {
