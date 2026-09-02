@@ -53,50 +53,27 @@ else if "`c(username)'"=="wb527706" {
 		run "$scripts/_ado/`ado'"
 	}
 	
-*---> A.3 Macros for policies and income concepts values 
-
-	*Original policy instruments, harmonized level of dissagregation should come ideally from a excel file that is core to the harmonization process (@jmmonroyb, create the excel file with the names not as per-capita and wih the meaning of each of them based on the manual, when the excel is read immediately the list of instuments are created) 
-	/*
-	local Directaxes 		"${Directaxes}"
-	local Contributions 	"${Contributions}" 
-	local DirectTransfers   "${DirectTransfers}"
-	local Subsidies         "${Subsidies}"
-	local Indtaxes 			"${Indtaxes}"
-	local InKindTransfers	"${InKindTransfers}" 
-
-	*Gropus adding the totals of each of the previous categories 
-	local tax dirtax_total sscontribs_total `Directaxes' `Contributions' 
-	local indtax indtax_total  Tax_VAT `Indtaxes' //@ Tax_VAT needs to be moved to indtaxes when we have the final excel file with the names
-	local taxes `tax' `indtax'
-	
-	local inkind inktransf_total  education_inKind `InKindTransfers'
-	local transfer dirtransf_total `DirectTransfers' 
-	local Subsidies subsidy_total  subsidy_elec subsidy_fuel subsidy_water `Subsidies' // @jmmonroyb, subsidy_elec subsidy_fuel subsidy_water need to bemoved to `Subsidies' when we have the final excel file
-	local spending `inkind' `transfer' `Subsidies'
-	
-	local income_concepts ym yn yd yc yf 
-	local concs `tax' `indtax' `transfer' `Subsidies' `inkind' `income_concepts' 
-	
-*/
 
 *---> A.3 Macros for policies and income concepts values 
 *         Note: new code added. 
 
 	import excel "$metadata\correlative_4.xlsx", sheet("instrument") firstrow clear
-	
+
+	tempfile correlative
+	save `correlative'
     foreach i in Directaxes Contributions DirectTransfers Subsidies Indtaxes InKindTransfers {
 	
     levelsof instrument if type == "`i'", local(`i') clean
 	dis "`i'"
 	 
 }
-	local taxes `Directaxes' `Indtaxes'
+	local taxes `Directaxes' `Indtaxes' `Contributions'
 	local spending `InKindTransfers' `DirectTransfers' `Subsidies'
 
 
-	local income_concepts ym yn yd yc yf 
-	local concs `Directaxes' `Indtaxes' `DirectTransfers' `Subsidies' `InKindTransfers' `income_concepts' 
+	local income_concepts ym_inat_pov_2021 ym_nat_pov yp_inat_pov_2021 yp_nat_pov yn_inat_pov_2021 yn_nat_pov yd_inat_pov_2021 yd_nat_pov yc_inat_pov_2021 yc_nat_pov yf_inat_pov_2021 yf_nat_pov //hardcoded
 	
+	local concs `Directaxes' `Contributions' `Indtaxes' `DirectTransfers' `Subsidies' `InKindTransfers' `income_concepts' 
 	
 *---> A.4 Converting all macros into percapita values 
 	foreach x in Directaxes Indtaxes InKindTransfers DirectTransfers Subsidies income_concepts concs  {
@@ -173,28 +150,6 @@ global fname_1 "$core_dataset_name"
 *===============================================================================
 
 
-* Loop over each country:
-* @jmmonroyb, final do-file that will be used by country economist should not include this loop as they will have one country. So we need to ensure smooth tranistion and less loop dependent as poosible 
-
-*@jmmonroyb, to debug we run with one data and call with a loop all the entire master file to run across countries 
-
-/* NOte> with the new structure to call datasets in the trunk, this previous version need do be checked
-
-local j=0
-forvalues i = 1/$n_datasets {
-local ++j
-
-	* globals to call dataset and define the spreadsheet name .
-	global sheetname    "${cty_`i'}"
-    global datasetname  "${fname_`i'}"
-	global indivname "d_`i'" // @jmmonroyb, do we need this? No given a chance in the way we call datasets 
-    di "Processing: ${path_`i'} - Sheet: ${sheetname}"
-*/
-
-
-*    use `"${path_`i'}"', clear
-
-
 global run_countries `" "ECU 2024 ENEMDU" "'
 foreach config of global run_countries {
 
@@ -219,6 +174,28 @@ global run_country "`config'"
 * Household database
 use "$HFMD_data/${file}_h", clear
 
+   egen ssc_total = rowtotal(ssc_nopensions ssc_pensions)   , missing  //need to check with Daniel, not found ABCD
+   * o_soc_ins INS_11_2_0	Instrument: Social insurance Not found need to check with Daniel ABCD
+
+  *housing_InKind, other_InKind   not found ABCD
+  * share_ym_pc_subsidy_agric_indirect  invalid name, too long need to check with Daniel ABCD
+ * subsidy_elec_indirect ABCD
+ ren subsidy_elec_indirect subsidy_elec_i
+  ren subsidy_agric_indirect subsidy_agric_i
+  ren subsidy_water_indirect subsidy_water_i
+  ren subsidy_food_indirect subsidy_food_i
+  ren subsidy_fuel_indirect subsidy_fuel_i
+  ren excise_other_indirect excise_other_i
+  ren excise_fuel_indirect excise_fuel_i
+  
+  ren education_* educ_*
+  * education_pre_and_prim
+  * education_preprimary
+  * education_primary
+  * education_secondary
+  * education_tertiary
+  * education_psnt
+  * education_copay
 
 
 	tempfile output
@@ -226,23 +203,241 @@ use "$HFMD_data/${file}_h", clear
 	
 *------------------------------Indicators --------------------------------------------
 
+
+*===============================================================================
+*---> E.  Marginal contributions and kakwani index. To be included 
+*===============================================================================
+
+*---> For now, out of the global loop
+	
+
+	local taxes `Directaxes' `Indtaxes' `Contributions'
+	local spending `InKindTransfers' `DirectTransfers' `Subsidies'
+
+	local rank ym_nat_pov
+	
+	
+	g line_li21 = 3
+	g line_lm21 = 4.2
+	g line_um21 = 8.3
+	
+		
+    local sheetnm  
+		
+	
+u `output', clear 
+
+			foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {
+			
+				gen `x'_pc= - `x'/ hhsize
+			}
+			
+			foreach x in `income_concepts' {
+				ren `x' `x'_pc 
+				
+			}
+			
+			
+				rename zref line_nat 
+
+   tempfile output
+	save `output'
+
+	
+	
+
+	foreach x of local concs_pc{
+		covconc `x' [aw=hhweight] , rank(`rank')	//gini and concentration coefficients
+		local _`x' = r(conc)
+		}
+	
+	groupfunction [aw=hhweight], sum(`concs_pc') by(ym_pvpc) norestore
+		qui count
+		local _1 =r(N)
+		local nnn=`_1'+ 1  //add one more obs, the total obs goes from 100 to 101
+		set obs `nnn'
+		replace ym_pvpc = 0 in `nnn'
+	
+		sort ym_pvpc
+		putmata x = (`concs_pc') if ym_pvpc!=0, replace 
+		mata: x = J(1,cols(x),0) \ x  //generate a constant row, add to the top
+		mata: x = x:/quadcolsum(x)  //divide each element by the column total
+		mata: for(i=1; i<=cols(x);i++) x[.,i] = quadrunningsum(x[.,i])  //replace exisiting matrix by new elements
+		
+		getmata (`concs_pc') = x, replace
+		
+		qui count
+		local _1 =r(N)
+		local nnn=`_1'+ 1 //add one more obs, the total obs goes to 102
+		set obs `nnn'
+		
+		replace ym_pvpc = 999 in `nnn'
+		foreach x of local concs_pc{
+			replace `x' = `_`x'' in `nnn'  //replace the last observation with gini/concentration coefficient
+		}	
+	order ym_pvpc, first
+	
+		   tempfile concentration
+	save `concentration'
+*---> Kakwani 	
+	keep if ym_pvpc==999
+	
+	ds
+	
+	local vars `r(varlist)'
+	dis
+	
+	foreach v of local vars {
+		    local val_`v' = `v'[1]
+
+	}
+
+* 2. Build the transposed dataset
+clear
+set obs `=wordcount("`vars'")'
+gen varname = ""
+gen value   = .
+
+local i = 1
+foreach v of local vars {
+    replace varname = "`v'"      in `i'
+    replace value   = `val_`v'' in `i'
+    local ++i
+}
+
+sum value if varname=="ym_inat_pov_2021_pc"
+g reference=`r(mean)'
+
+gen instrument = substr(varname, 1, length(varname) - 3)
+
+merge 1:1 instrument using `correlative'
+
+
+*---> Discuss with Daniel reference ABCD
+g kakwani= -value + reference 
+
+replace kakwani= value - reference if type=="Directaxes" |  type=="Indtaxes" |  type=="Contributions"
+
+	*---need to clean dataset 
+}
+	/*
+	
+*===============================================================================
+		*Netcash Position
+*===============================================================================
+///Deciles
+	use `output', clear
+	
+	
+	
+		foreach x in `tax' `indtax' {
+			gen share_`x'_pc= -pc_`x'/pc_mk
+		}		
+	
+		foreach x in `transfer' `inkind'  {
+			gen share_`x'_pc= pc_`x'/pc_mk
+		}
+///Deciles
+		
+	preserve
+	
+		*replace share_snit_hh_ae = - share_snit_hh_ae
+		keep mk_deciles_pc share* fexp	
+		
+	groupfunction [aw=fexp], mean (share*) by(mk_deciles_pc) norestore
+	
+	reshape long share_, i(mk_deciles_pc) j(variable) string
+		gen measure = "netcash" 
+		rename share_ value
+	
+	tempfile netcash
+	save `netcash'	
+	
+	restore 
+
+
+		
+
+*===============================================================================
+		*Produce Gini, Theil, and Poverty 
+		*Generate income concepts for Marginal Contribution
+*===============================================================================
+
+*run "$theado\sp_groupfunction.ado"
+
+use `output',  clear
+
+gen all = 1
+
+
+local aux `tax' `indtax' 
+foreach var of local aux {
+	
+	gen inc_`var'=pc_mk-pc_`var'
+	
+	local income2 `income2' inc_`var'   // Store incomes to marignal contribution calculation
+	
+	}
+local auxII `inkind' `transfer'
+foreach var of local auxII {
+	
+	gen inc_`var'=pc_mk+pc_`var'
+	
+	local income2 `income2' inc_`var' // Store incomes to marignal contribution calculation
+}
+
+	
+sp_groupfunction [aw=fexp], gini(`pc_income' `income2') theil(`pc_income' `income2') poverty(`pc_income' `income2') povertyline(`pline')  by(all) 
+
+tempfile poverty
+save `poverty'
+		
+		
+	use `output',  clear	
+			
+	sp_groupfunction [aw=fexp], benefits(`pc_concs') mean(`pc_concs') coverage(`pc_concs') beneficiaries(`pc_concs')  by(mk_deciles_pc)
+	
+	append using `poverty'
+	append using `netcash'
+
+		
+		gen concat = variable +"_"+ measure+"_" +reference+"_"+string(mk_deciles_pc)
+		order concat, first
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/*
+
 *Outline, 
 *Compute mean by partition
 
 *---> C.1  define indicators (by income in incidence), partitions 
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
 set seed 80292367
+
+
+		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+				gen `x'_pc=`x' /hhsize   //need to check with Daniel ABCD
+		}
+		
+		
+		
 foreach y in ym yd {
-					gen `y'_pc=`y' /hhsize   //need to check with Daniel
+					gen `y'_pc=`y' /hhsize   //need to check with Daniel ABCD
 
 		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 			
 			if strpos("`taxes'", "`x'") {
-				gen `x'_pc=`x' /hhsize   //need to check with Daniel
 				gen share_`y'_pc_`x' = - `x'_pc / `y'_pc
 			}
 			else if strpos("`spending'", "`x'") {	
-				gen `x'_pc=`x' /hhsize   //need to check with Daniel
 				gen share_`y'_pc_`x' = `x'_pc / `y'_pc
 			}
 
@@ -258,15 +453,13 @@ tempfile output_quantiles
 save `output_quantiles', replace 
 }
 
-
-/*
 *Prepare microdata : milliles and variable that allowed that means compute them 
 
 	foreach y in ym yd {
 
 		u `output_quantiles', clear	
 		
-		keep `y'_millile_pc `y'_centile_pc `y'_decile_pc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  pondih	
+		keep `y'_pvpc `y'_pvdc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  hhweight	
 
 		* --- Single pass: millile-level weighted means (only full-data operation) ---
 		*groupfunction [aw=pondih], mean(share_`y'* uinc_`y'* cinc_`y'* cov_`y'*) sum(abs_`y'* pondih) by(`y'_millile_pc)
@@ -287,12 +480,12 @@ save `output_quantiles', replace
 			cap frame drop fr_dec
 			frame copy fr_wide fr_dec
 			frame fr_dec {
-				drop `y'_millile_pc `y'_centile_pc
-				groupfunction [aw=pondih], mean(`indicator'*) by(`y'_decile_pc)
-				reshape long `indicator'_`y'_pc_, i(`y'_decile_pc) j(variable) string
-				tostring `y'_decile_pc, gen(partition) format(%04.0f)
+				drop  `y'_pvpc
+				groupfunction [aw=hhweight], mean(`indicator'*) by(`y'_pvdc)
+				reshape long `indicator'_`y'_pc_, i(`y'_pvdc) j(variable) string
+				tostring `y'_pvdc, gen(partition) format(%04.0f)
 					replace partition = "pv_dc_" + partition
-					drop `y'_decile_pc
+					drop `y'_pvdc
 				rename `indicator'_ value
 			}
 		
@@ -300,42 +493,29 @@ save `output_quantiles', replace
 			cap frame drop fr_cent
 			frame copy fr_wide fr_cent
 			frame fr_cent {
-				drop `y'_millile_pc `y'_decile_pc
-				groupfunction [aw=pondih], mean(`indicator'*) by(`y'_centile_pc)
-				reshape long `indicator'_`y'_pc_, i(`y'_centile_pc) j(variable) string
-				tostring `y'_centile_pc, gen(partition) format(%04.0f)
+				drop  `y'_pvdc
+				groupfunction [aw=hhweight], mean(`indicator'*) by(`y'_pvpc)
+				reshape long `indicator'_`y'_pc_, i(`y'_pvpc) j(variable) string
+				tostring `y'_pvpc, gen(partition) format(%04.0f)
 					replace partition = "pv_pc_" + partition
-					drop `y'_centile_pc
+					drop `y'_pvpc
 				rename `indicator'_ value
 			}
 
-		* --- Millile level (work inside a copy frame) ---
-			cap frame drop fr_mill
-			frame copy fr_wide fr_mill
-			frame fr_mill {
-				drop `y'_centile_pc `y'_decile_pc 
-				groupfunction [aw=pondih], mean(`indicator'*) by(`y'_millile_pc)
-				reshape long `indicator'_`y'_pc_, i(`y'_millile_pc) j(variable) string
-				save "${dataaux}/debugging.dta", replace
-				tostring `y'_millile_pc, gen(partition) format(%04.0f)
-					replace partition = "pv_pm_" + partition
-					drop `y'_millile_pc
-				rename `indicator'_ value
-			}
+
 			
 		* --- Combine all three levels into default ---
-			tempfile _tf_dec _tf_cent _tf_mill
+			tempfile _tf_dec _tf_cent 
 			frame fr_dec:  save `_tf_dec'
 			frame fr_cent: save `_tf_cent'
-			frame fr_mill: save `_tf_mill'
 			
-			use `_tf_mill', clear
-			append using `_tf_dec'
+			use `_tf_dec', clear
 			append using `_tf_cent'
 			*cap frame drop fr_dec fr_cent fr_mill
 
 
 *---> C.2 Generate decomposition by taxonomy items (3 levels)
+* Stop here ABCD to check with Daniel the best way to call dataframes and link to identification variables 
 			
 			gen indicator = "`indicator'"
 			gen income = "`y'"
@@ -343,11 +523,11 @@ save `output_quantiles', replace
 			gen category = "CAT_NA"
 			gen povertyline = "PL_NONE_N"
 			gen pension = "pdi"
-			gen country= substr("${fname_`i'}", 1, 3)
-			gen dataset = "${fname_`i'}"
+			gen country= "$country"
+			gen dataset = "$survey"
 
 			order indicator category instrument income povertyline partition pension country dataset value
-			save "$dataaux/`indicator'_`y'_`i'", replace
+			save "$dataaux/`indicator'_`y'", replace
 
 		}	  // eo foreach indicator
 		
@@ -356,13 +536,15 @@ save `output_quantiles', replace
 
 	} // eo foreach y
 
-} // eo foreach dataset
+	
+	
+ // eo foreach dataset
 
 *---> C.3 Compiling and saving data 
 foreach indicator in share uinc cinc cov  {
 	foreach y in ym yd {
 		local i = 1
-		use "$dataaux/`indicator'_`y'_`i'", clear
+		use "$dataaux/`indicator'_`y'", clear
 		
 		if "`y'"=="ym" & "`indicator'"=="share" {
 			save "$dataaux/final_dist.dta", replace
@@ -376,31 +558,37 @@ foreach indicator in share uinc cinc cov  {
 	} // eo foreach y
 } // eo foreach indicator
 
-*/
+
+
+		
+	
+*===============================================================================
+*---> E1c. Concentration Coefficients (id=43) and Kakwani Index (id=42)
+*     CC = 2*cov(X, F(Y)) / mean(X)
+*     Kakwani = CC - Gini(Y)
+*===============================================================================
+
+
 
 *===============================================================================
 *---> D. Distributional indicators International values Gini, Theil, and FGT measures
 		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
 
-local j=0
-forvalues i = 1/$n_datasets {
-local ++j
+*---> For now, out of the global loop
+	/*
+use "$HFMD_data/${file}_h", clear
 
-	* globals to call dataset and define the spreadsheet name .
-	global sheetname    "${cty_`i'}"
-    global datasetname  "${fname_`i'}"
-	global indivname "d_`i'" // @jmmonroyb, do we need this? 
-    di "Processing: ${path_`i'} - Sheet: ${sheetname}"
-
-    use `"${path_`i'}"', clear
 	*temporal changes to the data
-	rename (ymp_pc ) (ym_pc )
-	rename (zref line_1 line_2 line_3) (line_nat line_li21 line_lm21 line_um21 )
+	rename zref line_nat 
+	
+	g line_li21 = 3
+	g line_lm21 = 4.2
+	g line_um21 = 8.3
 
 	tempfile output
 	save `output', replace
-		
+
 
 *---> D.1 List of all new marginal contributinos store in income
     local income2 "" // list with all counterfactual vectors  
