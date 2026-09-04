@@ -48,7 +48,8 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 * Country-survey configuration
 *global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "'
-global run_countries `" "SEN 2021 EHCVM" "'
+*global run_countries `" "SEN 2021 EHCVM" "'
+global run_countries `" "ECU 2024 ENEMDU" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
