@@ -117,49 +117,6 @@ foreach j of global taxonomy_components  {
 }
 
 
-
-
-*============================================================================*
-*--->	B. Core dataset selection (single-country mode) delete in fron of Daniel ABCD
-*============================================================================*
-
-* This file runs one country/dataset per execution.
-* The trunk should set:
-*   - $core_dataset_path
-*   - $core_dataset_name (optional)
-*   - $core_country (optional ISO3)
-/*
-
-if "$core_dataset_path"=="" {
-	di as err "Missing required global: core_dataset_path"
-	exit 198
-}
-*/
-/*capture confirm file "$core_dataset_path"
-if _rc {
-	di as err "core_dataset_path not found: $core_dataset_path"
-	exit 601
-}
-
-if "$core_dataset_name"=="" {
-	local _name = subinstr("$core_dataset_path", "\\", "/", .)
-	local _name = reverse(word(reverse("`_name'"),1,"/"))
-	global core_dataset_name "`_name'"
-}
-
-if "$core_country"=="" {
-	global core_country = upper(substr("$core_dataset_name",1,3))
-}
-
-* Keep existing variable references by setting one-slot globals.
-global n_datasets 1
-global path_1 "$core_dataset_path"
-global cty_1 "$core_country"
-global fname_1 "$core_dataset_name"
-
-*/
-
-
 *============================================================================*
 *--->	B. Core dataset selection 
 *============================================================================*
@@ -228,7 +185,7 @@ cap ren sscontribs_* ssc_* //temporal since everything is homogeneous ABCD
 *===============================================================================
 *///---> here most of the Danie's estimates could work, other part of its code need to be debuged ABCD
 
-
+/*
 *Outline, 
 *Compute mean by partition
 
@@ -370,7 +327,7 @@ foreach indicator in share uinc cinc cov  {
 			isid indicator category instrument income povertyline partition pension country dataset, sort
 		}
 	} // eo foreach y
-} // eo foreach indicator
+// eo foreach indicator
 
 
 *---> Note: debuged until here. ABCD
@@ -381,7 +338,7 @@ foreach indicator in share uinc cinc cov  {
 *===============================================================================
 
 *---> For now, out of the global loop
-	/*
+	
 use "$HFMD_data/${file}_h", clear
 
 	*temporal changes to the data
@@ -627,9 +584,9 @@ save "$dataaux/final_pov_ineq.dta", replace
 				replace value   = `val_`v'' in `i'
 			local ++i
 		}
-*---> E.4 Discuss with Daniel reference ABCD ym_inat_pov_2021_pc? and method 
+*---> E.4 reference for kakwani
 
-	sum value if varname=="ym_inat_pov_2021_pc"
+	sum value if varname=="ym_nat_pov_pc"
 	g reference=`r(mean)'
 
 	g instrument = substr(varname, 1, length(varname) - 3)
@@ -673,6 +630,7 @@ save "$dataaux/final_pov_ineq.dta", replace
 	save `kakwani'
 	
 
+
 *===============================================================================
 *---> F.  Marginal contribution
 *===============================================================================	
@@ -706,7 +664,7 @@ save "$dataaux/final_pov_ineq.dta", replace
 	foreach t in gini fgt0 {
 		sum value if variable=="yd_nat_pov_pc" & measure=="`t'" 
 		replace mc_d=r(mean)-value if measure=="`t'"
-		sum value if variable=="ym_nat_pov_pc" & measure=="`t'" 
+		sum value if variable=="yf_nat_pov_pc" & measure=="`t'" 
 			replace mc_m=r(mean)-value if measure=="`t'" 
 	}
 
@@ -747,7 +705,7 @@ save "$dataaux/final_pov_ineq.dta", replace
 		save `aux'
 	restore 
 	
-	g income="ym"
+	g income="yf"
 	drop mc_d
 	ren mc_m value 
 	
@@ -768,6 +726,7 @@ save "$dataaux/final_pov_ineq.dta", replace
 				drop _merge 
 		}
 	
+	replace value=. if indicator=="mcp" & type=="InKindTransfers"
 	order $toreport 
 	keep $toreport	
 	
@@ -775,10 +734,7 @@ save "$dataaux/final_pov_ineq.dta", replace
 		save `marginal_contrib'
 	
 	}
-		
-		
-		
-		
+			
 /*
 
 
