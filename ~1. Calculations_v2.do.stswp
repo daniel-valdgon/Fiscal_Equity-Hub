@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
 * Program: GSG3 Fiscal Equity Hub - Core Database Outputs
-* Author: 	Daniel VAlderrama 
+* Author: 	Daniel VAlderrama and Juan Manuel Monroy
 * Date: 	Feb 2026
 * Title: 	Generate outputs for the GSG3 Core Database
 *-------------------------------------------------------------------------------
@@ -57,6 +57,18 @@ else if "`c(username)'"=="wb527706" {
 *---> A.3 Macros for policies and income concepts values 
 *         Note: new code added. 
 
+
+			
+
+		foreach t in context indicator category income povertyline partition pension {
+		
+		import excel "$metadata\correlative_4.xlsx", sheet("`t'") firstrow clear
+		drop if `t'==""
+    	tempfile `t'
+		save ``t''
+	}
+	
+
 	import excel "$metadata\correlative_4.xlsx", sheet("instrument") firstrow clear
 
 	tempfile correlative
@@ -105,8 +117,10 @@ foreach j of global taxonomy_components  {
 }
 
 
+
+
 *============================================================================*
-*--->	B. Core dataset selection (single-country mode)
+*--->	B. Core dataset selection (single-country mode) delete in fron of Daniel ABCD
 *============================================================================*
 
 * This file runs one country/dataset per execution.
@@ -144,13 +158,15 @@ global cty_1 "$core_country"
 global fname_1 "$core_dataset_name"
 
 */
-*===============================================================================
-*---> C. Netcash Position for ymp and yd.
-*        Generating incidence (relative) by decil (pre-fiscal and disposable)
-*===============================================================================
 
+
+*============================================================================*
+*--->	B. Core dataset selection 
+*============================================================================*
 
 global run_countries `" "ECU 2024 ENEMDU" "'
+*global run_countries `" "COL 2021 GEIH" "'
+
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -174,6 +190,7 @@ global run_country "`config'"
 * Household database
 use "$HFMD_data/${file}_h", clear
 
+cap ren sscontribs_* ssc_* //temporal since everything is homogeneous ABCD 
    egen ssc_total = rowtotal(ssc_nopensions ssc_pensions)   , missing  //need to check with Daniel, not found ABCD
    * o_soc_ins INS_11_2_0	Instrument: Social insurance Not found need to check with Daniel ABCD
 
@@ -200,193 +217,17 @@ use "$HFMD_data/${file}_h", clear
 
 	tempfile output
 	save `output', replace 
-	
-*------------------------------Indicators --------------------------------------------
 
-
-*===============================================================================
-*---> E.  Marginal contributions and kakwani index. To be included 
+*===============================================================================	
+*------------------------------Indicators --------------------------------------
 *===============================================================================
 
-*---> For now, out of the global loop
-	
-
-	local taxes `Directaxes' `Indtaxes' `Contributions'
-	local spending `InKindTransfers' `DirectTransfers' `Subsidies'
-
-	local rank ym_nat_pov
-	
-	
-		
-    local sheetnm  
-		
-	
-u `output', clear 
-
-			foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {
-			
-				gen `x'_pc= - `x'/ hhsize
-			}
-			
-			foreach x in `income_concepts' {
-				ren `x' `x'_pc 
-				
-			}
-			
-			
-	rename zref line_nat 
- 	g line_li21 = 3
-	g line_lm21 = 4.2
-	g line_um21 = 8.3
-	
-	tempfile output
-	save `output'
-
-	
-	
-
-	foreach x of local concs_pc{
-		covconc `x' [aw=hhweight] , rank(`rank')	//gini and concentration coefficients
-		local _`x' = r(conc)
-		}
-	
-	groupfunction [aw=hhweight], sum(`concs_pc') by(ym_pvpc) norestore
-		qui count
-		local _1 =r(N)
-		local nnn=`_1'+ 1  //add one more obs, the total obs goes from 100 to 101
-		set obs `nnn'
-		replace ym_pvpc = 0 in `nnn'
-	
-		sort ym_pvpc
-		putmata x = (`concs_pc') if ym_pvpc!=0, replace 
-		mata: x = J(1,cols(x),0) \ x  //generate a constant row, add to the top
-		mata: x = x:/quadcolsum(x)  //divide each element by the column total
-		mata: for(i=1; i<=cols(x);i++) x[.,i] = quadrunningsum(x[.,i])  //replace exisiting matrix by new elements
-		
-		getmata (`concs_pc') = x, replace
-		
-		qui count
-		local _1 =r(N)
-		local nnn=`_1'+ 1 //add one more obs, the total obs goes to 102
-		set obs `nnn'
-		
-		replace ym_pvpc = 999 in `nnn'
-		foreach x of local concs_pc{
-			replace `x' = `_`x'' in `nnn'  //replace the last observation with gini/concentration coefficient
-		}	
-	order ym_pvpc, first
-	
-		   tempfile concentration
-	save `concentration'
-*---> Kakwani 	
-	keep if ym_pvpc==999
-	
-	ds
-	
-	local vars `r(varlist)'
-	dis
-	
-	foreach v of local vars {
-		    local val_`v' = `v'[1]
-
-	}
-
-* 2. Build the transposed dataset
-clear
-set obs `=wordcount("`vars'")'
-gen varname = ""
-gen value   = .
-
-local i = 1
-foreach v of local vars {
-    replace varname = "`v'"      in `i'
-    replace value   = `val_`v'' in `i'
-    local ++i
-}
-
-sum value if varname=="ym_inat_pov_2021_pc"
-g reference=`r(mean)'
-
-gen instrument = substr(varname, 1, length(varname) - 3)
-
-merge 1:1 instrument using `correlative'
-
-
-*---> Discuss with Daniel reference ABCD
-g kakwani= -value + reference 
-
-replace kakwani= value - reference if type=="Directaxes" |  type=="Indtaxes" |  type=="Contributions"
-
-	*---need to clean dataset 
-
-	
-	
 *===============================================================================
-		*Marginal contribution
+*---> C. Netcash Position for ymp and yd.
+*        Generating incidence (relative) by decil (pre-fiscal and disposable)
 *===============================================================================
-	use `output', clear
-	
-gen all = 1
+*///---> here most of the Danie's estimates could work, other part of its code need to be debuged ABCD
 
-local aux `Directaxes' `Indtaxes'  `Contributions' 
-foreach var of local aux {
-	
-	gen inc_`var'=ym_nat_pov_pc-`var'_pc
-	
-	local income2 `income2' inc_`var'   // Store incomes to marignal contribution calculation
-	
-	}
-local auxII `InKindTransfers' `DirectTransfers'  `Subsidies'
-foreach var of local auxII {
-	
-	gen inc_`var'=ym_nat_pov_pc+`var'_pc
-	
-	local income2 `income2' inc_`var' // Store incomes to marignal contribution calculation
-}
-
-	
-sp_groupfunction [aw=hhweight], gini(`income_concepts_pc' `income2')  poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
-
-
-g mc_d=.
-g mc_m=.
-foreach t in gini fgt0 {
-	*gen ref_d_`t'=value if variable=="yd_nat_pov_pc" & measure=="`t'"
-	sum value if variable=="yd_nat_pov_pc" & measure=="`t'" 
-	replace mc_d=r(mean)-value if measure=="`t'" 
-	
-	sum value if variable=="ym_nat_pov_pc" & measure=="`t'" 
-	replace mc_m=r(mean)-value if measure=="`t'" 
-	
-
-}
-
-		
-		foreach t in local `income_concepts_pc'{
-	
-	drop if variable=="`income_concepts_pc'"
-}
-drop if measure=="fgt1" | measure=="fgt2"
-
-
-tempfile poverty
-save `poverty'
-
-
-
-		*gen concat = variable +"_"+ measure+"_" +reference+"_"+string(mk_deciles_pc)
-		*order concat, first
-		
-		
-		
-		
-}
-		
-		
-		
-		
-		
-		/*
 
 *Outline, 
 *Compute mean by partition
@@ -395,7 +236,7 @@ save `poverty'
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
 set seed 80292367
 
-
+u `output', clear 
 		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 				gen `x'_pc=`x' /hhsize   //need to check with Daniel ABCD
 		}
@@ -532,16 +373,7 @@ foreach indicator in share uinc cinc cov  {
 } // eo foreach indicator
 
 
-
-		
-	
-*===============================================================================
-*---> E1c. Concentration Coefficients (id=43) and Kakwani Index (id=42)
-*     CC = 2*cov(X, F(Y)) / mean(X)
-*     Kakwani = CC - Gini(Y)
-*===============================================================================
-
-
+*---> Note: debuged until here. ABCD
 
 *===============================================================================
 *---> D. Distributional indicators International values Gini, Theil, and FGT measures
@@ -705,10 +537,255 @@ use "$dataaux/pov_ineq_`i'.dta", clear
 save "$dataaux/final_pov_ineq.dta", replace
 
 
+*/
+
+*---> new two indicators added here 
 *===============================================================================
-*---> F. Exporing finaldatasets | Taxonomy  Unique ID
+*---> E.  kakwani index.
+*===============================================================================
+
+*---> Note: For now, only on the global loop
+	
+*---> E.1 Preparing main output database 
+	local rank ym_nat_pov
+		
+	u `output', clear 
+
+			foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {
+			
+				gen `x'_pc= - `x'/ hhsize
+			}
+			
+			foreach x in `income_concepts' {
+				ren `x' `x'_pc 
+				
+			}
+			
+	rename zref line_nat 
+ 	g line_li21 = 3
+	g line_lm21 = 4.2
+	g line_um21 = 8.3
+	
+	tempfile output_a
+	save `output_a'
+
+	
+*---> E.2 groupfunction for concentration_coefficient taking main dofile	
+
+	foreach x of local concs_pc{
+		covconc `x' [aw=hhweight] , rank(`rank')	//gini and concentration coefficients
+		local _`x' = r(conc)
+		}
+	
+	groupfunction [aw=hhweight], sum(`concs_pc') by(ym_pvpc) norestore
+		qui count
+		local _1 =r(N)
+		local nnn=`_1'+ 1  //add one more obs, the total obs goes from 100 to 101
+		set obs `nnn'
+		replace ym_pvpc = 0 in `nnn'
+	
+		sort ym_pvpc
+		putmata x = (`concs_pc') if ym_pvpc!=0, replace 
+		mata: x = J(1,cols(x),0) \ x  //generate a constant row, add to the top
+		mata: x = x:/quadcolsum(x)  //divide each element by the column total
+		mata: for(i=1; i<=cols(x);i++) x[.,i] = quadrunningsum(x[.,i])  //replace exisiting matrix by new elements
+		
+		getmata (`concs_pc') = x, replace
+		
+		qui count
+		local _1 =r(N)
+		local nnn=`_1'+ 1 //add one more obs, the total obs goes to 102
+		set obs `nnn'
+		
+		replace ym_pvpc = 999 in `nnn'
+		foreach x of local concs_pc{
+			replace `x' = `_`x'' in `nnn'  //replace the last observation with gini/concentration coefficient
+		}	
+	order ym_pvpc, first
+	
+	tempfile concentration
+	save `concentration'
+*---> E.3 Prepare dataset for Kakwani 	
+	keep if ym_pvpc==999
+	ds
+	local vars `r(varlist)'
+	dis
+	
+	foreach v of local vars {
+		    local val_`v' = `v'[1]
+
+	}
+
+	clear
+	set obs `=wordcount("`vars'")'
+	g varname = ""
+	g value   = .
+
+		local i = 1
+			foreach v of local vars {
+				replace varname = "`v'"      in `i'
+				replace value   = `val_`v'' in `i'
+			local ++i
+		}
+*---> E.4 Discuss with Daniel reference ABCD ym_inat_pov_2021_pc? and method 
+
+	sum value if varname=="ym_inat_pov_2021_pc"
+	g reference=`r(mean)'
+
+	g instrument = substr(varname, 1, length(varname) - 3)
+
+	merge 1:1 instrument using `correlative'
+
+
+    g kakwani= -value + reference 
+	replace kakwani= value - reference if type=="Directaxes" |  type=="Indtaxes" |  type=="Contributions"
+
+*---> E.5 Preparing clean dataset
+
+	
+	g indicator="kakw"
+	g country="$country"
+	g survey="$survey"
+	g dataset="${file}"
+	g category="CAT_NA"
+	drop if INSTRUMENT_ID==""
+	
+	g income="ym" //given ym_inat_pov_2021_pc
+	g povertyline="PL_NONE_N"
+	g partition="PV_NA_NONE"
+	g pension="pdi"
+	g context="equity"
+	drop value
+	ren kakwani value 
+	
+	drop _merge 
+		foreach t in context indicator category income povertyline partition pension {
+				merge m:1 `t' using ``t''
+				keep if _merge==3
+				drop _merge 
+		}
+	
+	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+	order $toreport 
+	keep $toreport
+
+	tempfile kakwani
+	save `kakwani'
+	
+
+*===============================================================================
+*---> F.  Marginal contribution
 *===============================================================================	
-*---> F.1 adding previous ones and generating aux output 
+*---> F.1 Using standard approach 
+ 
+	use `output_a', clear
+	
+	gen all = 1
+
+	local aux `Directaxes' `Indtaxes'  `Contributions' 
+		foreach var of local aux {
+	
+			gen inc_`var'=ym_nat_pov_pc-`var'_pc
+			local income2 `income2' inc_`var'   // Store incomes to marignal contribution calculation
+	
+		}
+	local auxII `InKindTransfers' `DirectTransfers'  `Subsidies'
+		foreach var of local auxII {
+	
+			gen inc_`var'=ym_nat_pov_pc+`var'_pc
+			local income2 `income2' inc_`var' // Store incomes to marignal contribution calculation
+		}
+
+	
+	sp_groupfunction [aw=hhweight], gini(`income_concepts_pc' `income2')  poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
+
+*---> F.2 Estimate marginal distributions by income reference
+	g mc_d=.
+	g mc_m=.
+
+	foreach t in gini fgt0 {
+		sum value if variable=="yd_nat_pov_pc" & measure=="`t'" 
+		replace mc_d=r(mean)-value if measure=="`t'"
+		sum value if variable=="ym_nat_pov_pc" & measure=="`t'" 
+			replace mc_m=r(mean)-value if measure=="`t'" 
+	}
+
+		
+	foreach t in local `income_concepts_pc'{
+	drop if variable=="`income_concepts_pc'"
+	}
+	
+	drop if measure=="fgt1" | measure=="fgt2"
+
+*---> F.3 Preparing clean dataset
+
+	drop value _population
+
+	g country="$country"
+	g survey="$survey"
+	g dataset="${file}"
+	g category="CAT_NA"
+
+	g indicator="mci" if measure=="gini" 
+	replace indicator="mcp" if measure=="fgt0" 
+	
+	g instrument = substr(variable, 5, length(variable) - 3)
+	g aux = substr(variable, 1, 1)
+	drop if aux=="y"
+	drop aux
+
+	merge m:1 instrument using `correlative'
+	
+	keep if _merge==3 
+	drop _merge
+	
+	preserve 
+	drop mc_m
+	g income="yd"
+	ren mc_d value
+		tempfile aux
+		save `aux'
+	restore 
+	
+	g income="ym"
+	drop mc_d
+	ren mc_m value 
+	
+	append using `aux'
+
+	
+	drop if INSTRUMENT_ID==""
+	
+	ren reference povertyline
+	replace povertyline="PL_NONE_N" if povertyline==""
+	g partition="PV_NA_NONE"
+	g pension="pdi"
+	g context="equity"
+
+		foreach t in context indicator category income povertyline partition pension {
+				merge m:1 `t' using ``t''
+				keep if _merge==3
+				drop _merge 
+		}
+	
+	order $toreport 
+	keep $toreport	
+	
+		tempfile marginal_contrib
+		save `marginal_contrib'
+	
+	}
+		
+		
+		
+		
+/*
+
+
+*===============================================================================
+*---> Z. Exporing finaldatasets | Taxonomy  Unique ID
+*===============================================================================	
+*---> Z.1 adding previous ones and generating aux output 
 
     u "$dataaux/final_dist.dta" , clear
 	append using "$dataaux\final_pov_ineq"
@@ -739,25 +816,6 @@ save "$dataaux/final_pov_ineq.dta", replace
 	save "$dataout/01-Cleaned-FIA-Indicators_${core_country}_rep.dta", replace
 
 	
-
-
-*===============================================================================
-*---> This sections in under construction. It consists in generating an Unique 
-*     ID from Original Taxonomy that matches the taxonomy by decomposition. 
-*===============================================================================
-/*
-	@jmmonroyb, we want to track the Pecchi database stats, share of progress and publish it online and validate by the country teams 
-
-	*Create System for statistic of indicator coverage 
-timer off 1
-timer list 1
-
-
-
-
-
-
-
 
 
 
