@@ -49,8 +49,8 @@ section5_3 dirtransf_total dtr_soc_ass dtr_soc_ins dtr_cash dtr_ocash dtr_wp dtr
 section5_4 subsidy_total subs_elec_total subs_fuel_total subs_water_total subs_food_total subs_agric_total subs_other_total subsidy_elec_direct subsidy_elec_indirect subsidy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect subsidy_food_direct subsidy_food_indirect subsidy_agric_direct subsidy_agric_indirect ///
 section5_5 indtax_total VAT_total excise_fuel excise_other CD_total other_indirect VAT_direct VAT_indirect excise_fuel_direct excise_fuel_indirect excise_other_direct excise_other_indirect CD_direct CD_indirect ///
 section5_6 inktransf_total ///
-section5_6a education_inKind education_pre_and_prim education_preprimary education_primary education_secondary education_tertiary education_psnt education_copay ///
-section5_6b health_inKind health_contr health_non_contr health_hospital health_prim health_inpatient health_outpatient health_copay
+section5_6a education_inKind education_pre_and_prim education_preprimary education_primary education_secondary education_tertiary education_psnt education_copay education_other ///
+section5_6b health_inKind health_contr health_non_contr health_hospital health_prim health_inpatient health_outpatient health_copay health_other
 
 
 *---------------------------------------------------------------

@@ -47,9 +47,8 @@ global core_database	"${root}/04-Products/00-FIA-Database/Core_Database.xlsx"
 
 
 * Country-survey configuration
-*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "'
-*global run_countries `" "SEN 2021 EHCVM" "'
-global run_countries `" "ECU 2024 ENEMDU" "'
+*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "ECU 2024 ENEMDU" "MDV 2019 HIES" "'
+global run_countries `" "GNQ 2022 ENH2" "'
 foreach config of global run_countries {
 
 global run_country "`config'"
@@ -104,17 +103,19 @@ include "${scripts}/2-03-datacheck_fia_metadata.do"
    * Replicates international poverty rates from the microdata using disposable income and the available PPP poverty lines.
 include "${scripts}/2-04-data_check_report.do"
 
+di as result "Ended ${run_country}"
+di as result "---------------------------"
+	sleep 3000
+	
+}
+
 tempfile ${country}_${survey_year}_${survey}
 save `${country}_${survey_year}_${survey}', replace
 
 * E. Merge with GMD database
 include "${scripts}/2-05-data_check_GMDmerge.do"
 
-di as result "Ended ${run_country}"
-di as result "---------------------------"
-	sleep 3000
-	
-}
+
 exit
 
 	

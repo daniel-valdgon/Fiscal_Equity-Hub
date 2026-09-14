@@ -301,11 +301,11 @@ else{
 *---------------------------------------------------------------
 if !missing(education_pre_and_prim) | !missing(education_secondary) | ///
    !missing(education_tertiary) | !missing(education_psnt) | ///
-   !missing(education_copay){
+   !missing(education_copay) | !missing(education_other){
 
 	egen inkeduc_total_check = rowtotal(education_pre_and_prim ///
 	    education_secondary education_tertiary education_psnt ///
-	    education_copay), missing
+	    education_copay education_other), missing
 
 	format inkeduc_total_check %20.1f
 

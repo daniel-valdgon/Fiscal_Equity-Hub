@@ -73,3 +73,11 @@ else if "${country}"=="MNG" & "$survey_year" =="2022" & "$survey" =="HSES"{
 	global file "HFMD"
 	global GMD_file ""
 }
+* MALDIVES (MDV 2019 HIES)
+else if "${country}"=="MDV" & "$survey_year" =="2019" & "$survey" =="HIES"{
+	global country_data "${microdata}/${country}/MDV_HIES_S2019_P2023_v01"
+	global HFMD_data "${country_data}/HFMD"
+	global file "HFMD"
+	global GMD_file ""
+}
+
