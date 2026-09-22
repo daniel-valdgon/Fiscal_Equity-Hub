@@ -2,7 +2,7 @@
 **# Load FIA metadata values for poverty and inequality checks
 *---------------------------------------------------------------
 preserve
-import excel "$country_data/Master_data/documentation/Metadata_FIA", clear 
+import excel "$country_data/Master_data/documentation/FIA_documentation/Metadata_FIA.xlsx", clear 
 
 drop E F
 rename (A B C D) (ID Type Variable Response)
