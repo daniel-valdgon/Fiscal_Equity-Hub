@@ -25,6 +25,7 @@ assert ///
     if !missing(yn, yn_check)
 
 di as result "Check passed: yn replicated from yd and direct transfers."
+sleep 1000
 
 
 assert ///
@@ -33,6 +34,7 @@ assert ///
     if !missing(yp, yp_check)
 
 di as result "Check passed: yp replicated from yn, direct taxes, and social contributions."
+sleep 1000
 
 
 assert ///
@@ -41,6 +43,7 @@ assert ///
     if !missing(yc, yc_check)
 
 di as result "Check passed: yc replicated from yd, subsidies, and indirect taxes."
+sleep 1000
 
 
 assert ///
@@ -49,6 +52,7 @@ assert ///
     if !missing(yf, yf_check)
 
 di as result "Check passed: yf replicated from yc and in-kind transfers."
+sleep 1000
 
 * Clean check variables
 drop yn_check yp_check yc_check yf_check

@@ -140,13 +140,16 @@ foreach num of local ids_to_check {
     capture assert abs(FIA_metadata - data) < 1 if ID == `num'
 
     if _rc == 0 {
-        di as result "`lbl': CHECK PASSED (comparing results from data with FIA metadata) = " %6.2f `data_value'
+        di as result "`lbl': CHECK PASSED | Data = " %6.2f `data_value' ///
+            " | FIA metadata = " %6.2f `fia_value'
     }
     else {
         di as error "`lbl': CHECK NO PASSED | Data = " %6.2f `data_value' ///
             " | FIA metadata = " %6.2f `fia_value'
     }
 }
+
+di as text "Differences should be less than 1.0"
 
 di "All available FIA metadata (gini/poverty) checks done."
 sleep 2000

@@ -26,6 +26,7 @@ if !missing(ssc_nopensions_employee) | !missing(ssc_nopensions_employer){
 	drop ssc_nopensions_check
 	
 	dis "Checked disaggregation ssc_nopensions"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check ssc_nopensions"
@@ -36,11 +37,9 @@ else{
 *---------------------------------------------------------------
 * Direct taxes
 *---------------------------------------------------------------
-if !missing(dirtax_PIT) | !missing(dirtax_proll) | !missing(dirtax_property) | ///
-   !missing(dirtax_capital) | !missing(dirtax_other) | !missing(dirtax_bit){
+if !missing(dirtax_PIT) | !missing(dirtax_proll) | !missing(dirtax_property) | !missing(dirtax_other) {
 
-	egen dirtax_total_check = rowtotal(dirtax_PIT dirtax_proll dirtax_property ///
-	    dirtax_capital dirtax_other dirtax_bit), missing
+	egen dirtax_total_check = rowtotal(dirtax_PIT dirtax_proll dirtax_property dirtax_other ), missing
 
 	compare dirtax_total_check dirtax_total
 
@@ -54,9 +53,33 @@ if !missing(dirtax_PIT) | !missing(dirtax_proll) | !missing(dirtax_property) | /
 	drop dirtax_total_check
 	
 	dis "Checked disaggregation dirtax_total"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check dirtax_total"
+	sleep 1000
+}
+
+if !missing(dirtax_salaries) | !missing(dirtax_capital) | !missing(dirtax_bit) | !missing(dirtax_pit_other) {
+
+	egen dirtax_PIT_check = rowtotal(dirtax_salaries dirtax_capital dirtax_bit dirtax_pit_other ), missing
+
+	compare dirtax_PIT_check dirtax_PIT
+
+	assert missing(dirtax_PIT_check) == missing(dirtax_PIT)
+
+	assert ///
+	    (dirtax_PIT != 0 & abs((dirtax_PIT_check - dirtax_PIT) / dirtax_PIT) < 0.01) | ///
+	    (dirtax_PIT == 0 & abs(dirtax_PIT_check) < 1) ///
+	    if !missing(dirtax_PIT, dirtax_PIT_check)
+
+	drop dirtax_PIT_check
+	
+	dis "Checked disaggregation dirtax_PIT"
+	sleep 1000
+}
+else{
+	dis as error "No disaggregation to check dirtax_PIT"
 	sleep 1000
 }
 
@@ -80,6 +103,7 @@ if !missing(dtr_soc_ass) | !missing(dtr_soc_ins) {
 	drop dirtransf_total_check
 	
 	dis "Checked disaggregation dirtransf_total"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check dirtransf_total"
@@ -108,6 +132,7 @@ if !missing(dtr_cash) | !missing(dtr_ocash) | !missing(dtr_wp) | ///
 	drop dtr_soc_ass_check
 	
 	dis "Checked disaggregation dtr_soc_ass"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check dtr_soc_ass"
@@ -137,6 +162,7 @@ if !missing(subs_elec_total) | !missing(subs_fuel_total) | ///
 	drop subsidy_total_check
 	
 	dis "Checked disaggregation subsidy_total"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check subsidy_total"
@@ -166,6 +192,7 @@ foreach x in elec fuel water food agric {
 		drop `x'_check
 		
 		dis "Checked disaggregation subs_`x'_total"
+		sleep 1000
 	}
 	else{
 		dis as error "No disaggregation to check subs_`x'_total"
@@ -195,6 +222,7 @@ if !missing(VAT_total) | !missing(excise_fuel) | !missing(excise_other) | ///
 	drop indtax_total_check
 	
 	dis "Checked disaggregation indtax_total"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check indtax_total"
@@ -223,6 +251,7 @@ foreach x in VAT CD {
 		drop `x'_check
 		
 		dis "Checked disaggregation `x'_total"
+		sleep 1000
 	}
 	else{
 		dis as error "No disaggregation to check `x'_total"
@@ -252,6 +281,7 @@ foreach x in excise_fuel excise_other {
 		drop `x'_check
 		
 		dis "Checked disaggregation `x'"
+		sleep 1000
 	}
 	else{
 		dis as error "No disaggregation to check `x'"
@@ -289,6 +319,7 @@ if !missing(education_inKind) | !missing(health_inKind){
 	drop inktransf_total_check
 	
 	dis "Checked disaggregation inktransf_total"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check inktransf_total"
@@ -321,6 +352,7 @@ if !missing(education_pre_and_prim) | !missing(education_secondary) | ///
 	drop inkeduc_total_check
 	
 	dis "Checked disaggregation education_inKind"
+	sleep 1000
 }
 else{
 	dis as error "No disaggregation to check education_inKind"
