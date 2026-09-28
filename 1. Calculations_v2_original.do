@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
 * Program: GSG3 Fiscal Equity Hub - Core Database Outputs
-* Author: 	Daniel Valderrama, Juan Manuel Monroy, Silvia Ortiz
+* Author: 	Daniel VAlderrama and Juan Manuel Monroy
 * Date: 	Feb 2026
 * Title: 	Generate outputs for the GSG3 Core Database
 *-------------------------------------------------------------------------------
@@ -10,7 +10,7 @@
 ---------------------------------------------------------------------------------*/
 
 *===============================================================================
-**# A. Paths and Macros definition
+*---> A. Paths and Macros definition
 *===============================================================================
    
    clear all
@@ -57,7 +57,11 @@ else if "`c(username)'"=="wb527706" {
 *---> A.3 Macros for policies and income concepts values 
 *         Note: new code added. 
 
-	foreach t in context indicator category income povertyline partition pension {		
+
+			
+
+		foreach t in context indicator category income povertyline partition pension {
+		
 		import excel "$metadata\correlative_4.xlsx", sheet("`t'") firstrow clear
 		drop if `t'==""
     	tempfile `t'
@@ -77,6 +81,7 @@ else if "`c(username)'"=="wb527706" {
 }
 	local taxes `Directaxes' `Indtaxes' `Contributions'
 	local spending `InKindTransfers' `DirectTransfers' `Subsidies'
+
 
 	local income_concepts ym_inat_pov_2021 ym_nat_pov yp_inat_pov_2021 yp_nat_pov yn_inat_pov_2021 yn_nat_pov yd_inat_pov_2021 yd_nat_pov yc_inat_pov_2021 yc_nat_pov yf_inat_pov_2021 yf_nat_pov //hardcoded
 	
@@ -113,7 +118,7 @@ foreach j of global taxonomy_components  {
 
 
 *============================================================================*
-**# B. Core dataset selection 
+*--->	B. Core dataset selection 
 *============================================================================*
 
 global run_countries `" "ECU 2024 ENEMDU" "'
@@ -129,8 +134,9 @@ global run_country "`config'"
 
 	include "${scripts}/1-01-paths_country_cases.do"
 	
-    di as result "Running ${run_country} indicators"
+    di as result "Running ${run_country}"
 	di as result "---------------------------"
+	sleep 3000
 
 
 * Obj: This section will include protocols to revise the databases, q-check over the FIA data
@@ -139,27 +145,24 @@ global run_country "`config'"
 * It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
 
 * Household database
-use "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", clear
+use "$HFMD_data/${file}_h", clear
+
+cap ren sscontribs_* ssc_* //temporal since everything is homogeneous ABCD 
    egen ssc_total = rowtotal(ssc_nopensions ssc_pensions)   , missing  //need to check with Daniel, not found ABCD
    * o_soc_ins INS_11_2_0	Instrument: Social insurance Not found need to check with Daniel ABCD
 
   *housing_InKind, other_InKind   not found ABCD
   * share_ym_pc_subsidy_agric_indirect  invalid name, too long need to check with Daniel ABCD
  * subsidy_elec_indirect ABCD
-  ren subsidy_elec_indirect* subsidy_elec_i*
-  ren subsidy_agric_indirect* subsidy_agric_i*
-  ren subsidy_water_indirect* subsidy_water_i*
-  ren subsidy_food_indirect* subsidy_food_i*
-  ren subsidy_fuel_indirect* subsidy_fuel_i*
-  ren excise_other_indirect* excise_other_i*
-  ren excise_fuel_indirect* excise_fuel_i*
+ ren subsidy_elec_indirect subsidy_elec_i
+  ren subsidy_agric_indirect subsidy_agric_i
+  ren subsidy_water_indirect subsidy_water_i
+  ren subsidy_food_indirect subsidy_food_i
+  ren subsidy_fuel_indirect subsidy_fuel_i
+  ren excise_other_indirect excise_other_i
+  ren excise_fuel_indirect excise_fuel_i
+  
   ren education_* educ_*
-  ren ssc_nopensions_employee* ssc_nopen_ee*
-  ren ssc_nopensions_employer* ssc_nopen_er*
-  ren ssc_pensions_employee* ssc_pen_ee*
-  ren ssc_pensions_employer* ssc_pen_er*
-  ren ssc_pensions* ssc_pen*
-  ren ssc_nopensions* ssc_nopen*
   * education_pre_and_prim
   * education_preprimary
   * education_primary
@@ -167,48 +170,38 @@ use "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", clear
   * education_tertiary
   * education_psnt
   * education_copay
-  
-  * Per capita variables/incomes (or adult equivalent) named with "_pc" suffix
-  foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' `Subsidies' `Contributions' "ym" "yp" "yn" "yd" "yc" "yf"{
-    capture confirm variable `x'_unit
-    if _rc == 0 {
-        rename `x'_unit `x'_pc
-    }
-    else {
-        dis as text "Creating `x'_pc"
-		quietly: gen `x'_pc = .
-    }
-}
 
-  *temporal changes to the data
-	rename zref line_nat 
-	
-	g line_li21 = 3
-	g line_lm21 = 4.2
-	g line_um21 = 8.3
 
 	tempfile output
-	save `output', replace
+	save `output', replace 
 
 *===============================================================================	
 *------------------------------Indicators --------------------------------------
 *===============================================================================
 
 *===============================================================================
-**# C. Netcash Position for ymp and yd.
+*---> C. Netcash Position for ymp and yd.
 *        Generating incidence (relative) by decil (pre-fiscal and disposable)
 *===============================================================================
 *///---> here most of the Danie's estimates could work, other part of its code need to be debuged ABCD
 
-
+/*
 *Outline, 
 *Compute mean by partition
 
 *---> C.1  define indicators (by income in incidence), partitions 
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
-set seed 80292367		
+set seed 80292367
+
+u `output', clear 
+		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+				gen `x'_pc=`x' /hhsize   //need to check with Daniel ABCD
+		}
+		
+		
 		
 foreach y in ym yd {
+					gen `y'_pc=`y' /hhsize   //need to check with Daniel ABCD
 
 		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 			
@@ -229,6 +222,7 @@ foreach y in ym yd {
 
 tempfile output_quantiles
 save `output_quantiles', replace 
+}
 
 *Prepare microdata : milliles and variable that allowed that means compute them 
 
@@ -250,7 +244,7 @@ save `output_quantiles', replace
 		frame copy default fr_wide, replace
 
 		* --- Loop over each indicator: reshape to long at 3 levels ---
-		foreach indic in share uinc cinc cov  {
+		foreach indicator in share uinc cinc cov  {
 
 		* --- Decile level (work inside a copy frame, no touch on default) ---
 		
@@ -258,12 +252,12 @@ save `output_quantiles', replace
 			frame copy fr_wide fr_dec
 			frame fr_dec {
 				drop  `y'_pvpc
-				groupfunction [aw=hhweight], mean(`indic'*) by(`y'_pvdc)
-				reshape long `indic'_`y'_pc_, i(`y'_pvdc) j(variable) string
+				groupfunction [aw=hhweight], mean(`indicator'*) by(`y'_pvdc)
+				reshape long `indicator'_`y'_pc_, i(`y'_pvdc) j(variable) string
 				tostring `y'_pvdc, gen(partition) format(%04.0f)
 					replace partition = "pv_dc_" + partition
 					drop `y'_pvdc
-				rename `indic'_ value
+				rename `indicator'_ value
 			}
 		
 		* --- Centile level (work inside a copy frame) ---
@@ -271,12 +265,12 @@ save `output_quantiles', replace
 			frame copy fr_wide fr_cent
 			frame fr_cent {
 				drop  `y'_pvdc
-				groupfunction [aw=hhweight], mean(`indic'*) by(`y'_pvpc)
-				reshape long `indic'_`y'_pc_, i(`y'_pvpc) j(variable) string
+				groupfunction [aw=hhweight], mean(`indicator'*) by(`y'_pvpc)
+				reshape long `indicator'_`y'_pc_, i(`y'_pvpc) j(variable) string
 				tostring `y'_pvpc, gen(partition) format(%04.0f)
 					replace partition = "pv_pc_" + partition
 					drop `y'_pvpc
-				rename `indic'_ value
+				rename `indicator'_ value
 			}
 
 
@@ -294,18 +288,17 @@ save `output_quantiles', replace
 *---> C.2 Generate decomposition by taxonomy items (3 levels)
 * Stop here ABCD to check with Daniel the best way to call dataframes and link to identification variables 
 			
-			gen indicator = "`indic'"
+			gen indicator = "`indicator'"
 			gen income = "`y'"
 			rename variable instrument
 			gen category = "CAT_NA"
 			gen povertyline = "PL_NONE_N"
 			gen pension = "pdi"
 			gen country= "$country"
-			gen survey="$survey"
 			gen dataset = "$survey"
-			gen context = "equity"
+
 			order indicator category instrument income povertyline partition pension country dataset value
-			save "$dataaux/`indic'_`y'", replace
+			save "$dataaux/`indicator'_`y'", replace
 
 		}	  // eo foreach indicator
 		
@@ -314,15 +307,17 @@ save `output_quantiles', replace
 
 	} // eo foreach y
 
-
+	
+	
+ // eo foreach dataset
 
 *---> C.3 Compiling and saving data 
-foreach indic in share uinc cinc cov  {
+foreach indicator in share uinc cinc cov  {
 	foreach y in ym yd {
 		local i = 1
-		use "$dataaux/`indic'_`y'", clear
+		use "$dataaux/`indicator'_`y'", clear
 		
-		if "`y'"=="ym" & "`indic'"=="share" {
+		if "`y'"=="ym" & "`indicator'"=="share" {
 			save "$dataaux/final_dist.dta", replace
 		}
 		else {
@@ -333,30 +328,29 @@ foreach indic in share uinc cinc cov  {
 		}
 	} // eo foreach y
 // eo foreach indicator
-		foreach t in context indicator category income povertyline partition pension {
-				dis "Merge with `t' file"
-				merge m:1 `t' using ``t''
-				keep if _merge==3
-				drop _merge 
-		}
-}
-
-		merge m:1 instrument using `correlative', nogen
-		
-		gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
-		order $toreport 
-		keep $toreport
-		
-	tempfile netcash_relincidence
-	save `netcash_relincidence'
 
 
 *---> Note: debuged until here. ABCD
+
 *===============================================================================
-**# D. Distributional indicators International values Gini, Theil, and FGT measures
+*---> D. Distributional indicators International values Gini, Theil, and FGT measures
 		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
-/* u `output', clear 
+
+*---> For now, out of the global loop
+	
+use "$HFMD_data/${file}_h", clear
+
+	*temporal changes to the data
+	rename zref line_nat 
+	
+	g line_li21 = 3
+	g line_lm21 = 4.2
+	g line_um21 = 8.3
+
+	tempfile output
+	save `output', replace
+
 
 *---> D.1 List of all new marginal contributinos store in income
     local income2 "" // list with all counterfactual vectors  
@@ -367,8 +361,6 @@ foreach indic in share uinc cinc cov  {
 		cap assert (`policy'_pc >= 0 | `policy'_pc==.) // in the meantime not calculated on the basis of the final income concept 
 	}
 
-}	
-	
 	*Computing vectors of marginal contributions, all computed with respect market income and consumable income
     local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
 	foreach inc in yd yc yf {
@@ -389,8 +381,7 @@ foreach indic in share uinc cinc cov  {
 
 	*1. Computing poverty levels 
 	dis " ${fname_`i'} - List of counterfactual income concepts: `income2' "
-	gen all=1
-	sp_groupfunction [aw=popweight], gini(`income_concepts_pc' `income2') theil(`income_concepts_pc' `income2') poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
+	sp_groupfunction [aw=pondih], gini(`income_concepts_pc' `income2') theil(`income_concepts_pc' `income2') poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
 	gen value_level = value
 	
 	*2. Computing marginal contributions
@@ -502,26 +493,36 @@ local i = 1
 use "$dataaux/pov_ineq_`i'.dta", clear
 save "$dataaux/final_pov_ineq.dta", replace
 
-}
 
 */
+
 *---> new two indicators added here 
 *===============================================================================
-**# E.  kakwani index.
+*---> E.  kakwani index.
 *===============================================================================
 
 *---> Note: For now, only on the global loop
+	
 *---> E.1 Preparing main output database 
-local rank ym_nat_pov
+	local rank ym_nat_pov
 		
-u `output', clear 
-	foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {	
-		replace `x'_pc= - `x'_pc
-	}
-	foreach x in `income_concepts' {
-		ren `x' `x'_pc 
-	}		
+	u `output', clear 
 
+			foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {
+			
+				gen `x'_pc= - `x'/ hhsize
+			}
+			
+			foreach x in `income_concepts' {
+				ren `x' `x'_pc 
+				
+			}
+			
+	rename zref line_nat 
+ 	g line_li21 = 3
+	g line_lm21 = 4.2
+	g line_um21 = 8.3
+	
 	tempfile output_a
 	save `output_a'
 
@@ -616,21 +617,22 @@ u `output', clear
 	
 	drop _merge 
 		foreach t in context indicator category income povertyline partition pension {
-				dis "Merge with `t' file"
 				merge m:1 `t' using ``t''
 				keep if _merge==3
 				drop _merge 
 		}
 	
-	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
 	order $toreport 
 	keep $toreport
 
 	tempfile kakwani
 	save `kakwani'
+	
+
 
 *===============================================================================
-**# F.  Marginal contribution
+*---> F.  Marginal contribution
 *===============================================================================	
 *---> F.1 Using standard approach 
  
@@ -727,27 +729,15 @@ u `output', clear
 	replace value=. if indicator=="mcp" & type=="InKindTransfers"
 	order $toreport 
 	keep $toreport	
-	sort INDICATOR_ID INSTRUMENT_ID INCOME_ID
 	
 		tempfile marginal_contrib
 		save `marginal_contrib'
 	
 	}
-	
-*===============================================================================
-**# G. Exporting results
-*===============================================================================	
-use `netcash_relincidence', clear
-append using `kakwani', force
-append using `marginal_contrib', force
-
-order country ID_CONTEXT dataset value INDICATOR_ID SHORT_NAME CATEGORY_ID	INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
-	
-	export excel using "$dataout/01-Cleaned-FIA-Indicators.dta", sheet("database_rep", replace) first(variable)  
-	save "$dataout/01-Cleaned-FIA-Indicators_${country}_${survey}_${survey_year}.dta", replace
-
-	
+			
 /*
+
+
 *===============================================================================
 *---> Z. Exporing finaldatasets | Taxonomy  Unique ID
 *===============================================================================	
