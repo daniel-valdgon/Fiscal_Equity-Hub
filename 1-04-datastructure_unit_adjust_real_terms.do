@@ -128,5 +128,28 @@ order ym_inat_pov_2021 ym_inat_pov_2017 ym_nat_pov yp_inat_pov_2021 yp_inat_pov_
 
 order ym_unit yp_unit yn_unit yd_unit yc_unit yf_unit ym_pvdc_unit ym_pvpc_unit yp_pvdc_unit yp_pvpc_unit yn_pvdc_unit yn_pvpc_unit yd_pvdc_unit yd_pvpc_unit yc_pvdc_unit yc_pvpc_unit yf_pvdc_unit yf_pvpc_unit, a(yf)
 
-di as result "Income variables for national and international poverty created. Please check the results."
+
+*---------------------------------------------------------------
+**# 4. Instruments in per capita/adult equivalent
+*---------------------------------------------------------------
+
+local ssc pension_total ssc_pensions ssc_pensions_employee ssc_pensions_employer ssc_nopensions ssc_nopensions_employee ssc_nopensions_employer 
+local dirtax dirtax_total dirtax_PIT dirtax_proll dirtax_property dirtax_bit dirtax_capital dirtax_other dirtax_salaries dirtax_pit_other
+local dirtransf dirtransf_total dtr_soc_ass dtr_soc_ins dtr_cash dtr_ocash dtr_wp dtr_inkind dtr_other 
+local subsidy subsidy_total subs_elec_total subs_fuel_total subs_water_total subs_food_total subs_agric_total subs_other_total subsidy_elec_direct subsidy_elec_indirect subsidy_fuel_direct subsidy_fuel_indirect subsidy_water_direct subsidy_water_indirect subsidy_food_direct subsidy_food_indirect subsidy_agric_direct subsidy_agric_indirect
+local indtax indtax_total VAT_total excise_fuel excise_other CD_total other_indirect VAT_direct VAT_indirect excise_fuel_direct excise_fuel_indirect excise_other_direct excise_other_indirect CD_direct CD_indirect
+local inktransf inktransf_total education_inKind education_pre_and_prim education_preprimary education_primary education_secondary education_tertiary education_psnt education_copay education_other health_inKind health_contr health_non_contr health_hospital health_prim health_inpatient health_outpatient health_copay health_other
+
+local allvars `ssc' `dirtax' `dirtransf' `subsidy' `indtax' `inktransf'
+
+local unitvars
+
+foreach var in `allvars' {
+    gen `var'_unit = `var' / ${hh_adj}
+    local unitvars `unitvars' `var'_unit
+}
+
+order `allvars' `unitvars'
+
+di as result "Income variables for national and international poverty created. Instruments in pc/ae created."
 sleep 1000

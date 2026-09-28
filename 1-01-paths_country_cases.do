@@ -7,6 +7,7 @@ if "${country}"=="GNQ" & "$survey_year" =="2022" & "$survey" =="ENH2"{
 	global country_data "${microdata}/${country}/GNQ_ENH2_S2022_P2022_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_GNQ_S2022_P2022_v01"
+	global file_out "HFMD_GNQ_S2022_P2022_v01"
 	global GMD_file ""
 }
 
@@ -15,6 +16,7 @@ else if "${country}"=="SEN" & "$survey_year" =="2021" & "$survey" =="EHCVM"{
 	global country_data "${microdata}/${country}/SEN_EHCVM_S2021_P2021_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_SEN_S2021_P2021_v01"
+	global file_out "HFMD_SEN_S2021_P2021_v01"
 	global GMD_file  "${country_data}\Master_data\data_raw\other_harmonization\GMD\SEN_2021_EHCVM_V01_M_V02_A_GMD_ALL.dta"
 }
 
@@ -23,6 +25,7 @@ else if "${country}"=="MRT" & "$survey_year" =="2019" & "$survey" =="EPCV"{
 	global country_data "${microdata}/${country}/MRT_EPCV_S2019_P2019_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_MRT_S2019_P2019_v01"
+	global file_out "HFMD_MRT_S2019_P2019_v01"
 	global GMD_file  "${country_data}\Master_data\data_raw\other_harmonization\GMD\MRT_2019_EPCV_V01_M_V02_A_GMD_ALL.dta"
 }
 
@@ -31,6 +34,7 @@ else if "${country}"=="GMB" & "$survey_year" =="2020" & "$survey" =="IHS"{
 	global country_data "${microdata}/${country}/GMB_IHS_S2020_P2020_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_GMB_S2020_P2020_v01"
+	global file_out "HFMD_GMB_S2020_P2020_v01"
 	global GMD_file  "${country_data}\Master_data\data_raw\other_harmonization\GMD\GMB_2020_IHS_V02_M_V03_A_GMD_ALL.dta"
 }
 
@@ -39,6 +43,7 @@ else if "${country}"=="COL" & "$survey_year" =="2021" & "$survey" =="GEIH"{
 	global country_data "${microdata}/${country}/COL_GEIH_S2021_P2021_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "COL_GEIH_S2021_P2021_v01"
+	global file_out "HFMD_COL_S2021_P2021_v01"
 	global GMD_file  "${country_data}\Master_data\data_raw\other_harmonization\GMD\COL_2021_GEIH_V02_M_V01_A_GMD_ALL.dta"
 }
 
@@ -47,6 +52,7 @@ else if "${country}"=="ECU" & "$survey_year" =="2024" & "$survey" =="ENEMDU"{
 	global country_data "${microdata}/${country}/ECU_ENEMDU_S2024_P2024_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "ECU_ENEMDU_S2024_P2024_v01"
+	global file_out "HFMD_ECU_S2024_P2024_v01"
 	global GMD_file "${country_data}\Master_data\data_raw\other_harmonization\GMD\ECU_2024_ENEMDU_V01_M_V01_A_GMD_ALL.dta"
 }
 
@@ -55,6 +61,7 @@ else if "${country}"=="AGO" & "$survey_year" =="2018" & "$survey" =="IDREA"{
 	global country_data "${microdata}/${country}/AGO_IDREA_S2018_P2023_v01"
 	global HFMD_data "${country_data}/HFMD"
 	global file "HFMD_AGO_S2018_P2023_v01"
+	global file_out "HFMD_AGO_S2018_P2023_v01"
 	global GMD_file 	"${country_data}\Master_data\data_raw\other_harmonization\GMD\AGO_2018_IDREA_V01_M_V01_A_GMD_GPWG.dta"
 }
 
@@ -62,7 +69,8 @@ else if "${country}"=="AGO" & "$survey_year" =="2018" & "$survey" =="IDREA"{
 else if "${country}"=="LKA" & "$survey_year" =="2019" & "$survey" =="HIES"{
 	global country_data "${microdata}/${country}/LKA_HIES_S2019_P2024_v01"
 	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD"
+	global file "HFMD_LKA_S2019_P2024_v01"
+	global file_out "HFMD_LKA_S2019_P2024_v01"
 	global GMD_file ""
 }
 
@@ -70,14 +78,16 @@ else if "${country}"=="LKA" & "$survey_year" =="2019" & "$survey" =="HIES"{
 else if "${country}"=="MNG" & "$survey_year" =="2022" & "$survey" =="HSES"{
 	global country_data "${microdata}/${country}/MNG_HSES_S2022_P2022_v01"
 	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD"
+	global file "MNG_S2022_P2022_v01"
+	global file_out "HFMD_MNG_S2022_P2022_v01"
 	global GMD_file ""
 }
 * MALDIVES (MDV 2019 HIES)
 else if "${country}"=="MDV" & "$survey_year" =="2019" & "$survey" =="HIES"{
 	global country_data "${microdata}/${country}/MDV_HIES_S2019_P2023_v01"
 	global HFMD_data "${country_data}/HFMD"
-	global file "HFMD"
+	global file "HFMD_MDV_S2019_P2023_v01"
+	global file_out "HFMD_MDV_S2019_P2023_v01"
 	global GMD_file ""
 }
 
