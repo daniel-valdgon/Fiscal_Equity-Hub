@@ -115,9 +115,8 @@ foreach j of global taxonomy_components  {
 *============================================================================*
 **# B. Core dataset selection 
 *============================================================================*
-
-global run_countries `" "ECU 2024 ENEMDU" "'
-*global run_countries `" "COL 2021 GEIH" "'
+*global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "ECU 2024 ENEMDU" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "MDV 2019 HIES" "'
+global run_countries `" "GNQ 2022 ENH2" "'
 
 foreach config of global run_countries {
 
@@ -356,7 +355,19 @@ foreach indic in share uinc cinc cov  {
 **# D. Distributional indicators International values Gini, Theil, and FGT measures
 		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
-/* u `output', clear 
+ u `output', clear 
+ 
+foreach x in `income_concepts' {
+	capture confirm variable `x'_pc
+    if _rc == 0 {
+		dis as text "Already exists `x'_pc"
+    }
+	else{
+		dis as text "Creating `x'_pc"
+		quietly: gen `x'_pc = `x'/hhsize		
+	}
+}
+
 
 *---> D.1 List of all new marginal contributinos store in income
     local income2 "" // list with all counterfactual vectors  
@@ -365,9 +376,7 @@ foreach indic in share uinc cinc cov  {
 	foreach policy of local taxes {
 		replace `policy'_pc = -`policy'_pc
 		cap assert (`policy'_pc >= 0 | `policy'_pc==.) // in the meantime not calculated on the basis of the final income concept 
-	}
-
-}	
+	}	
 	
 	*Computing vectors of marginal contributions, all computed with respect market income and consumable income
     local aux2 `tax' `indtax' `transfer' `Subsidies' `inkind'
@@ -392,7 +401,7 @@ foreach indic in share uinc cinc cov  {
 	gen all=1
 	sp_groupfunction [aw=popweight], gini(`income_concepts_pc' `income2') theil(`income_concepts_pc' `income2') poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
 	gen value_level = value
-	
+
 	*2. Computing marginal contributions
 	ren variable long_variable
 	ren measure indicator
@@ -401,14 +410,13 @@ foreach indic in share uinc cinc cov  {
 	replace reference ="PL_NONE_N" if indicator == "gini" | indicator == "theil"
 	replace reference = upper(reference) 
 	
-	gen aux_end_y=value if ( income_concept+"_pc"==long_variable)
+	gen aux_end_y=value if ( income_concept+ "_inat_pov_2021" +"_pc"==long_variable | income_concept+ "_nat_pov_" +"_pc"==long_variable)
 	bysort indicator income_concept reference (value): egen sd=sd(aux_end_y) 
 	bysort indicator income_concept reference (value): egen end_y=mean(aux_end_y) 
 
 	assert end_y!=. & sd==.
 	gen value_mc = (value - end_y) 
 	
-
 	*3.Computing total impact 
 	foreach inc in ym yd yc yf {
 		gen aux_`inc'_lvl=end_y if income_concept=="`inc'"
@@ -438,9 +446,7 @@ foreach indic in share uinc cinc cov  {
 	replace value_mc=. if ( income_concept+"_pc"==long_variable) // marginal contributions of income concepts  
 
 	*Eliminating levels that are not useful now: all policy counterfactuals 
-	replace value_level=. if ( income_concept+"_pc"!=long_variable)
-
-
+	replace value_level=. if (income_concept+ "_inat_pov_2021" +"_pc"!=long_variable & income_concept+ "_nat_pov_" +"_pc"!=long_variable)
 	
 *---> D.2 Generate decomposition by taxonomy items (4 levels)
 *NOTE, WE EXCLUDE FOR NOW INDICATORS THAT ALLOW US TO ESTIMATE MARGINAL CONTRIBUTION
@@ -494,18 +500,43 @@ ren value_ value
 order indicator category instrument income povertyline partition pension country dataset value
 save "$dataaux/pov_ineq_`i'.dta", replace
 
-}
 
 *---> D.3 Compiling and saving data
 
 local i = 1
 use "$dataaux/pov_ineq_`i'.dta", clear
+drop if indicator=="mci"| indicator=="mcp" //considerando que ya hay una nueva sección donde se calculan las contribuciones marginales
+
+
+*---> D.4 Preparing clean dataset
+	replace country="$country"
+	g survey="$survey"
+	replace dataset="${file}"
+	g context="equity"
+	
+	replace povertyline="line_li21" if povertyline=="LINE_LI21"
+	replace povertyline="line_lm21" if povertyline=="LINE_LM21"
+	replace povertyline="line_nat" if povertyline=="LINE_NAT"
+	replace povertyline="line_um21" if povertyline=="LINE_UM21"
+
+	replace instrument=""
+		foreach t in context indicator category income povertyline partition pension {
+				dis "Merge with `t' file"
+				merge m:1 `t' using ``t''
+				drop if value==. & country=="" & dataset==""  & survey==""
+				keep if _merge==3
+				drop _merge 
+		}
+
+	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+	order $toreport 
+	keep $toreport
+
+tempfile distributional_ind
+save `distributional_ind'
+	
 save "$dataaux/final_pov_ineq.dta", replace
 
-}
-
-*/
-*---> new two indicators added here 
 *===============================================================================
 **# E.  kakwani index.
 *===============================================================================
@@ -642,18 +673,20 @@ u `output', clear
 		foreach var of local aux {
 	
 			gen inc_`var'=ym_nat_pov_pc-`var'_pc
-			local income2 `income2' inc_`var'   // Store incomes to marignal contribution calculation
+			local income3 `income3' inc_`var'   // Store incomes to marignal contribution calculation
 	
 		}
 	local auxII `InKindTransfers' `DirectTransfers'  `Subsidies'
 		foreach var of local auxII {
 	
 			gen inc_`var'=ym_nat_pov_pc+`var'_pc
-			local income2 `income2' inc_`var' // Store incomes to marignal contribution calculation
+			local income3 `income3' inc_`var' // Store incomes to marignal contribution calculation
 		}
-
 	
-	sp_groupfunction [aw=hhweight], gini(`income_concepts_pc' `income2')  poverty(`income_concepts_pc' `income2') povertyline(`pline')  by(all) 
+	dis "`income_concepts_pc'" "-" "`income3'"
+
+	sp_groupfunction [aw=hhweight], gini(`income_concepts_pc' `income3')  poverty(`income_concepts_pc' `income3') povertyline(`pline')  by(all) 
+
 
 *---> F.2 Estimate marginal distributions by income reference
 	g mc_d=.
@@ -731,21 +764,20 @@ u `output', clear
 	
 		tempfile marginal_contrib
 		save `marginal_contrib'
-	
-	}
-	
+
 *===============================================================================
 **# G. Exporting results
 *===============================================================================	
 use `netcash_relincidence', clear
 append using `kakwani', force
 append using `marginal_contrib', force
+append using `distributional_ind', force
 
-order country ID_CONTEXT dataset value INDICATOR_ID SHORT_NAME CATEGORY_ID	INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
+
+order country ID_CONTEXT dataset value INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
 	
-	export excel using "$dataout/01-Cleaned-FIA-Indicators.dta", sheet("database_rep", replace) first(variable)  
 	save "$dataout/01-Cleaned-FIA-Indicators_${country}_${survey}_${survey_year}.dta", replace
-
+}
 	
 /*
 *===============================================================================
