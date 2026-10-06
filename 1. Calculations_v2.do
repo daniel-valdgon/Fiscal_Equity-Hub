@@ -130,6 +130,7 @@ global run_country "`config'"
 	
     di as result "Running ${run_country} indicators"
 	di as result "---------------------------"
+	sleep 1500
 
 
 * Obj: This section will include protocols to revise the databases, q-check over the FIA data
@@ -353,7 +354,6 @@ foreach indic in share uinc cinc cov  {
 *---> Note: debuged until here. ABCD
 *===============================================================================
 **# D. Distributional indicators International values Gini, Theil, and FGT measures
-		*Generate Income Concepts for Marginal Contribution
 *===============================================================================
  u `output', clear 
  
@@ -364,9 +364,10 @@ foreach x in `income_concepts' {
     }
 	else{
 		dis as text "Creating `x'_pc"
-		quietly: gen `x'_pc = `x'/hhsize		
+		quietly: gen `x'_pc = `x'
 	}
 }
+
 
 
 *---> D.1 List of all new marginal contributinos store in income
@@ -410,11 +411,20 @@ foreach x in `income_concepts' {
 	replace reference ="PL_NONE_N" if indicator == "gini" | indicator == "theil"
 	replace reference = upper(reference) 
 	
-	gen aux_end_y=value if ( income_concept+ "_inat_pov_2021" +"_pc"==long_variable | income_concept+ "_nat_pov_" +"_pc"==long_variable)
+	
+	*Eliminating values without sense (like ineternational poverty X line_NAT; or any isntrument with int. poverty)
+	drop if inlist(long_variable, "ym_inat_pov_2021_pc", "yp_inat_pov_2021_pc", "yn_inat_pov_2021_pc", "yd_inat_pov_2021_pc", "yc_inat_pov_2021_pc", "yf_inat_pov_2021_pc") & inlist(reference, "LINE_NAT")
+	
+	drop if inlist(long_variable, "ym_nat_pov_pc", "yp_nat_pov_pc", "yn_nat_pov_pc", "yd_nat_pov_pc", "yc_nat_pov_pc", "yf_nat_pov_pc") & inlist(reference, "LINE_LI21", "LINE_LM21", "LINE_UM21")
+	
+	drop if inlist(reference, "LINE_LI21", "LINE_LM21", "LINE_UM21") & (long_variable!="yp_inat_pov_2021_pc" & long_variable!="ym_inat_pov_2021_pc" & long_variable!="yn_inat_pov_2021_pc" & long_variable!="yd_inat_pov_2021_pc" & long_variable!="yc_inat_pov_2021_pc"& long_variable!="yf_inat_pov_2021_pc")
+	
+	
+	gen aux_end_y=value if (income_concept+ "_nat_pov" +"_pc"==long_variable)
 	bysort indicator income_concept reference (value): egen sd=sd(aux_end_y) 
 	bysort indicator income_concept reference (value): egen end_y=mean(aux_end_y) 
 
-	assert end_y!=. & sd==.
+	assert end_y!=. & sd==. if (reference!="LINE_LI21" & reference!="LINE_LM21" & reference!="LINE_UM21")
 	gen value_mc = (value - end_y) 
 	
 	*3.Computing total impact 
@@ -422,8 +432,8 @@ foreach x in `income_concepts' {
 		gen aux_`inc'_lvl=end_y if income_concept=="`inc'"
 		bysort indicator reference: egen `inc'_lvl=mean(aux_`inc'_lvl) 
 		bysort indicator reference: egen sd_`inc'_lvl=sd(aux_`inc'_lvl)
-		assert `inc'_lvl!=. 
-		assert sd_`inc'_lvl==0 | sd_`inc'_lvl==.
+		assert `inc'_lvl!=. if (reference!="LINE_LI21" & reference!="LINE_LM21" & reference!="LINE_UM21")
+		assert sd_`inc'_lvl==0 | sd_`inc'_lvl==. if (reference!="LINE_LI21" & reference!="LINE_LM21" & reference!="LINE_UM21")
 
 	}
 
@@ -442,11 +452,12 @@ foreach x in `income_concepts' {
 		replace value_mc=. if inlist(indicator, "fgt0", "fgt1", "fgt2") & inlist(income_concept, "yf") // all mc to poverty with final income
 	}
 
+
 	assert abs(value_mc)<0.0001 | value_mc==. if income_concept+"_pc"==long_variable
 	replace value_mc=. if ( income_concept+"_pc"==long_variable) // marginal contributions of income concepts  
 
 	*Eliminating levels that are not useful now: all policy counterfactuals 
-	replace value_level=. if (income_concept+ "_inat_pov_2021" +"_pc"!=long_variable & income_concept+ "_nat_pov_" +"_pc"!=long_variable)
+	replace value_level=. if (income_concept+ "_inat_pov_2021" +"_pc"!=long_variable & income_concept+ "_nat_pov" +"_pc"!=long_variable)
 	
 *---> D.2 Generate decomposition by taxonomy items (4 levels)
 *NOTE, WE EXCLUDE FOR NOW INDICATORS THAT ALLOW US TO ESTIMATE MARGINAL CONTRIBUTION
@@ -465,9 +476,10 @@ gen country= substr("${fname_`i'}", 1, 3)
 gen dataset = "${fname_`i'}"
 
 
-replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & country=="ECU" // @jmmonroyb, thre is a weird reason why the conditional of line 452 is not working,so I am making an exception here, please check  "replace instrument = "INS_NA_N_N" if instrumen  ..."  
+*replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & country=="ECU" // @jmmonroyb, thre is a weird reason why the conditional of line 452 is not working,so I am making an exception here, please check  "replace instrument = "INS_NA_N_N" if instrumen  ..."  
 
 save "$dataaux/pov_ineq_debug_`i'.dta", replace 
+
 
 drop _population long_variable  value sd aux_* end_y all ym_lvl sd_ym_lvl yd_lvl sd_yd_lvl yc_lvl sd_yc_lvl yf_lvl sd_yf_lvl
 
@@ -531,6 +543,10 @@ drop if indicator=="mci"| indicator=="mcp" //considerando que ya hay una nueva s
 	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
 	order $toreport 
 	keep $toreport
+	
+	** Dropping the poverty indicators for final income2
+	drop if inlist(INDICATOR_ID,"FEH_IND_HCR", "FEH_IND_PGP") & INCOME_ID =="INC_FI"
+
 
 tempfile distributional_ind
 save `distributional_ind'
@@ -773,11 +789,19 @@ append using `kakwani', force
 append using `marginal_contrib', force
 append using `distributional_ind', force
 
-
 order country ID_CONTEXT dataset value INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
 	
+	duplicates drop *, force
+	
 	save "$dataout/01-Cleaned-FIA-Indicators_${country}_${survey}_${survey_year}.dta", replace
+	
+	di as result "Ended and saved ${run_country} indicators"
+	di as result "---------------------------"
+	sleep 1500	
+	
 }
+
+exit 
 	
 /*
 *===============================================================================
