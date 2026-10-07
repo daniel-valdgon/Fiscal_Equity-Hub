@@ -136,7 +136,7 @@ forvalues i = 1/3 {
         capture assert abs(PIP_data - data) < 0.5 if ID == `i'
 
         if _rc == 0 {
-            di as result "PIP check for poverty line `povline': PASSED"
+            di as result "PIP check for poverty line `povline': PASSED | Data = " %6.2f `data_value' " | PIP = " %6.2f `pip_value'
         }
 
         else {
