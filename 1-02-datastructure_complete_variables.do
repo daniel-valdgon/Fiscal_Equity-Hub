@@ -126,3 +126,32 @@ if "`invalid_string_missing'" != "" {
 
 di as result "Variable completeness check passed: all variables are either populated or completely empty."
 sleep 2000
+
+*---------------------------------------------------------------
+**# 3. Warn about negative numeric values without stopping execution
+*---------------------------------------------------------------
+* Check all numeric variables, including categories containing "other".
+* Zeros and missing values do not trigger warnings.
+local negative_vars
+
+foreach var of local expected {
+    capture confirm numeric variable `var'
+    if _rc != 0 {
+        continue
+    }
+
+    quietly count if `var' < 0 & !missing(`var')
+    if r(N) > 0 {
+        di as error "WARNING: `var' contains " r(N) " negative observations."
+        local negative_vars `negative_vars' `var'
+    }
+}
+
+if "`negative_vars'" != "" {
+    di as error "WARNING: negative values found in: `negative_vars'. Execution will continue."
+}
+else {
+    di as result "Numeric sign check completed: no negative values found."
+}
+
+sleep 3000

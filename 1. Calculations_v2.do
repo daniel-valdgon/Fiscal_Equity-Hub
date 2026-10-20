@@ -6,7 +6,7 @@
 * Title: 	Generate outputs for the GSG3 Core Database
 *-------------------------------------------------------------------------------
 *-------------------------------------------------------------------------------
-* Note: Outputs are exported in long format to the hidden sheet all_${sheetname}.
+* Note: Outputs are exported in long format to the hidden sheet all_${country}_${survey}_${survey_year}.
 ---------------------------------------------------------------------------------*/
 
 *===============================================================================
@@ -46,6 +46,7 @@ else if "`c(username)'"=="wb527706" {
 	global dataout       "${root}/03-Outputs\01-Cleaned-FIA-Indicators"
 	global metadata       "${root}/01-Data/00-Aux"
 	global dataaux        "${root}/01-Data/00-Aux/temp"
+	global xls_out 			"${root}/03-Outputs/03-Visualizations/DataHub_Output.xlsx"
 
 	local dirfiles: dir "$scripts/_ado/" files "*.ado"
 	
@@ -227,6 +228,7 @@ foreach y in ym yd {
 		} // eo foreach x
 }
 
+
 tempfile output_quantiles
 save `output_quantiles', replace 
 
@@ -236,7 +238,7 @@ save `output_quantiles', replace
 
 		u `output_quantiles', clear	
 		
-		keep `y'_pvpc `y'_pvdc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  hhweight	
+		keep `y'_pvpc `y'_pvdc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  hhweight popweight	
 
 		* --- Single pass: millile-level weighted means (only full-data operation) ---
 		*groupfunction [aw=pondih], mean(share_`y'* uinc_`y'* cinc_`y'* cov_`y'*) sum(abs_`y'* pondih) by(`y'_millile_pc)
@@ -258,7 +260,7 @@ save `output_quantiles', replace
 			frame copy fr_wide fr_dec
 			frame fr_dec {
 				drop  `y'_pvpc
-				groupfunction [aw=hhweight], mean(`indic'*) by(`y'_pvdc)
+				groupfunction [aw=popweight], mean(`indic'*) by(`y'_pvdc)
 				reshape long `indic'_`y'_pc_, i(`y'_pvdc) j(variable) string
 				tostring `y'_pvdc, gen(partition) format(%04.0f)
 					replace partition = "pv_dc_" + partition
@@ -271,7 +273,7 @@ save `output_quantiles', replace
 			frame copy fr_wide fr_cent
 			frame fr_cent {
 				drop  `y'_pvdc
-				groupfunction [aw=hhweight], mean(`indic'*) by(`y'_pvpc)
+				groupfunction [aw=popweight], mean(`indic'*) by(`y'_pvpc)
 				reshape long `indic'_`y'_pc_, i(`y'_pvpc) j(variable) string
 				tostring `y'_pvpc, gen(partition) format(%04.0f)
 					replace partition = "pv_pc_" + partition
@@ -793,7 +795,12 @@ order country ID_CONTEXT dataset value INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SH
 	
 	duplicates drop *, force
 	
+	replace INSTRUMENT_ID="." if INSTRUMENT_ID==""
+	gen concat=INCOME_ID + "_" + INDICATOR_ID + "_" + INSTRUMENT_ID + "_" + POVERTY_LINE_ID + "_" + PARTITION_VALUE_ID
+	
 	save "$dataout/01-Cleaned-FIA-Indicators_${country}_${survey}_${survey_year}.dta", replace
+	
+	export excel "$xls_out", sheet("all_${country}_${survey}_${survey_year}") sheetreplace first(variable)
 	
 	di as result "Ended and saved ${run_country} indicators"
 	di as result "---------------------------"

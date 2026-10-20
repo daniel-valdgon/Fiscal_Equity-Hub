@@ -63,7 +63,7 @@ preserve
 
         capture drop inat_pov_`i' inat_pov_`i'1
 
-        apoverty yd_inat_pov_2021 [aw = popweight], ///
+        apoverty yd_inat_pov_2021_pc [aw = popweight], ///
             line(`povline') gen(inat_pov_`i')
 
         local output_vars `output_vars' inat_pov_`i'

@@ -29,6 +29,12 @@ foreach income in ym yp yn yd yc yf {
     gen `income'_unit = `income' / ${hh_adj}
 		  local income_label : variable label `income'
 	 label var `income'_unit "`income_label' (`label_division_unit')"
+
+    * Always retain both per capita and adult-equivalent income versions
+    gen `income'_pc = `income' / hhsize
+    label var `income'_pc "`income_label' (Per capita)"
+    gen `income'_ae = `income' / ae
+    label var `income'_ae "`income_label' (Adult equivalent)"
 	
     * Create spatial-temporal deflated income for distribution groups
     gen `income'_unit_df = `income'_unit / def_sp_tmp_nat
@@ -124,9 +130,34 @@ label var yf_inat_pov_2021 "Final income, 2021 PPP, for international poverty li
 label var yf_inat_pov_2017 "Final income, 2017 PPP, for international poverty lines"
 label var yf_nat_pov "Final income, for national poverty line"
 
-order ym_inat_pov_2021 ym_inat_pov_2017 ym_nat_pov yp_inat_pov_2021 yp_inat_pov_2017 yp_nat_pov yn_inat_pov_2021 yn_inat_pov_2017 yn_nat_pov yd_inat_pov_2021 yd_inat_pov_2017 yd_nat_pov yc_inat_pov_2021 yc_inat_pov_2017 yc_nat_pov yf_inat_pov_2021 yf_inat_pov_2017 yf_nat_pov, a(zref1)
+* Create both poverty income versions independently of the official adjustment
+local povertyvars
+foreach income in ym yp yn yd yc yf {
+    foreach adjustment in pc ae {
+        * International poverty, PPP USD per person/adult equivalent per day
+        foreach year in 2021 2017 {
+            gen `income'_inat_pov_`year'_`adjustment' = ///
+                `income'_`adjustment' / def_sp_tmp_inat / cpi_`year' / ppp_`year' / 365 ///
+                if !missing(`income'_`adjustment')
+        }
 
-order ym_unit yp_unit yn_unit yd_unit yc_unit yf_unit ym_pvdc_unit ym_pvpc_unit yp_pvdc_unit yp_pvpc_unit yn_pvdc_unit yn_pvpc_unit yd_pvdc_unit yd_pvpc_unit yc_pvdc_unit yc_pvpc_unit yf_pvdc_unit yf_pvpc_unit, a(yf)
+        * National poverty, spatial-temporal deflated local currency
+        gen `income'_nat_pov_`adjustment' = ///
+            `income'_`adjustment' / def_sp_tmp_nat ///
+            if !missing(`income'_`adjustment')
+    }
+
+    foreach measure in inat_pov_2021 inat_pov_2017 nat_pov {
+        local poverty_label : variable label `income'_`measure'
+        label var `income'_`measure'_pc "`poverty_label' (Per capita)"
+        label var `income'_`measure'_ae "`poverty_label' (Adult equivalent)"
+        local povertyvars `povertyvars' `income'_`measure' `income'_`measure'_pc `income'_`measure'_ae
+    }
+}
+
+order `povertyvars', a(zref1)
+
+order ym_unit ym_pc ym_ae yp_unit yp_pc yp_ae yn_unit yn_pc yn_ae yd_unit yd_pc yd_ae yc_unit yc_pc yc_ae yf_unit yf_pc yf_ae ym_pvdc_unit ym_pvpc_unit yp_pvdc_unit yp_pvpc_unit yn_pvdc_unit yn_pvpc_unit yd_pvdc_unit yd_pvpc_unit yc_pvdc_unit yc_pvpc_unit yf_pvdc_unit yf_pvpc_unit, a(yf)
 
 
 *---------------------------------------------------------------
