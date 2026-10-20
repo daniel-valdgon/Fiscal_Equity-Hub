@@ -1,5 +1,5 @@
 *---------------------------------------------------------------
-* Paths for specific contry case
+* Paths for specific country case: validation workflow only.
 *---------------------------------------------------------------
 
 * EQUATORIAL GUINEA (GNQ 2022 ENH2)
@@ -91,3 +91,8 @@ else if "${country}"=="MDV" & "$survey_year" =="2019" & "$survey" =="HIES"{
 	global GMD_file ""
 }
 
+
+else {
+    display as error "Unknown country/survey case: ${country} ${survey_year} ${survey}"
+    exit 198
+}

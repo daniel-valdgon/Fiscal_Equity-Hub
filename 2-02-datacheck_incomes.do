@@ -3,17 +3,17 @@
 * income and fiscal instruments
 *---------------------------------------------------------------
 
-* Reverse sign convention for instruments stored as negative flows
-foreach var of varlist dirtransf_total indtax_total {
-    replace `var' = `var' * (-1)
-}
+* Use negative auxiliary flows without modifying original instruments
+
 
 * Reconstruct income concepts
-capture drop yn_check yp_check yc_check yf_check
+tempvar negative_transfers negative_indirect
+generate double `negative_transfers' = -dirtransf_total
+generate double `negative_indirect' = -indtax_total
 
-egen yn_check = rowtotal(yd dirtransf_total)
+egen yn_check = rowtotal(yd `negative_transfers')
 egen yp_check = rowtotal(yn dirtax_total ssc_nopensions)
-egen yc_check = rowtotal(yd subsidy_total indtax_total)
+egen yc_check = rowtotal(yd subsidy_total `negative_indirect')
 egen yf_check = rowtotal(yc health_inKind education_inKind)
 
 * Validate reconstructed income concepts
@@ -27,7 +27,6 @@ assert ///
 di as result "Check passed: yn replicated from yd and direct transfers."
 sleep 1000
 
-
 assert ///
     (yp != 0 & abs((yp_check - yp) / yp) < 0.01) | ///
     (yp == 0 & abs(yp_check) < 1) ///
@@ -36,7 +35,6 @@ assert ///
 di as result "Check passed: yp replicated from yn, direct taxes, and social contributions."
 sleep 1000
 
-
 assert ///
     (yc != 0 & abs((yc_check - yc) / yc) < 0.01) | ///
     (yc == 0 & abs(yc_check) < 1) ///
@@ -44,7 +42,6 @@ assert ///
 
 di as result "Check passed: yc replicated from yd, subsidies, and indirect taxes."
 sleep 1000
-
 
 assert ///
     (yf != 0 & abs((yf_check - yf) / yf) < 0.01) | ///
@@ -56,11 +53,6 @@ sleep 1000
 
 * Clean check variables
 drop yn_check yp_check yc_check yf_check
-
-* Restore original sign convention
-foreach var of varlist dirtransf_total indtax_total {
-    replace `var' = `var' * (-1)
-}
 
 di as result "All income concepts were successfully replicated using disposable income and fiscal instruments."
 sleep 1000

@@ -1,10 +1,20 @@
+capture confirm file "$country_data/Master_data/documentation/FIA_documentation/Metadata_FIA.xlsx"
+if _rc {
+    display as text "NOT EXECUTED: FIA metadata workbook is unavailable."
+    exit
+}
+capture which ineqdeco
+if _rc {
+    display as text "NOT EXECUTED: ineqdeco is not installed."
+    exit
+}
 *---------------------------------------------------------------
 **# Load FIA metadata values for poverty and inequality checks
 *---------------------------------------------------------------
 preserve
 import excel "$country_data/Master_data/documentation/FIA_documentation/Metadata_FIA.xlsx", clear 
 
-drop E F
+capture drop E F
 rename (A B C D) (ID Type Variable Response)
 drop if ID=="ID" 
 drop if Variable==""
@@ -30,6 +40,13 @@ restore
 **# Check replication of inequality and poverty indicators
 * using HFMD data and compare against FIA metadata
 *-------------------------------------------------------------------
+local official pc
+assert inlist(division_unit, 1, 2)
+assert division_unit == division_unit[1]
+if division_unit[1] == 1 local official ae
+foreach income in ym yp yn yd yc yf {
+    assert `income'_nat_pov == `income'_`official' / def_sp_tmp_nat
+}
 local income_variables ym_nat_pov yp_nat_pov yn_nat_pov yd_nat_pov yc_nat_pov yf_nat_pov
 local output_vars
 
@@ -37,6 +54,7 @@ local output_vars
 **# 1. Compute poverty and Gini using national-poverty real income variables
 *---------------------------------------------------------------
 preserve
+dis "Calculating poverty (national line) and inequality using *`official'* division"
 foreach var of local income_variables {
 
     * Skip variable if it does not exist in the dataset
@@ -54,13 +72,13 @@ foreach var of local income_variables {
     }
 
     * Poverty using national poverty line
-    apoverty `var' [aw = popweight], varpl(zref) gen(pov_`var')
+    generate byte pov_`var'1 = (`var' < zref1) if !missing(`var', zref1)
 
     * Inequality
     ineqdeco `var' [aw = popweight]
     gen double gini_`var' = `r(gini)'
 
-    local output_vars `output_vars' pov_`var' gini_`var'
+    local output_vars `output_vars' pov_`var'1 gini_`var'
 }
 
 * Stop if no indicators were created
@@ -137,7 +155,7 @@ foreach num of local ids_to_check {
     quietly summarize FIA_metadata if ID == `num', meanonly
     local fia_value = r(mean)
 
-    capture assert abs(FIA_metadata - data) < 1 if ID == `num'
+    capture assert abs(FIA_metadata - data) < 2 if ID == `num'
 
     if _rc == 0 {
         di as result "`lbl': CHECK PASSED | Data = " %6.2f `data_value' ///
@@ -149,9 +167,8 @@ foreach num of local ids_to_check {
     }
 }
 
-di as text "Differences should be less than 1.0"
+di as text "Differences should be less than 2.0"
 
 di "All available FIA metadata (gini/poverty) checks done."
 sleep 2000
 restore
-

@@ -6,19 +6,27 @@
  Version: 0.1
 \*============================================================================*/
 
-clear all
-timer clear 1
-timer on 1
+* Validation-only workflow: read saved HFMD.
+* Configure paths with 00-init.do first. No construction do-file is called.
+* The saved HFMD must already contain the complete pc/ae and poverty schema.
+* National poverty uses zref1 and the country's official division_unit.
+* International poverty uses yd_inat_pov_2021, always per capita, including ae countries.
+
+version 17
+set more off
+if "$scripts" == "" {
+    display as error "Run 00-init.do first."
+    exit 198
+}
 
 * Country-survey configuration
 *global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "ECU 2024 ENEMDU" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "MDV 2019 HIES" "'
-global run_countries `" "AGO 2018 IDREA" "'
+global run_countries `" "LKA 2019 HIES" "'
+
 foreach config of global run_countries {
-
-global run_country "`config'"
-
+	global run_country "`config'"
     global country     : word 1 of $run_country
-    global survey_year : word 2 of $run_country
+	global survey_year : word 2 of $run_country
     global survey      : word 3 of $run_country
 
 	include "${scripts}/1-01-paths_country_cases.do"
@@ -46,9 +54,6 @@ include "${scripts}/1-02-datastructure_complete_variables.do"
 * B. Verifies that combined spatial-temporal deflators are equal to the product of the corresponding spatial and temporal deflators.
 include "${scripts}/1-03-datastructure_deflators_check.do"
 
-* C. Applies the official household size adjustment, either per capita or adult equivalent, and creates income variables in real terms for national and international poverty measurement.
-include "${scripts}/1-04-datastructure_unit_adjust_real_terms.do"
-
 *============================================================================*
 **# 2. Reproducibility Harmonize Fiscal Microdata (only needed once, create a log that validates if data was replaced or not, if it was replaced, create a log with the changes and the reason for the change)
 *============================================================================*
@@ -68,17 +73,10 @@ include "${scripts}/2-03-datacheck_fia_metadata.do"
 include "${scripts}/2-04-data_check_report.do"
 
 
-save "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", replace
+* E. Merge with GMD database
+*include "${scripts}/2-05-data_check_GMDmerge.do"
+
 di as result "Ended ${run_country}"
 di as result "---------------------------"
 	sleep 3000
-	
 }
-
-/*tempfile ${country}_${survey_year}_${survey}
-save `${country}_${survey_year}_${survey}', replace
-
-* E. Merge with GMD database
-include "${scripts}/2-05-data_check_GMDmerge.do"*/
-
-exit
