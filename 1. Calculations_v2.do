@@ -64,7 +64,6 @@ else if "`c(username)'"=="wb527706" {
     	tempfile `t'
 		save ``t''
 	}
-	
 
 	import excel "$metadata\correlative_4.xlsx", sheet("instrument") firstrow clear
 
@@ -140,7 +139,7 @@ global run_country "`config'"
 * It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
 
 * Household database
-use "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", clear
+use "$HFMD_data/${file}_h.dta", clear
    egen ssc_total = rowtotal(ssc_nopensions ssc_pensions)   , missing  //need to check with Daniel, not found ABCD
    * o_soc_ins INS_11_2_0	Instrument: Social insurance Not found need to check with Daniel ABCD
 
@@ -170,16 +169,17 @@ use "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", clear
   * education_copay
   
   * Per capita variables/incomes (or adult equivalent) named with "_pc" suffix
-  foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' `Subsidies' `Contributions' "ym" "yp" "yn" "yd" "yc" "yf"{
-    capture confirm variable `x'_unit
-    if _rc == 0 {
-        rename `x'_unit `x'_pc
+foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
+             `Subsidies' `Contributions' ym yp yn yd yc yf {
+        * Verificar si existe la variable per capita
+        capture confirm variable `x'_pc
+        if _rc {
+            di as text "Creating `x'_pc"
+            quietly gen double `x'_pc = `x'/hhsize
+        }
+        * Eliminar variable adulto equivalente
+        capture drop `x'_ae
     }
-    else {
-        dis as text "Creating `x'_pc"
-		quietly: gen `x'_pc = .
-    }
-}
 
   *temporal changes to the data
 	rename zref line_nat 
@@ -196,6 +196,127 @@ use "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", clear
 *===============================================================================
 
 *===============================================================================
+**# C. Total value
+*===============================================================================
+tempfile results total_temp ainc_temp national_temp
+local first = 1
+
+foreach inc in ym yd {
+    foreach p in dc pc {
+
+        use `output', clear
+
+        local groupvar "`inc'_pv`p'"
+
+        *---------------------------------------
+        * 1. Agregar valores por grupo
+        *---------------------------------------
+        groupfunction [aw=hhweight], ///
+            sum(`Directaxes' `Contributions' `DirectTransfers' ///
+                `Subsidies' `Indtaxes' `InKindTransfers') ///
+            by(`groupvar')
+
+        rename * I_*
+        rename I_`groupvar' `groupvar'
+
+        reshape long I_, i(`groupvar') j(variable) string
+        rename I_ value
+
+        * Calcular total e incidencia absoluta
+        bysort variable: egen double total = total(value)
+        gen double share = value / total
+
+        * Crear identificador de partición
+        tostring `groupvar', gen(part) format(%04.0f)
+        gen partition = "pv_`p'_" + part
+
+        *---------------------------------------
+        * 2. Valor de cada política por grupo
+        *---------------------------------------
+        preserve
+            keep partition variable value
+
+            gen indicator = "total"
+            gen income = "`inc'"
+
+            save `total_temp', replace
+        restore
+
+        *---------------------------------------
+        * 3. Valor total de cada política
+        *    Solo una vez por ingreso
+        *---------------------------------------
+        if "`p'" == "dc" {
+
+            preserve
+                keep variable total
+                duplicates drop variable, force
+
+                rename total value
+                gen partition = "PV_NA_NONE"
+                gen indicator = "total"
+                gen income = "`inc'"
+
+                save `national_temp', replace
+            restore
+        }
+
+        *---------------------------------------
+        * 4. Unir indicadores
+        *---------------------------------------
+        use `total_temp', clear
+
+        if "`p'" == "dc" {
+            append using `national_temp'
+        }
+
+        * Acumular resultados de cada iteración
+        if `first' {
+            save `results', replace
+            local first = 0
+        }
+        else {
+            append using `results'
+            save `results', replace
+        }
+    }
+}
+
+		*---------------------------------------
+		* 5. Base final
+		*---------------------------------------
+		use `results', clear
+
+		order income partition variable indicator value
+		sort income partition variable indicator
+			
+			gen category = "CAT_NA"
+			gen povertyline = "PL_NONE_N"
+			gen pension = "pdi"
+			gen country= "$country"
+			gen survey="$survey"
+			gen dataset = "$survey"
+			gen context = "equity"
+
+		foreach t in context indicator category income povertyline partition pension {
+				dis "Merge with `t' file"
+				merge m:1 `t' using ``t''
+				keep if _merge==3
+				drop _merge 
+		}
+		rename variable instrument
+
+	merge m:1 instrument using `correlative', nogen
+		
+		gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+
+	tempfile total_absoluteincidence
+	save `total_absoluteincidence'
+}
+
+*===============================================================================
 **# C. Netcash Position for ymp and yd.
 *        Generating incidence (relative) by decil (pre-fiscal and disposable)
 *===============================================================================
@@ -207,6 +328,8 @@ use "$root/03-Outputs/00-Cleaned-Databases/${file_out}_h.dta", clear
 
 *---> C.1  define indicators (by income in incidence), partitions 
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
+u `output', clear 
+
 set seed 80292367		
 		
 foreach y in ym yd {
@@ -787,6 +910,7 @@ u `output', clear
 **# G. Exporting results
 *===============================================================================	
 use `netcash_relincidence', clear
+append using `total_absoluteincidence', force
 append using `kakwani', force
 append using `marginal_contrib', force
 append using `distributional_ind', force
