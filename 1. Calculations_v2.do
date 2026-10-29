@@ -188,6 +188,15 @@ foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
 	g line_lm21 = 4.2
 	g line_um21 = 8.3
 
+	if cp_model==1{ //PDI
+		global cp_model = 1
+		global pf "yp"
+	}
+	else if cp_model==2{ //PGT
+		global cp_model = 2
+		global pf "ym"
+	}
+
 	tempfile output
 	save `output', replace
 
@@ -201,7 +210,7 @@ foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
 tempfile results total_temp ainc_temp national_temp
 local first = 1
 
-foreach inc in ym yd {
+foreach inc in "${pf}" yd {
     foreach p in dc pc {
 
         use `output', clear
@@ -314,7 +323,6 @@ foreach inc in ym yd {
 
 	tempfile total_absoluteincidence
 	save `total_absoluteincidence'
-}
 
 *===============================================================================
 **# C. Netcash Position for ymp and yd.
@@ -332,7 +340,7 @@ u `output', clear
 
 set seed 80292367		
 		
-foreach y in ym yd {
+foreach y in "${pf}" yd {
 
 		foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 			
@@ -357,7 +365,7 @@ save `output_quantiles', replace
 
 *Prepare microdata : milliles and variable that allowed that means compute them 
 
-	foreach y in ym yd {
+	foreach y in "${pf}" yd {
 
 		u `output_quantiles', clear	
 		
@@ -443,11 +451,11 @@ save `output_quantiles', replace
 
 *---> C.3 Compiling and saving data 
 foreach indic in share uinc cinc cov  {
-	foreach y in ym yd {
+	foreach y in "${pf}" yd {
 		local i = 1
 		use "$dataaux/`indic'_`y'", clear
 		
-		if "`y'"=="ym" & "`indic'"=="share" {
+		if "`y'"=="${pf}" & "`indic'"=="share" {
 			save "$dataaux/final_dist.dta", replace
 		}
 		else {
@@ -474,7 +482,6 @@ foreach indic in share uinc cinc cov  {
 		
 	tempfile netcash_relincidence
 	save `netcash_relincidence'
-
 
 *---> Note: debuged until here. ABCD
 *===============================================================================
@@ -534,8 +541,7 @@ foreach x in `income_concepts' {
 	gen income_concept = substr(long_variable,1,2)
 	gen policy = substr(long_variable, 8, .)
 	replace reference ="PL_NONE_N" if indicator == "gini" | indicator == "theil"
-	replace reference = upper(reference) 
-	
+	replace reference = upper(reference) 	
 	
 	*Eliminating values without sense (like ineternational poverty X line_NAT; or any isntrument with int. poverty)
 	drop if inlist(long_variable, "ym_inat_pov_2021_pc", "yp_inat_pov_2021_pc", "yn_inat_pov_2021_pc", "yd_inat_pov_2021_pc", "yc_inat_pov_2021_pc", "yf_inat_pov_2021_pc") & inlist(reference, "LINE_NAT")
@@ -553,18 +559,17 @@ foreach x in `income_concepts' {
 	gen value_mc = (value - end_y) 
 	
 	*3.Computing total impact 
-	foreach inc in ym yd yc yf {
+	foreach inc in yp yd yc yf {
 		gen aux_`inc'_lvl=end_y if income_concept=="`inc'"
 		bysort indicator reference: egen `inc'_lvl=mean(aux_`inc'_lvl) 
 		bysort indicator reference: egen sd_`inc'_lvl=sd(aux_`inc'_lvl)
 		assert `inc'_lvl!=. if (reference!="LINE_LI21" & reference!="LINE_LM21" & reference!="LINE_UM21")
 		assert sd_`inc'_lvl==0 | sd_`inc'_lvl==. if (reference!="LINE_LI21" & reference!="LINE_LM21" & reference!="LINE_UM21")
-
 	}
-
+	
 	*Eliminating the calculation of total impact to have only one indicator (trick: using ym)
-	gen value_totimp = ym_lvl - yc_lvl if inlist(indicator,"fgt0", "fgt1", "fgt2") & income_concept=="ym"
-	replace value_totimp = ym_lvl - yf_lvl if inlist(indicator,"gini", "theil") & income_concept=="ym"
+	gen value_totimp = yp_lvl - yc_lvl if inlist(indicator,"fgt0", "fgt1", "fgt2") & income_concept=="${pf}"
+	replace value_totimp = yp_lvl - yf_lvl if inlist(indicator,"gini", "theil") & income_concept=="${pf}"
 
 	
 	*Eliminating MC that does not make sense
@@ -590,7 +595,7 @@ foreach x in `income_concepts' {
 *indicator, income were defined above 		
 gen category = "CAT_NA"
 rename policy instrument
-replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & inlist(long_variable,"ym_pc", "yn_pc", "yd_pc", "yc_pc", "yf_pc")
+replace instrument = "INS_NA_N_N" if instrument=="" | instrument==" " & inlist(long_variable,"${pf}_pc", "yn_pc", "yd_pc", "yc_pc", "yf_pc")
 
 rename income_concept income
 rename reference povertyline
@@ -606,7 +611,7 @@ gen dataset = "${fname_`i'}"
 save "$dataaux/pov_ineq_debug_`i'.dta", replace 
 
 
-drop _population long_variable  value sd aux_* end_y all ym_lvl sd_ym_lvl yd_lvl sd_yd_lvl yc_lvl sd_yc_lvl yf_lvl sd_yf_lvl
+drop _population long_variable  value sd aux_* end_y all yp_lvl sd_yp_lvl yd_lvl sd_yd_lvl yc_lvl sd_yc_lvl yf_lvl sd_yf_lvl
 
 reshape long value_, i(indicator category instrument income povertyline partition pension country dataset) j(indicator2) string
 
@@ -678,13 +683,14 @@ save `distributional_ind'
 	
 save "$dataaux/final_pov_ineq.dta", replace
 
+*/
 *===============================================================================
 **# E.  kakwani index.
 *===============================================================================
-
+/*
 *---> Note: For now, only on the global loop
 *---> E.1 Preparing main output database 
-local rank ym_nat_pov
+local rank "${pf}"_nat_pov
 		
 u `output', clear 
 	foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {	
@@ -705,15 +711,15 @@ u `output', clear
 		local _`x' = r(conc)
 		}
 	
-	groupfunction [aw=hhweight], sum(`concs_pc') by(ym_pvpc) norestore
+	groupfunction [aw=hhweight], sum(`concs_pc') by(${pf}_pvpc) norestore
 		qui count
 		local _1 =r(N)
 		local nnn=`_1'+ 1  //add one more obs, the total obs goes from 100 to 101
 		set obs `nnn'
-		replace ym_pvpc = 0 in `nnn'
+		replace ${pf}_pvpc = 0 in `nnn'
 	
-		sort ym_pvpc
-		putmata x = (`concs_pc') if ym_pvpc!=0, replace 
+		sort ${pf}_pvpc
+		putmata x = (`concs_pc') if ${pf}_pvpc!=0, replace 
 		mata: x = J(1,cols(x),0) \ x  //generate a constant row, add to the top
 		mata: x = x:/quadcolsum(x)  //divide each element by the column total
 		mata: for(i=1; i<=cols(x);i++) x[.,i] = quadrunningsum(x[.,i])  //replace exisiting matrix by new elements
@@ -725,16 +731,16 @@ u `output', clear
 		local nnn=`_1'+ 1 //add one more obs, the total obs goes to 102
 		set obs `nnn'
 		
-		replace ym_pvpc = 999 in `nnn'
+		replace ${pf}_pvpc = 999 in `nnn'
 		foreach x of local concs_pc{
 			replace `x' = `_`x'' in `nnn'  //replace the last observation with gini/concentration coefficient
 		}	
-	order ym_pvpc, first
+	order ${pf}_pvpc, first
 	
 	tempfile concentration
 	save `concentration'
 *---> E.3 Prepare dataset for Kakwani 	
-	keep if ym_pvpc==999
+	keep if ${pf}_pvpc==999
 	ds
 	local vars `r(varlist)'
 	dis
@@ -755,9 +761,13 @@ u `output', clear
 				replace value   = `val_`v'' in `i'
 			local ++i
 		}
-*---> E.4 reference for kakwani
-
-	sum value if varname=="ym_nat_pov_pc"
+*---> E.4 reference for kakwani //pre fiscal incoem depending on the model
+	if ${cp_model}==1{ //PDI
+		sum value if varname=="yp_nat_pov_pc"	
+	}
+	else if ${cp_model}==2{ //PGT
+		sum value if varname=="ym_nat_pov_pc"	
+	}
 	g reference=`r(mean)'
 
 	g instrument = substr(varname, 1, length(varname) - 3)
@@ -778,7 +788,7 @@ u `output', clear
 	g category="CAT_NA"
 	drop if INSTRUMENT_ID==""
 	
-	g income="ym" //given ym_inat_pov_2021_pc
+	g income="${pf}" //given ym_inat_pov_2021_pc
 	g povertyline="PL_NONE_N"
 	g partition="PV_NA_NONE"
 	g pension="pdi"
@@ -800,46 +810,49 @@ u `output', clear
 
 	tempfile kakwani
 	save `kakwani'
-
+}*/
 *===============================================================================
 **# F.  Marginal contribution
 *===============================================================================	
 *---> F.1 Using standard approach 
  
-	use `output_a', clear
+	use `output', clear
+
+	foreach x in `income_concepts' {
+		ren `x' `x'_pc 
+	}	// are already per capita, just to keep the same name
+	
+	foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {	
+		replace `x'_pc= `x'_pc/def_sp_tmp_nat
+	} //should be deflacted to be compare with the poverty measures
 	
 	gen all = 1
 
 	local aux `Directaxes' `Indtaxes'  `Contributions' 
 		foreach var of local aux {
 	
-			gen inc_`var'=ym_nat_pov_pc-`var'_pc
+			gen inc_`var'=yp_nat_pov_pc-`var'_pc
 			local income3 `income3' inc_`var'   // Store incomes to marignal contribution calculation
 	
 		}
 	local auxII `InKindTransfers' `DirectTransfers'  `Subsidies'
 		foreach var of local auxII {
 	
-			gen inc_`var'=ym_nat_pov_pc+`var'_pc
+			gen inc_`var'=yp_nat_pov_pc+`var'_pc
 			local income3 `income3' inc_`var' // Store incomes to marignal contribution calculation
 		}
 	
 	dis "`income_concepts_pc'" "-" "`income3'"
 
-	sp_groupfunction [aw=hhweight], gini(`income_concepts_pc' `income3')  poverty(`income_concepts_pc' `income3') povertyline(`pline')  by(all) 
-
+	sp_groupfunction [aw=popweight], gini(`income_concepts_pc' `income3')  poverty(`income_concepts_pc' `income3') povertyline(line_nat)  by(all) 
 
 *---> F.2 Estimate marginal distributions by income reference
-	g mc_d=.
-	g mc_m=.
+	g mc_p=.
 
 	foreach t in gini fgt0 {
-		sum value if variable=="yd_nat_pov_pc" & measure=="`t'" 
-		replace mc_d=r(mean)-value if measure=="`t'"
-		sum value if variable=="yf_nat_pov_pc" & measure=="`t'" 
-			replace mc_m=r(mean)-value if measure=="`t'" 
+		sum value if variable=="yp_nat_pov_pc" & measure=="`t'" 
+			replace mc_p=r(mean)-value if measure=="`t'" 
 	}
-
 		
 	foreach t in local `income_concepts_pc'{
 	drop if variable=="`income_concepts_pc'"
@@ -863,28 +876,9 @@ u `output', clear
 	g aux = substr(variable, 1, 1)
 	drop if aux=="y"
 	drop aux
-
-	merge m:1 instrument using `correlative'
 	
-	keep if _merge==3 
-	drop _merge
-	
-	preserve 
-	drop mc_m
-	g income="yd"
-	ren mc_d value
-		tempfile aux
-		save `aux'
-	restore 
-	
-	g income="yf"
-	drop mc_d
-	ren mc_m value 
-	
-	append using `aux'
-
-	
-	drop if INSTRUMENT_ID==""
+	g income="yp"
+	ren mc_p value
 	
 	ren reference povertyline
 	replace povertyline="PL_NONE_N" if povertyline==""
@@ -892,16 +886,23 @@ u `output', clear
 	g pension="pdi"
 	g context="equity"
 
-		foreach t in context indicator category income povertyline partition pension {
-				merge m:1 `t' using ``t''
-				keep if _merge==3
-				drop _merge 
-		}
-	
+	foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+
+	merge m:1 instrument using `correlative'
+
 	replace value=. if indicator=="mcp" & type=="InKindTransfers"
-	order $toreport 
-	keep $toreport	
+	drop if INSTRUMENT_ID==""
 	sort INDICATOR_ID INSTRUMENT_ID INCOME_ID
+	keep if _merge==3 
+	drop _merge
+		gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
 	
 		tempfile marginal_contrib
 		save `marginal_contrib'
@@ -911,7 +912,7 @@ u `output', clear
 *===============================================================================	
 use `netcash_relincidence', clear
 append using `total_absoluteincidence', force
-append using `kakwani', force
+*append using `kakwani', force
 append using `marginal_contrib', force
 append using `distributional_ind', force
 
