@@ -825,6 +825,27 @@ u `output', clear
 * that positive contributions consistently indicate reductions in poverty
 * or inequality, regardless of the reference income concept.
 
+* Matrix of fiscal instrument adjustments by income concept
+* ----------------------------------------------------------
+* Fiscal instrument       yp      yn      yd      yc      yf
+* ----------------------------------------------------------
+* Direct taxes            -       +       +       +       +
+* Contributions           -       +       +       +       +
+* Direct transfers        +       +       -       -       -
+* Subsidies               +       +       +       -       -
+* Indirect taxes          -       -       -       +       +
+* In-kind transfers       +       +       +       +       -
+* ----------------------------------------------------------
+*
+* (+) Add the instrument to the reference income.
+* (-) Subtract the instrument from the reference income.
+*
+* If the instrument is already included in the income concept,
+* it is removed to construct the counterfactual (direction = -1).
+* Otherwise, it is introduced (direction = +1).
+*
+* Positive marginal contributions indicate reductions in
+* poverty or inequality, regardless of the income concept.
 
 use `output', clear
 
@@ -845,9 +866,9 @@ gen all = 1
 local policies `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'
 
 *--->  F.2 Estimate marginal contributions by income
-tempfile results_yp results_yc results_yf
+tempfile results_yp results_yn results_yd results_yc results_yf
 
-foreach inc in yp yc yf {
+foreach inc in yp yn yd yc yf {
 dis "`inc'"
 sleep 2000
     preserve
@@ -873,6 +894,74 @@ sleep 2000
             }
 
             local direction = 1
+        }
+
+        *------------------------------------------
+        * Net market income (yn)
+        * Includes direct taxes and contributions
+        * Excludes transfers, subsidies, indirect
+        * taxes and in-kind transfers
+        *------------------------------------------
+        else if "`inc'" == "yn" {
+
+            * Remove direct taxes and contributions
+            if `: list policy in Directaxes' | `: list policy in Contributions' {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc + `policy'_pc
+
+                local direction = -1
+            }
+
+            * Introduce indirect taxes
+            else if `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc - `policy'_pc
+
+                local direction = 1
+            }
+
+            * Introduce transfers, subsidies and in-kind
+            else {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc + `policy'_pc
+
+                local direction = 1
+            }
+        }
+
+        *------------------------------------------
+        * Disposable income (yd)
+        * Includes direct taxes, contributions and
+        * direct transfers
+        * Excludes indirect taxes, subsidies and
+        * in-kind transfers
+        *------------------------------------------
+        else if "`inc'" == "yd" {
+
+            * Remove direct taxes and contributions
+            if `: list policy in Directaxes' | `: list policy in Contributions' {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc + `policy'_pc
+
+                local direction = -1
+            }
+
+            * Remove direct transfers
+            else if `: list policy in DirectTransfers' {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc - `policy'_pc
+
+                local direction = -1
+            }
+
+            * Introduce indirect taxes
+            else if `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc - `policy'_pc
+
+                local direction = 1
+            }
+
+            * Introduce subsidies and in-kind
+            else {
+                gen `inc'_inc_`policy' = `inc'_nat_pov_pc + `policy'_pc
+
+                local direction = 1
+            }
         }
 
         *------------------------------------------
@@ -991,6 +1080,8 @@ sleep 2000
 *---> F.7 Append all income concepts
 use `results_yp', clear
 
+append using `results_yn'
+append using `results_yd'
 append using `results_yc'
 append using `results_yf'
 
@@ -1027,6 +1118,285 @@ sort income instrument indicator
 		tempfile marginal_contrib
 		save `marginal_contrib'
 
+		
+*===============================================================================
+**# F.2  Marginal contribution international poverty
+*===============================================================================	
+use `output', clear
+
+*--->  F.1 Prepare income concepts and fiscal instruments
+
+foreach x in `income_concepts' {
+    rename `x' `x'_pc
+}
+
+foreach x in `Directaxes' `Contributions' `DirectTransfers' ///
+             `Subsidies' `Indtaxes' `InKindTransfers' {
+    drop `x'_pc
+	gen `x'_pc = `x'/ hhsize / def_sp_tmp_inat/ cpi_2021 / ppp_2021 / 365
+}
+
+gen all = 1
+
+* Define fiscal instrument groups
+local policies `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'
+
+*--->  F.2 Estimate marginal contributions by income
+tempfile results_yp results_yn results_yd results_yc results_yf
+
+foreach inc in yp yn yd yc yf {
+dis "`inc'"
+sleep 2000
+    preserve
+
+    local income3
+
+    foreach policy of local policies {
+
+        *------------------------------------------
+        * Market income plus pensions (yp)
+        * All fiscal policies are excluded
+        *------------------------------------------
+        if "`inc'" == "yp" {
+
+            * Introduce taxes and contributions
+            if `: list policy in Directaxes' | `: list policy in Contributions' | `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc - `policy'_pc
+            }
+
+            * Introduce transfers, subsidies and in-kind
+            else {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+            }
+
+            local direction = 1
+        }
+
+        *------------------------------------------
+        * Net market income (yn)
+        * Includes direct taxes and contributions
+        * Excludes transfers, subsidies, indirect
+        * taxes and in-kind transfers
+        *------------------------------------------
+        else if "`inc'" == "yn" {
+
+            * Remove direct taxes and contributions
+            if `: list policy in Directaxes' | `: list policy in Contributions' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+
+                local direction = -1
+            }
+
+            * Introduce indirect taxes
+            else if `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc - `policy'_pc
+
+                local direction = 1
+            }
+
+            * Introduce transfers, subsidies and in-kind
+            else {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+
+                local direction = 1
+            }
+        }
+
+        *------------------------------------------
+        * Disposable income (yd)
+        * Includes direct taxes, contributions and
+        * direct transfers
+        * Excludes indirect taxes, subsidies and
+        * in-kind transfers
+        *------------------------------------------
+        else if "`inc'" == "yd" {
+
+            * Remove direct taxes and contributions
+            if `: list policy in Directaxes' | `: list policy in Contributions' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+
+                local direction = -1
+            }
+
+            * Remove direct transfers
+            else if `: list policy in DirectTransfers' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc - `policy'_pc
+
+                local direction = -1
+            }
+
+            * Introduce indirect taxes
+            else if `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc - `policy'_pc
+
+                local direction = 1
+            }
+
+            * Introduce subsidies and in-kind
+            else {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+
+                local direction = 1
+            }
+        }
+
+        *------------------------------------------
+        * Consumable income (yc)
+        * Includes taxes, transfers and subsidies
+        * Excludes in-kind transfers
+        *------------------------------------------
+        else if "`inc'" == "yc" {
+            * Remove taxes already included
+            if `: list policy in Directaxes' | `: list policy in Contributions' | `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+
+                local direction = -1
+            }
+
+            * Remove transfers and subsidies
+            else if `: list policy in DirectTransfers' | `: list policy in Subsidies' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc - `policy'_pc
+
+                local direction = -1
+            }
+
+            * Introduce in-kind transfers
+            else if `: list policy in InKindTransfers' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+
+                local direction = 1
+            }
+        }
+
+        *------------------------------------------
+        * Final income (yf)
+        * All fiscal policies are included
+        *------------------------------------------
+        else if "`inc'" == "yf" {
+
+            * Remove taxes already included
+            if `: list policy in Directaxes' | `: list policy in Contributions' | `: list policy in Indtaxes' {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc + `policy'_pc
+            }
+
+            * Remove transfers, subsidies and in-kind
+            else {
+                gen `inc'_inc_`policy' = `inc'_inat_pov_2021_pc - `policy'_pc
+            }
+
+            local direction = -1
+        }
+
+        local income3 `income3' `inc'_inc_`policy'
+
+        * Save direction for each instrument
+        local dir_`policy' = `direction'
+    }
+
+
+*---> F.3 Estimate poverty and inequality
+		
+		sp_groupfunction [aw=popweight], poverty(`inc'_inat_pov_2021_pc `income3') povertyline(line_li21 line_lm21 line_um21)  by(all) 
+
+*---> F.4 Calculate marginal contributions
+gen mc_p = .
+
+foreach t in gini fgt0 {
+
+    foreach line in line_li21 line_lm21 line_um21 {
+
+        quietly summarize value if ///
+            variable == "`inc'_inat_pov_2021_pc" & ///
+            measure == "`t'" & reference == "`line'"
+
+        local reference = r(mean)
+
+        foreach policy of local policies {
+
+            local direction = `dir_`policy''
+
+            replace mc_p = ///
+                `direction' * (`reference' - value) ///
+                if variable == "`inc'_inc_`policy'" ///
+                & measure == "`t'" & reference == "`line'"
+        }
+    }
+}
+
+*---> F.5 Prepare clean dataset
+    keep if strpos(variable, "`inc'_inc_") == 1
+
+    keep if inlist(measure, "fgt0")
+
+    drop value _population
+
+    gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "${file}"
+    gen category = "CAT_NA"
+
+    gen indicator = "mcp" if measure == "fgt0"
+
+    gen instrument = subinstr( ///
+        variable, "`inc'_inc_", "", 1)
+
+    gen income = "`inc'"
+
+    rename mc_p value
+
+
+*---> F.6 Save results for current income
+    save `results_`inc'', replace
+
+    restore
+}
+
+*---> F.7 Append all income concepts
+use `results_yp', clear
+
+append using `results_yn'
+append using `results_yd'
+append using `results_yc'
+append using `results_yf'
+
+
+keep country survey dataset category ///
+         income instrument indicator value reference
+
+order country survey dataset category ///
+      income reference instrument indicator value
+
+sort income instrument indicator
+
+	
+	rename reference povertyline
+	g partition="PV_NA_NONE"
+	g pension="pdi"
+	g context="equity"
+
+	foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+
+	merge m:1 instrument using `correlative'
+
+
+	replace value=. if indicator=="mcp" & type=="InKindTransfers"
+	drop if INSTRUMENT_ID==""
+	sort INDICATOR_ID INSTRUMENT_ID INCOME_ID
+	keep if _merge==3 
+	drop _merge
+		gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+	
+		tempfile marginal_contrib_21
+		save `marginal_contrib_21'
+
+
 *===============================================================================
 **# G. Exporting results
 *===============================================================================	
@@ -1034,7 +1404,9 @@ use `netcash_relincidence', clear
 append using `total_absoluteincidence', force
 *append using `kakwani', force
 append using `marginal_contrib', force
+append using `marginal_contrib_21', force
 append using `distributional_ind', force
+
 
 order country ID_CONTEXT dataset value INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
 	
