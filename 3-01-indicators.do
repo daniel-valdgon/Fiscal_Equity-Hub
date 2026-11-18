@@ -10,30 +10,20 @@
 ---------------------------------------------------------------------------------*/
 
 *===============================================================================
-**# A. Paths and Macros definition
+**# 1. Paths and Macros definition
 *===============================================================================
    
    clear all
    timer clear 1
    timer on 1
    
-*---> A.1 Paths are defined once in revamp trunk
-if "$root"=="" {
-	di as err "Missing required global root. Define it in 00-Trunk_Revamp.do."
-	exit 198
+*---> A.1 Main paths defined?
+if "$scripts" == "" {
+    display as error "Run 00-init.do first."
+    exit 198
 }
 
-if "$scripts"=="" {
-	global scripts "${root}/02-Scripts/wb419055"
-}
 
-else if "`c(username)'"=="wb527706" {
-	global root     	"C:\Users\wb527706\OneDrive - WBG\GSG Fiscal Equity - WB Group - Data-Hub"	
-}
-
-else if "`c(username)'"=="wb527706" {
-	global scripts "${root}/02-Scripts/wb527706"
-}
 *---> A.2 Define project folder paths. 
 *         Input folders: Country economists will share either the microdata or
 *         the core indicators, if both are shared, the code should validate the
@@ -113,8 +103,9 @@ foreach j of global taxonomy_components  {
 
 
 *============================================================================*
-**# B. Core dataset selection 
+**# 2. Core dataset selection and indicators
 *============================================================================*
+
 *global run_countries `" "GNQ 2022 ENH2" "SEN 2021 EHCVM" "MRT 2019 EPCV" "GMB 2020 IHS" "COL 2021 GEIH" "ECU 2024 ENEMDU" "AGO 2018 IDREA" "LKA 2019 HIES" "MNG 2022 HSES" "MDV 2019 HIES" "'
 global run_countries `" "GNQ 2022 ENH2" "'
 
@@ -137,6 +128,7 @@ global run_country "`config'"
 
 * It create a dataset with information available in the datalab and save it
 * It should be uploaded to Github, it should request documentation everytime is modified, it should run regular backups 
+
 
 * Household database
 use "$HFMD_data/${file}_h.dta", clear
@@ -205,8 +197,12 @@ foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
 *===============================================================================
 
 *===============================================================================
-**# C. Total value
+**# A. Total value
 *===============================================================================
+di as result "Total value"
+di as result "---------------------------"
+sleep 500
+
 tempfile results total_temp ainc_temp national_temp
 local first = 1
 
@@ -325,11 +321,12 @@ foreach inc in "${pf}" yd {
 	save `total_absoluteincidence'
 
 *===============================================================================
-**# C. Netcash Position for ymp and yd.
+**# B. Netcash Position for ymp and yd.
 *        Generating incidence (relative) by decil (pre-fiscal and disposable)
 *===============================================================================
-*///---> here most of the Danie's estimates could work, other part of its code need to be debuged ABCD
-
+di as result "Net cash position"
+di as result "---------------------------"
+sleep 500
 
 *Outline, 
 *Compute mean by partition
@@ -483,10 +480,13 @@ foreach indic in share uinc cinc cov  {
 	tempfile netcash_relincidence
 	save `netcash_relincidence'
 
-*---> Note: debuged until here. ABCD
 *===============================================================================
-**# D. Distributional indicators International values Gini, Theil, and FGT measures
+**# C. Distributional indicators International values Gini, Theil, and FGT measures
 *===============================================================================
+di as result "Distributional (Gini, theil)"
+di as result "---------------------------"
+sleep 500
+
  u `output', clear 
  
 foreach x in `income_concepts' {
@@ -685,9 +685,13 @@ save "$dataaux/final_pov_ineq.dta", replace
 
 */
 *===============================================================================
-**# E.  kakwani index.
+**# D.  kakwani index.
 *===============================================================================
 /*
+di as result "Kakwani Index"
+di as result "---------------------------"
+sleep 500
+
 *---> Note: For now, only on the global loop
 *---> E.1 Preparing main output database 
 local rank "${pf}"_nat_pov
@@ -813,8 +817,11 @@ u `output', clear
 }*/
 
 *===============================================================================
-**# F.1  Marginal contribution national poverty
+**# E.1  Marginal contribution national poverty
 *===============================================================================	
+di as result "Marginal contributions"
+di as result "---------------------------"
+sleep 500
 
 * Marginal contributions are calculated by either introducing or removing
 * each fiscal instrument, depending on whether it is already included in
@@ -1120,7 +1127,7 @@ sort income instrument indicator
 
 		
 *===============================================================================
-**# F.2  Marginal contribution international poverty
+**# E.2  Marginal contribution international poverty
 *===============================================================================	
 use `output', clear
 
@@ -1398,6 +1405,133 @@ sort income instrument indicator
 
 
 *===============================================================================
+**# F.  Inclusion and exclusion error
+*===============================================================================		
+di as result "Inclusion and exclusion error"
+di as result "---------------------------"
+sleep 500
+
+use `output', clear
+
+apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor)
+gen yd_pvdct10 = (yd_pvdc==10) if !missing(yd_pvdc)
+gen yd_pvdct20 = (yd_pvdc>=9)  if !missing(yd_pvdc)
+
+gen yd_pvdcb10 = (yd_pvdc==1)  if !missing(yd_pvdc)
+gen yd_pvdcb20 = (yd_pvdc<=2) if !missing(yd_pvdc)
+
+foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'{
+	gen `instrument'1 = (`instrument' > 0) if !missing(`instrument')
+	replace `instrument'1 = 0 if `instrument'!=. & `instrument'==0	
+	}
+
+* 1. Inclusion error: Nonpoor population, Top 10 and Top 20
+foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+
+    * Nonpoor population
+    quietly count if `instrument'1 == 1 & !missing(poor1, popweight) & popweight > 0
+
+    if r(N) > 0 {
+        quietly mean poor1 [aw=popweight] if `instrument'1 == 1 & !missing(poor1)
+        gen incnpo_`instrument' = (1 - _b[poor1]) * 100
+    }
+    else {
+        gen incnpo_`instrument' = .
+    }
+
+    * Top 10 and Top 20
+    foreach p in 10 20 {
+
+        quietly count if `instrument'1 == 1 & !missing(yd_pvdct`p', popweight) & popweight > 0
+
+        if r(N) > 0 {
+            quietly mean yd_pvdct`p' [aw=popweight] if `instrument'1 == 1
+            gen inc`p'_`instrument' = _b[yd_pvdct`p'] * 100
+        }
+        else {
+            gen inc`p'_`instrument' = .
+        }
+    }
+}
+
+
+* 2. Exclusion error: Poor population
+foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+
+    * Poor population
+    quietly count if poor1 == 1 & !missing(`instrument'1, popweight) & popweight > 0
+
+    if r(N) > 0 {
+        quietly mean `instrument'1 [aw=popweight] if poor1 == 1
+        gen excpo_`instrument' = (1 - _b[`instrument'1]) * 100
+    }
+    else {
+        gen excpo_`instrument' = .
+    }
+
+    * Bottom 10 and Bottom 20
+    foreach p in 10 20 {
+
+        quietly count if yd_pvdcb`p' == 1 & ///
+            !missing(`instrument'1, popweight) & popweight > 0
+
+        if r(N) > 0 {
+            quietly mean `instrument'1 [aw=popweight] ///
+                if yd_pvdcb`p' == 1
+
+            gen exc`p'_`instrument' = (1 - _b[`instrument'1]) * 100
+        }
+        else {
+            gen exc`p'_`instrument' = .
+        }
+    }
+}
+
+collapse (mean) incnpo* inc10* inc20* excpo* exc10* exc20*
+
+gen i = 1
+reshape long incnpo_ inc10_ inc20_ excpo_ exc10_ exc20_, i(i) j(instrument) string
+
+rename *_ value_*
+
+reshape long value_, i(instrument) j(measure) string
+drop i
+rename value_ value
+rename measure indicator
+
+	gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "${file}"
+    gen category = "CAT_NA"
+	gen povertyline = "PL_NONE_N"
+		replace povertyline="line_nat" if indicator=="incnpo" | indicator=="excpo"
+	g partition="PV_NA_NONE"
+	g pension="pdi"
+	g context="equity"
+	gen income = ""
+		replace income="INC_NA" if indicator=="incnpo" | indicator=="excpo"
+		replace income="yd" if indicator!="incnpo" & indicator!="excpo"
+
+
+	foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+	merge m:1 instrument using `correlative', nogen
+	
+	drop if INSTRUMENT_ID==""
+	sort INSTRUMENT_ID INDICATOR_ID 
+	gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+	
+		tempfile inclusion_exclusion
+		save `inclusion_exclusion'
+
+
+*===============================================================================
 **# G. Exporting results
 *===============================================================================	
 use `netcash_relincidence', clear
@@ -1406,7 +1540,7 @@ append using `total_absoluteincidence', force
 append using `marginal_contrib', force
 append using `marginal_contrib_21', force
 append using `distributional_ind', force
-
+append using `inclusion_exclusion', force
 
 order country ID_CONTEXT dataset value INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
 	
