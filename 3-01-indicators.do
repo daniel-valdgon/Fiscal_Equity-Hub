@@ -195,6 +195,65 @@ foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
 *===============================================================================	
 *------------------------------Indicators --------------------------------------
 *===============================================================================
+*===============================================================================
+**# BASIC INFORMATION
+*===============================================================================
+use `output', clear
+
+* Population
+gen n=1
+sum n [iw=popweight]
+gen pop = `r(sum)'
+
+* Hosueholds
+sum n [iw=hhweight]
+gen hh = `r(sum)'
+drop n
+
+* Poverty line
+sum line_nat
+gen povline = `r(mean)'
+
+collapse (mean) pop hh povline cp_model
+gen surveyn= "$survey"
+
+gen surveyy= "$survey_year"
+
+label define pensions 1 "PDI - Pensions treated as deferred income" 2 "PGT - Pensions treated as goverment transfers"
+label values cp_model pensions
+
+decode cp_model, gen(pensions)
+drop cp_model
+
+rename (pop hh povline surveyn surveyy pensions) (value_pop value_hh value_povline string_surveyn string_surveyy string_pensions)
+gen n=1
+reshape long value_ string_, i(n) j(indicator) string
+drop n
+rename *_ *
+	gen category = "CAT_NA"
+	gen povertyline = "PL_NONE_N"
+	gen pension = "pdi"
+	gen country= "$country"
+	gen survey="$survey"
+	gen dataset = "$survey"
+	gen context = "equity"
+	gen income="INC_NA"
+	gen partition="PV_NA_NONE"
+	
+	foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+
+	sort INDICATOR_ID 
+	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value string
+		order $toreport 
+		keep $toreport
+	
+	tempfile info
+	save `info'
 
 *===============================================================================
 **# A. Total value
@@ -683,18 +742,17 @@ save `distributional_ind'
 	
 save "$dataaux/final_pov_ineq.dta", replace
 
-*/
+
 *===============================================================================
 **# D.  kakwani index.
 *===============================================================================
-/*
 di as result "Kakwani Index"
 di as result "---------------------------"
 sleep 500
 
 *---> Note: For now, only on the global loop
 *---> E.1 Preparing main output database 
-local rank "${pf}"_nat_pov
+local rank ${pf}_nat_pov
 		
 u `output', clear 
 	foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'  {	
@@ -711,11 +769,11 @@ u `output', clear
 *---> E.2 groupfunction for concentration_coefficient taking main dofile	
 
 	foreach x of local concs_pc{
-		covconc `x' [aw=hhweight] , rank(`rank')	//gini and concentration coefficients
+		covconc `x' [aw=popweight] , rank(`rank')	//gini and concentration coefficients
 		local _`x' = r(conc)
 		}
 	
-	groupfunction [aw=hhweight], sum(`concs_pc') by(${pf}_pvpc) norestore
+	groupfunction [aw=popweight], sum(`concs_pc') by(${pf}_pvpc) norestore
 		qui count
 		local _1 =r(N)
 		local nnn=`_1'+ 1  //add one more obs, the total obs goes from 100 to 101
@@ -807,14 +865,12 @@ u `output', clear
 				keep if _merge==3
 				drop _merge 
 		}
-	
 	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
 	order $toreport 
 	keep $toreport
 
 	tempfile kakwani
 	save `kakwani'
-}*/
 
 *===============================================================================
 **# E.1  Marginal contribution national poverty
@@ -1413,19 +1469,31 @@ sleep 500
 
 use `output', clear
 
+*===============================================================================
+* 1. Poverty and decile indicators
+*===============================================================================
+
 apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor)
-gen yd_pvdct10 = (yd_pvdc==10) if !missing(yd_pvdc)
-gen yd_pvdct20 = (yd_pvdc>=9)  if !missing(yd_pvdc)
 
-gen yd_pvdcb10 = (yd_pvdc==1)  if !missing(yd_pvdc)
-gen yd_pvdcb20 = (yd_pvdc<=2) if !missing(yd_pvdc)
+foreach inc in yd yp {
 
-foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'{
-	gen `instrument'1 = (`instrument' > 0) if !missing(`instrument')
-	replace `instrument'1 = 0 if `instrument'!=. & `instrument'==0	
-	}
+    gen `inc'_t10 = (`inc'_pvdc == 10) if !missing(`inc'_pvdc)
+    gen `inc'_t20 = (`inc'_pvdc >= 9)  if !missing(`inc'_pvdc)
 
-* 1. Inclusion error: Nonpoor population, Top 10 and Top 20
+    gen `inc'_b10 = (`inc'_pvdc == 1)  if !missing(`inc'_pvdc)
+    gen `inc'_b20 = (`inc'_pvdc <= 2) if !missing(`inc'_pvdc)
+}
+
+foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+
+    gen `instrument'1 = (`instrument' > 0) if !missing(`instrument')
+}
+
+
+*===============================================================================
+* 2. Inclusion error: Nonpoor population, Top 10 and Top 20
+*===============================================================================
+
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
     * Nonpoor population
@@ -1439,23 +1507,31 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
         gen incnpo_`instrument' = .
     }
 
-    * Top 10 and Top 20
-    foreach p in 10 20 {
+    * Top 10 and Top 20: yd and yp
+    foreach inc in yd yp {
+        foreach p in 10 20 {
 
-        quietly count if `instrument'1 == 1 & !missing(yd_pvdct`p', popweight) & popweight > 0
+            quietly count if `instrument'1 == 1 & ///
+                !missing(`inc'_t`p', popweight) & popweight > 0
 
-        if r(N) > 0 {
-            quietly mean yd_pvdct`p' [aw=popweight] if `instrument'1 == 1
-            gen inc`p'_`instrument' = _b[yd_pvdct`p'] * 100
-        }
-        else {
-            gen inc`p'_`instrument' = .
+            if r(N) > 0 {
+                quietly mean `inc'_t`p' [aw=popweight] ///
+                    if `instrument'1 == 1 & !missing(`inc'_t`p')
+
+                gen inc`p'_`inc'_`instrument' = _b[`inc'_t`p'] * 100
+            }
+            else {
+                gen inc`p'_`inc'_`instrument' = .
+            }
         }
     }
 }
 
 
-* 2. Exclusion error: Poor population
+*===============================================================================
+* 3. Exclusion error: Poor population, Bottom 10 and Bottom 20
+*===============================================================================
+
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
     * Poor population
@@ -1469,28 +1545,39 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
         gen excpo_`instrument' = .
     }
 
-    * Bottom 10 and Bottom 20
-    foreach p in 10 20 {
+    * Bottom 10 and Bottom 20: yd and yp
+    foreach inc in yd yp {
+        foreach p in 10 20 {
 
-        quietly count if yd_pvdcb`p' == 1 & ///
-            !missing(`instrument'1, popweight) & popweight > 0
+            quietly count if `inc'_b`p' == 1 & ///
+                !missing(`instrument'1, popweight) & popweight > 0
 
-        if r(N) > 0 {
-            quietly mean `instrument'1 [aw=popweight] ///
-                if yd_pvdcb`p' == 1
+            if r(N) > 0 {
+                quietly mean `instrument'1 [aw=popweight] ///
+                    if `inc'_b`p' == 1
 
-            gen exc`p'_`instrument' = (1 - _b[`instrument'1]) * 100
-        }
-        else {
-            gen exc`p'_`instrument' = .
+                gen exc`p'_`inc'_`instrument' = ///
+                    (1 - _b[`instrument'1]) * 100
+            }
+            else {
+                gen exc`p'_`inc'_`instrument' = .
+            }
         }
     }
 }
 
-collapse (mean) incnpo* inc10* inc20* excpo* exc10* exc20*
+
+*===============================================================================
+* 4. Reshape results
+*===============================================================================
+
+collapse (mean) incnpo_* inc10_* inc20_* excpo_* exc10_* exc20_*
 
 gen i = 1
-reshape long incnpo_ inc10_ inc20_ excpo_ exc10_ exc20_, i(i) j(instrument) string
+
+reshape long incnpo_ inc10_yd_ inc20_yd_ inc10_yp_ inc20_yp_ ///
+             excpo_ exc10_yd_ exc20_yd_ exc10_yp_ exc20_yp_, ///
+             i(i) j(instrument) string
 
 rename *_ value_*
 
@@ -1498,6 +1585,16 @@ reshape long value_, i(instrument) j(measure) string
 drop i
 rename value_ value
 rename measure indicator
+
+	gen income = ""
+		replace income="INC_NA" if indicator=="incnpo" | indicator=="excpo"
+		replace income="yd" if indicator=="inc10_yd" | indicator=="inc20_yd" | indicator=="exc10_yd" | indicator=="exc20_yd"
+		replace income="yp" if indicator=="inc10_yp" | indicator=="inc20_yp" | indicator=="exc10_yp" | indicator=="exc20_yp"
+		
+	replace indicator = "inc10" if inlist(indicator, "inc10_yd","inc10_yp")
+	replace indicator = "inc20" if inlist(indicator, "inc20_yd","inc20_yp")
+	replace indicator = "exc10" if inlist(indicator, "exc10_yd","exc10_yp")
+	replace indicator = "exc20" if inlist(indicator, "exc20_yd","exc20_yp")
 
 	gen country = "$country"
     gen survey = "$survey"
@@ -1508,9 +1605,6 @@ rename measure indicator
 	g partition="PV_NA_NONE"
 	g pension="pdi"
 	g context="equity"
-	gen income = ""
-		replace income="INC_NA" if indicator=="incnpo" | indicator=="excpo"
-		replace income="yd" if indicator!="incnpo" & indicator!="excpo"
 
 
 	foreach t in context indicator category income povertyline partition pension {
@@ -1534,15 +1628,17 @@ rename measure indicator
 *===============================================================================
 **# G. Exporting results
 *===============================================================================	
-use `netcash_relincidence', clear
+use `info', clear
+append using `netcash_relincidence', force
 append using `total_absoluteincidence', force
-*append using `kakwani', force
+append using `kakwani', force
 append using `marginal_contrib', force
 append using `marginal_contrib_21', force
 append using `distributional_ind', force
 append using `inclusion_exclusion', force
 
-order country ID_CONTEXT dataset value INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
+
+order country ID_CONTEXT dataset value string INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
 	
 	duplicates drop *, force
 	
