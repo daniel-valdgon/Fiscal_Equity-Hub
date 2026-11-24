@@ -196,7 +196,7 @@ foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
 *------------------------------Indicators --------------------------------------
 *===============================================================================
 *===============================================================================
-**# BASIC INFORMATION
+**# Basic information
 *===============================================================================
 use `output', clear
 
@@ -744,7 +744,7 @@ save "$dataaux/final_pov_ineq.dta", replace
 
 
 *===============================================================================
-**# D.  kakwani index.
+**# D.  Kakwani index and concentration coefficient
 *===============================================================================
 di as result "Kakwani Index"
 di as result "---------------------------"
@@ -799,8 +799,6 @@ u `output', clear
 		}	
 	order ${pf}_pvpc, first
 	
-	tempfile concentration
-	save `concentration'
 *---> E.3 Prepare dataset for Kakwani 	
 	keep if ${pf}_pvpc==999
 	ds
@@ -823,6 +821,42 @@ u `output', clear
 				replace value   = `val_`v'' in `i'
 			local ++i
 		}
+		
+	preserve
+		g indicator="concoef"
+		g country="$country"
+		g survey="$survey"
+		g dataset="${file}"
+		g category="CAT_NA"
+		
+		g income="${pf}"
+		g povertyline="PL_NONE_N"
+		g partition="PV_NA_NONE"
+		g pension="pdi"
+		g context="equity"
+		
+			foreach t in context indicator category income povertyline partition pension {
+					dis "Merge with `t' file"
+					merge m:1 `t' using ``t''
+					keep if _merge==3
+					drop _merge 
+			}
+		
+		replace varname = substr(varname,1,length(varname)-3) if substr(varname,-3,.)=="_pc"
+		drop if varname == "${pf}_pvpc"
+		rename varname instrument
+		
+		merge m:1 instrument using `correlative'		
+
+		gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+	
+		tempfile concentration
+		save `concentration'
+		
+	restore
+	
 *---> E.4 reference for kakwani //pre fiscal incoem depending on the model
 	if ${cp_model}==1{ //PDI
 		sum value if varname=="yp_nat_pov_pc"	
@@ -1632,6 +1666,7 @@ use `info', clear
 append using `netcash_relincidence', force
 append using `total_absoluteincidence', force
 append using `kakwani', force
+append using `concentration', force
 append using `marginal_contrib', force
 append using `marginal_contrib_21', force
 append using `distributional_ind', force
