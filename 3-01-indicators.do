@@ -145,6 +145,15 @@ use "$HFMD_data/${file}_h.dta", clear
   ren subsidy_fuel_indirect* subsidy_fuel_i*
   ren excise_other_indirect* excise_other_i*
   ren excise_fuel_indirect* excise_fuel_i*
+  
+  ren subsidy_elec_direct* subsidy_elec_d*
+  ren subsidy_agric_direct* subsidy_agric_d*
+  ren subsidy_water_direct* subsidy_water_d*
+  ren subsidy_food_direct* subsidy_food_d*
+  ren subsidy_fuel_direct* subsidy_fuel_d*
+  ren excise_other_direct* excise_other_d*
+  ren excise_fuel_direct* excise_fuel_d*
+  
   ren education_* educ_*
   ren ssc_nopensions_employee* ssc_nopen_ee*
   ren ssc_nopensions_employer* ssc_nopen_er*
@@ -198,6 +207,15 @@ foreach x in `Directaxes' `Indtaxes' `InKindTransfers' `DirectTransfers' ///
 *===============================================================================
 **# Basic information
 *===============================================================================
+import excel "$country_data/Master_data/documentation/FIA_documentation/Metadata_FIA.xlsx", clear
+
+keep if inlist(A,"21", "22")
+forvalues i = 1/`=_N' {
+    
+	local id = A[`i']
+    global response_`id' = D[`i']
+}
+
 use `output', clear
 
 * Population
@@ -216,8 +234,10 @@ gen povline = `r(mean)'
 
 collapse (mean) pop hh povline cp_model
 gen surveyn= "$survey"
-
 gen surveyy= "$survey_year"
+gen consinc= "$response_21"
+gen pcae= "$response_22"
+
 
 label define pensions 1 "PDI - Pensions treated as deferred income" 2 "PGT - Pensions treated as goverment transfers"
 label values cp_model pensions
@@ -225,7 +245,8 @@ label values cp_model pensions
 decode cp_model, gen(pensions)
 drop cp_model
 
-rename (pop hh povline surveyn surveyy pensions) (value_pop value_hh value_povline string_surveyn string_surveyy string_pensions)
+rename (pop hh povline surveyn surveyy consinc pcae pensions) (value_pop value_hh value_povline string_surveyn string_surveyy string_consinc string_pcae string_pensions)
+
 gen n=1
 reshape long value_ string_, i(n) j(indicator) string
 drop n
@@ -254,6 +275,7 @@ rename *_ *
 	
 	tempfile info
 	save `info'
+
 
 *===============================================================================
 **# A. Total value
@@ -425,7 +447,7 @@ save `output_quantiles', replace
 
 		u `output_quantiles', clear	
 		
-		keep `y'_pvpc `y'_pvdc share_`y'* uinc_`y'* cinc_`y'* cov_`y'*  hhweight popweight	
+		keep `y'_pvpc `y'_pvdc share_`y'* uinc_`y'* cinc_`y'* cov_`y'* hhweight popweight	
 
 		* --- Single pass: millile-level weighted means (only full-data operation) ---
 		*groupfunction [aw=pondih], mean(share_`y'* uinc_`y'* cinc_`y'* cov_`y'*) sum(abs_`y'* pondih) by(`y'_millile_pc)
@@ -1658,9 +1680,90 @@ rename measure indicator
 		tempfile inclusion_exclusion
 		save `inclusion_exclusion'
 
+		
+*===============================================================================
+**# G.  Coverage of the poor
+*===============================================================================		
+di as result "Coverage of the poor"
+di as result "---------------------------"
+sleep 500
+
+use `output', clear
+
+set seed 80292367	
+apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor)	
+		
+foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+		gen covpoor_pc_`x'  = (`x'_pc > 0) if poor==1
+}
+
+preserve
+collapse (mean) covpoor_pc_* [iw=popweight]
+gen n=1
+
+reshape long covpoor_pc_, i(n) j(instrument) string
+drop n
+
+	gen income = "INC_NA" 
+	gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "${file}"
+    gen category = "CAT_NA"
+	gen povertyline = "line_nat"
+	gen partition="PV_NA_NONE"
+	gen pension="pdi"
+	gen context="equity"
+	rename covpoor_pc_ value
+	gen indicator = "covpoor"
+	
+	tempfile coverage_poortotal
+	save `coverage_poortotal'
+restore 
+
+collapse (mean) covpoor_pc_* [iw=popweight], by(yd_pvdc)
+gen n=1
+
+reshape long covpoor_pc_, i(n yd_pvdc) j(instrument) string
+drop n
+rename yd_pvdc partition
+tostring partition, replace
+replace partition = "pv_dc_000" + partition
+replace partition = "pv_dc_0010" if partition=="pv_dc_00010"
+
+	gen income = "yd" 
+	gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "${file}"
+    gen category = "CAT_NA"
+	gen povertyline = "line_nat"
+	gen pension="pdi"
+	gen context="equity"
+	rename covpoor_pc_ value
+	gen indicator = "covpoor"
+	
+append using `coverage_poortotal', force
+
+
+foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+	merge m:1 instrument using `correlative', nogen
+	
+	drop if INSTRUMENT_ID==""
+	sort INSTRUMENT_ID INDICATOR_ID 
+	gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+	
+		tempfile coverage_poor
+		save `coverage_poor'
+
 
 *===============================================================================
-**# G. Exporting results
+**# Exporting results
 *===============================================================================	
 use `info', clear
 append using `netcash_relincidence', force
@@ -1671,6 +1774,7 @@ append using `marginal_contrib', force
 append using `marginal_contrib_21', force
 append using `distributional_ind', force
 append using `inclusion_exclusion', force
+append using `coverage_poor', force
 
 
 order country ID_CONTEXT dataset value string INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
