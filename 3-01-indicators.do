@@ -431,7 +431,7 @@ foreach y in "${pf}" yd {
 
 			gen uinc_`y'_pc_`x' = `x'_pc / `y'_pc
 			gen cinc_`y'_pc_`x' = `x'_pc / `y'_pc  if (`x'_pc > 0)
-			gen cov_`y'_pc_`x'  = (`x'_pc > 0)
+			gen cov_`y'_pc_`x'  = (`x'_pc != 0 & `x'_pc != .)
 			
 		
 		} // eo foreach x
@@ -1529,7 +1529,10 @@ use `output', clear
 * 1. Poverty and decile indicators
 *===============================================================================
 
-apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor)
+apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor_nat)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_li21) gen(poor_li21)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_lm21) gen(poor_lm21)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_um21) gen(poor_um21)
 
 foreach inc in yd yp {
 
@@ -1552,15 +1555,22 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
-    * Nonpoor population
-    quietly count if `instrument'1 == 1 & !missing(poor1, popweight) & popweight > 0
+    * Nonpoor population: each poverty line
+    foreach pl in nat li21 lm21 um21 {
 
-    if r(N) > 0 {
-        quietly mean poor1 [aw=popweight] if `instrument'1 == 1 & !missing(poor1)
-        gen incnpo_`instrument' = (1 - _b[poor1]) * 100
-    }
-    else {
-        gen incnpo_`instrument' = .
+        quietly count if `instrument'1 == 1 & ///
+            !missing(poor_`pl'1, popweight) & popweight > 0
+
+        if r(N) > 0 {
+            quietly mean poor_`pl'1 [aw=popweight] ///
+                if `instrument'1 == 1 & !missing(poor_`pl'1)
+
+            gen incnpo_`pl'_`instrument' = ///
+                (1 - _b[poor_`pl'1]) * 100
+        }
+        else {
+            gen incnpo_`pl'_`instrument' = .
+        }
     }
 
     * Top 10 and Top 20: yd and yp
@@ -1574,7 +1584,8 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
                 quietly mean `inc'_t`p' [aw=popweight] ///
                     if `instrument'1 == 1 & !missing(`inc'_t`p')
 
-                gen inc`p'_`inc'_`instrument' = _b[`inc'_t`p'] * 100
+                gen inc`p'_`inc'_`instrument' = ///
+                    _b[`inc'_t`p'] * 100
             }
             else {
                 gen inc`p'_`inc'_`instrument' = .
@@ -1590,15 +1601,22 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
-    * Poor population
-    quietly count if poor1 == 1 & !missing(`instrument'1, popweight) & popweight > 0
+    * Poor population: each poverty line
+    foreach pl in nat li21 lm21 um21 {
 
-    if r(N) > 0 {
-        quietly mean `instrument'1 [aw=popweight] if poor1 == 1
-        gen excpo_`instrument' = (1 - _b[`instrument'1]) * 100
-    }
-    else {
-        gen excpo_`instrument' = .
+        quietly count if poor_`pl'1 == 1 & ///
+            !missing(`instrument'1, popweight) & popweight > 0
+
+        if r(N) > 0 {
+            quietly mean `instrument'1 [aw=popweight] ///
+                if poor_`pl'1 == 1 & !missing(`instrument'1)
+
+            gen excpo_`pl'_`instrument' = ///
+                (1 - _b[`instrument'1]) * 100
+        }
+        else {
+            gen excpo_`pl'_`instrument' = .
+        }
     }
 
     * Bottom 10 and Bottom 20: yd and yp
@@ -1622,7 +1640,6 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
     }
 }
 
-
 *===============================================================================
 * 4. Reshape results
 *===============================================================================
@@ -1631,8 +1648,10 @@ collapse (mean) incnpo_* inc10_* inc20_* excpo_* exc10_* exc20_*
 
 gen i = 1
 
-reshape long incnpo_ inc10_yd_ inc20_yd_ inc10_yp_ inc20_yp_ ///
-             excpo_ exc10_yd_ exc20_yd_ exc10_yp_ exc20_yp_, ///
+reshape long incnpo_nat_ incnpo_li21_ incnpo_lm21_ incnpo_um21_ ///
+			 inc10_yd_ inc20_yd_ inc10_yp_ inc20_yp_ ///
+             excpo_nat_ excpo_li21_ excpo_lm21_ excpo_um21_ ///
+			 exc10_yd_ exc20_yd_ exc10_yp_ exc20_yp_, ///
              i(i) j(instrument) string
 
 rename *_ value_*
@@ -1643,7 +1662,7 @@ rename value_ value
 rename measure indicator
 
 	gen income = ""
-		replace income="INC_NA" if indicator=="incnpo" | indicator=="excpo"
+		replace income="INC_NA" if substr(indicator,1,6)=="incnpo" | substr(indicator,1,6)=="excpo_"
 		replace income="yd" if indicator=="inc10_yd" | indicator=="inc20_yd" | indicator=="exc10_yd" | indicator=="exc20_yd"
 		replace income="yp" if indicator=="inc10_yp" | indicator=="inc20_yp" | indicator=="exc10_yp" | indicator=="exc20_yp"
 		
@@ -1651,13 +1670,19 @@ rename measure indicator
 	replace indicator = "inc20" if inlist(indicator, "inc20_yd","inc20_yp")
 	replace indicator = "exc10" if inlist(indicator, "exc10_yd","exc10_yp")
 	replace indicator = "exc20" if inlist(indicator, "exc20_yd","exc20_yp")
+	
+	gen povertyline = "PL_NONE_N"
+		replace povertyline="line_nat" if indicator=="excpo_nat" | indicator=="incnpo_nat"
+		replace povertyline="line_li21" if indicator=="excpo_li21" | indicator=="incnpo_li21"
+		replace povertyline="line_lm21" if indicator=="excpo_lm21" | indicator=="incnpo_lm21"
+		replace povertyline="line_um21" if indicator=="excpo_um21" | indicator=="incnpo_um21"
+	replace indicator = "excpo" if inlist(indicator, "excpo_li21", "excpo_lm21", "excpo_nat", "excpo_um21")
+	replace indicator = "incnpo" if inlist(indicator,"incnpo_li21", "incnpo_lm21", "incnpo_nat", "incnpo_um21")
 
 	gen country = "$country"
     gen survey = "$survey"
     gen dataset = "${file}"
     gen category = "CAT_NA"
-	gen povertyline = "PL_NONE_N"
-		replace povertyline="line_nat" if indicator=="incnpo" | indicator=="excpo"
 	g partition="PV_NA_NONE"
 	g pension="pdi"
 	g context="equity"
@@ -1694,7 +1719,7 @@ set seed 80292367
 apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor)	
 		
 foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
-		gen covpoor_pc_`x'  = (`x'_pc > 0) if poor==1
+		gen covpoor_pc_`x'  = (`x'_pc != 0 & `x'_pc != .) if poor==1
 }
 
 preserve
