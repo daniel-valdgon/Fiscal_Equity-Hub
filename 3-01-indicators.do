@@ -222,7 +222,47 @@ use `output', clear
 gen n=1
 sum n [iw=popweight]
 gen pop = `r(sum)'
+	* By deciles
+	preserve
+	collapse (sum) n [iw=popweight], by(${pf}_pvdc)
+	tempfile pop_${pf}
+	save `pop_${pf}', replace
+	restore
+	
+	preserve
+	collapse (sum) n [iw=popweight], by(yd_pvdc)
+	tempfile pop_yd
+	save `pop_yd', replace
+	restore
+	
+	preserve
+		use `pop_${pf}', clear
+		append using `pop_yd', force
+		gen income=""
+			replace income = "yd" if yd_pvdc!=.
+			replace income = "${pf}" if ${pf}_pvdc!=.
 
+		tostring ${pf}_pvdc, replace
+		tostring yd_pvdc, replace
+		gen partition=""
+			replace partition = "pv_dc_000" + ${pf}_pvdc if income == "${pf}"
+			replace partition = "pv_dc_000" + yd_pvdc if income == "yd"
+		replace partition = "pv_dc_0010" if partition=="pv_dc_00010"
+		
+		rename n value
+		gen indicator="pop"
+		gen category = "CAT_NA"
+		gen povertyline = "PL_NONE_N"
+		gen pension = "pdi"
+		gen country= "$country"
+		gen survey="$survey"
+		gen dataset = "$survey"
+		gen context = "equity"
+		drop *_pvdc
+			tempfile pop_deciles
+			save `pop_deciles', replace
+	restore
+		
 * Hosueholds
 sum n [iw=hhweight]
 gen hh = `r(sum)'
@@ -232,12 +272,62 @@ drop n
 sum line_nat
 gen povline = `r(mean)'
 
-collapse (mean) pop hh povline cp_model
+* Policy year
+sum p_year
+gen policyy = `r(mean)'
+
+* Deflactores
+quietly summarize def_sp_nat
+local sp = r(N) > 0
+
+quietly summarize def_tmp_nat
+local tmp = r(N) > 0
+
+quietly summarize def_sp_tmp_nat
+local sptmp = r(N) > 0
+
+local deflator_type = "Unclassified"
+
+* 1. Spatial only
+if `sp' & !`tmp' & `sptmp' {
+    quietly count if !missing(def_sp_nat, def_sp_tmp_nat) ///
+        & abs(def_sp_nat - def_sp_tmp_nat) > 1e-6
+
+    if r(N) == 0 local deflator_type = "Spatial"
+}
+
+* 2. Temporal only
+if !`sp' & `tmp' & `sptmp' {
+    quietly count if !missing(def_tmp_nat, def_sp_tmp_nat) ///
+        & abs(def_tmp_nat - def_sp_tmp_nat) > 1e-6
+
+    if r(N) == 0 local deflator_type = "Temporal"
+}
+
+* 3. Spatial-temporal combined
+if !`sp' & !`tmp' & `sptmp' {
+    local deflator_type = "Spatial-temporal"
+}
+
+* 4. Spatial-temporal disaggregated
+if `sp' & `tmp' & `sptmp' {
+    quietly count if !missing(def_sp_nat, def_tmp_nat, def_sp_tmp_nat) ///
+        & abs(def_sp_nat * def_tmp_nat - def_sp_tmp_nat) > 1e-6
+
+    if r(N) == 0 local deflator_type = "Spatial-temporal"
+}
+
+display as result "Deflator type: `deflator_type'"
+
+
+*** All results to sav3
+
+collapse (mean) pop hh povline policyy cp_model
 gen surveyn= "$survey"
 gen surveyy= "$survey_year"
 gen consinc= "$response_21"
 gen pcae= "$response_22"
-
+gen defl = "`deflator_type'"
 
 label define pensions 1 "PDI - Pensions treated as deferred income" 2 "PGT - Pensions treated as goverment transfers"
 label values cp_model pensions
@@ -245,7 +335,8 @@ label values cp_model pensions
 decode cp_model, gen(pensions)
 drop cp_model
 
-rename (pop hh povline surveyn surveyy consinc pcae pensions) (value_pop value_hh value_povline string_surveyn string_surveyy string_consinc string_pcae string_pensions)
+rename (pop hh povline surveyn surveyy policyy consinc pcae defl pensions) (value_pop value_hh value_povline string_surveyn string_surveyy string_policyy string_consinc string_pcae string_defl string_pensions)
+tostring string_policyy, replace
 
 gen n=1
 reshape long value_ string_, i(n) j(indicator) string
@@ -261,6 +352,8 @@ rename *_ *
 	gen income="INC_NA"
 	gen partition="PV_NA_NONE"
 	
+	append using `pop_deciles', force
+	
 	foreach t in context indicator category income povertyline partition pension {
 			dis "Merge with `t' file"
 			merge m:1 `t' using ``t''
@@ -275,7 +368,6 @@ rename *_ *
 	
 	tempfile info
 	save `info'
-
 
 *===============================================================================
 **# A. Total value
@@ -463,6 +555,22 @@ save `output_quantiles', replace
 		* --- Loop over each indicator: reshape to long at 3 levels ---
 		foreach indic in share uinc cinc cov  {
 
+		* --- Overall level (national) ---
+			cap frame drop fr_total
+			frame copy fr_wide fr_total
+
+			frame fr_total {
+				groupfunction [aw=popweight], mean(`indic'*)
+
+				gen i = 1
+				reshape long `indic'_`y'_pc_, i(i) j(variable) string
+
+				gen partition = "PV_NA_NONE"
+
+				drop i
+				rename `indic'_ value
+			}
+
 		* --- Decile level (work inside a copy frame, no touch on default) ---
 		
 			cap frame drop fr_dec
@@ -492,14 +600,16 @@ save `output_quantiles', replace
 
 
 			
-		* --- Combine all three levels into default ---
-			tempfile _tf_dec _tf_cent 
-			frame fr_dec:  save `_tf_dec'
-			frame fr_cent: save `_tf_cent'
-			
+		* --- Combine decile, centile and overall levels ---
+			tempfile _tf_dec _tf_cent _tf_total
+
+			frame fr_dec:   save `_tf_dec'
+			frame fr_cent:  save `_tf_cent'
+			frame fr_total: save `_tf_total'
+
 			use `_tf_dec', clear
 			append using `_tf_cent'
-			*cap frame drop fr_dec fr_cent fr_mill
+			append using `_tf_total'
 
 
 *---> C.2 Generate decomposition by taxonomy items (3 levels)
@@ -1706,83 +1816,131 @@ rename measure indicator
 
 		
 *===============================================================================
-**# G.  Coverage of the poor
-*===============================================================================		
+**# G. Coverage of the poor
+*===============================================================================
 di as result "Coverage of the poor"
 di as result "---------------------------"
 sleep 500
 
 use `output', clear
 
-set seed 80292367	
-apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor)	
-		
-foreach x in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
-		gen covpoor_pc_`x'  = (`x'_pc != 0 & `x'_pc != .) if poor==1
+*===============================================================================
+* G.1 Poverty indicators
+*===============================================================================
+apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor_nat)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_li21) gen(poor_li21)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_lm21) gen(poor_lm21)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_um21) gen(poor_um21)
+
+*===============================================================================
+* G.2 Coverage of the poor by poverty line
+*===============================================================================
+foreach pl in nat li21 lm21 um21 {
+
+    foreach x in `Directaxes' `Contributions' `DirectTransfers' ///
+        `Subsidies' `Indtaxes' `InKindTransfers' {
+
+        gen covpoor_`pl'_`x' = ///
+            (`x'_pc != 0 & !missing(`x'_pc)) ///
+            if poor_`pl'1 == 1
+    }
 }
 
+*===============================================================================
+* G.3 Overall coverage of the poor
+*===============================================================================
+
+tempfile coverage_poortotal
+
 preserve
-collapse (mean) covpoor_pc_* [iw=popweight]
-gen n=1
+    collapse (mean) covpoor_* [iw=popweight]
+    gen n = 1
 
-reshape long covpoor_pc_, i(n) j(instrument) string
+    reshape long ///
+        covpoor_nat_ covpoor_li21_ covpoor_lm21_ covpoor_um21_, ///
+        i(n) j(instrument) string
+    drop n
+
+    reshape long covpoor_, i(instrument) j(pl) string
+		gen income = "INC_NA"
+		gen partition = "PV_NA_NONE"
+
+    tempfile overall
+    save `overall'
+
+restore
+
+*===============================================================================
+* G.4 Coverage of the poor by decile
+*===============================================================================
+
+collapse (mean) covpoor_* [iw=popweight], by(yd_pvdc)
+gen n = 1
+
+reshape long ///
+    covpoor_nat_ covpoor_li21_ covpoor_lm21_ covpoor_um21_, ///
+    i(n yd_pvdc) j(instrument) string
 drop n
 
-	gen income = "INC_NA" 
-	gen country = "$country"
-    gen survey = "$survey"
-    gen dataset = "${file}"
-    gen category = "CAT_NA"
-	gen povertyline = "line_nat"
-	gen partition="PV_NA_NONE"
-	gen pension="pdi"
-	gen context="equity"
-	rename covpoor_pc_ value
-	gen indicator = "covpoor"
-	
-	tempfile coverage_poortotal
-	save `coverage_poortotal'
-restore 
+reshape long covpoor_, i(instrument yd_pvdc) j(pl) string
+gen income = "yd"
+gen partition = "pv_dc_" + string(yd_pvdc, "%04.0f")
+drop yd_pvdc
 
-collapse (mean) covpoor_pc_* [iw=popweight], by(yd_pvdc)
-gen n=1
+*===============================================================================
+* G.5 Combine results
+*===============================================================================
 
-reshape long covpoor_pc_, i(n yd_pvdc) j(instrument) string
-drop n
-rename yd_pvdc partition
-tostring partition, replace
-replace partition = "pv_dc_000" + partition
-replace partition = "pv_dc_0010" if partition=="pv_dc_00010"
+append using `overall'
 
-	gen income = "yd" 
-	gen country = "$country"
-    gen survey = "$survey"
-    gen dataset = "${file}"
-    gen category = "CAT_NA"
-	gen povertyline = "line_nat"
-	gen pension="pdi"
-	gen context="equity"
-	rename covpoor_pc_ value
-	gen indicator = "covpoor"
-	
-append using `coverage_poortotal', force
+* Poverty line identifiers
+gen povertyline = ""
+
+replace povertyline = "line_nat"  if pl == "nat_"
+replace povertyline = "line_li21" if pl == "li21_"
+replace povertyline = "line_lm21" if pl == "lm21_"
+replace povertyline = "line_um21" if pl == "um21_"
+
+drop pl
+
+gen country = "$country"
+gen survey = "$survey"
+gen dataset = "${file}"
+gen category = "CAT_NA"
+gen pension = "pdi"
+gen context = "equity"
+gen indicator = "covpoor"
+
+rename covpoor_ value
+
+
+*===============================================================================
+* G.6 Merge with metadata
+*===============================================================================
 
 foreach t in context indicator category income povertyline partition pension {
-			dis "Merge with `t' file"
-			merge m:1 `t' using ``t''
-			keep if _merge==3
-			drop _merge 
-	}
-	merge m:1 instrument using `correlative', nogen
-	
-	drop if INSTRUMENT_ID==""
-	sort INSTRUMENT_ID INDICATOR_ID 
-	gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
-		order $toreport 
-		keep $toreport
-	
-		tempfile coverage_poor
-		save `coverage_poor'
+
+    di "Merge with `t' file"
+
+    merge m:1 `t' using ``t''
+    keep if _merge == 3
+    drop _merge
+}
+
+merge m:1 instrument using `correlative', nogen
+
+drop if INSTRUMENT_ID == ""
+sort INSTRUMENT_ID INDICATOR_ID
+
+global toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID ///
+    INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID ///
+    PENSION_ID country dataset value
+
+order $toreport
+keep $toreport
+
+tempfile coverage_poor
+save `coverage_poor'
 
 *===============================================================================
 **# H. Concentration Shares
