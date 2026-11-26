@@ -1545,9 +1545,8 @@ foreach inc in yd yp {
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
-    gen `instrument'1 = (`instrument' > 0) if !missing(`instrument')
+    gen `instrument'1 = (`instrument'_pc != 0) if !missing(`instrument'_pc)
 }
-
 
 *===============================================================================
 * 2. Inclusion error: Nonpoor population, Top 10 and Top 20
@@ -1573,8 +1572,8 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
         }
     }
 
-    * Top 10 and Top 20: yd and yp
-    foreach inc in yd yp {
+    * Top 10 and Top 20: yd and "$pf"
+    foreach inc in yd "$pf" {
         foreach p in 10 20 {
 
             quietly count if `instrument'1 == 1 & ///
@@ -1619,8 +1618,8 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
         }
     }
 
-    * Bottom 10 and Bottom 20: yd and yp
-    foreach inc in yd yp {
+    * Bottom 10 and Bottom 20: yd and "$pf"
+    foreach inc in yd "$pf" {
         foreach p in 10 20 {
 
             quietly count if `inc'_b`p' == 1 & ///
@@ -1649,9 +1648,9 @@ collapse (mean) incnpo_* inc10_* inc20_* excpo_* exc10_* exc20_*
 gen i = 1
 
 reshape long incnpo_nat_ incnpo_li21_ incnpo_lm21_ incnpo_um21_ ///
-			 inc10_yd_ inc20_yd_ inc10_yp_ inc20_yp_ ///
+			 inc10_yd_ inc20_yd_ inc10_${pf}_ inc20_${pf}_ ///
              excpo_nat_ excpo_li21_ excpo_lm21_ excpo_um21_ ///
-			 exc10_yd_ exc20_yd_ exc10_yp_ exc20_yp_, ///
+			 exc10_yd_ exc20_yd_ exc10_${pf}_ exc20_${pf}_, ///
              i(i) j(instrument) string
 
 rename *_ value_*
@@ -1664,12 +1663,12 @@ rename measure indicator
 	gen income = ""
 		replace income="INC_NA" if substr(indicator,1,6)=="incnpo" | substr(indicator,1,6)=="excpo_"
 		replace income="yd" if indicator=="inc10_yd" | indicator=="inc20_yd" | indicator=="exc10_yd" | indicator=="exc20_yd"
-		replace income="yp" if indicator=="inc10_yp" | indicator=="inc20_yp" | indicator=="exc10_yp" | indicator=="exc20_yp"
+		replace income="${pf}" if indicator=="inc10_${pf}" | indicator=="inc20_${pf}" | indicator=="exc10_" | indicator=="exc20_${pf}"
 		
-	replace indicator = "inc10" if inlist(indicator, "inc10_yd","inc10_yp")
-	replace indicator = "inc20" if inlist(indicator, "inc20_yd","inc20_yp")
-	replace indicator = "exc10" if inlist(indicator, "exc10_yd","exc10_yp")
-	replace indicator = "exc20" if inlist(indicator, "exc20_yd","exc20_yp")
+	replace indicator = "inc10" if inlist(indicator, "inc10_yd","inc10_${pf}")
+	replace indicator = "inc20" if inlist(indicator, "inc20_yd","inc20_${pf}")
+	replace indicator = "exc10" if inlist(indicator, "exc10_yd","exc10_${pf}")
+	replace indicator = "exc20" if inlist(indicator, "exc20_yd","exc20_${pf}")
 	
 	gen povertyline = "PL_NONE_N"
 		replace povertyline="line_nat" if indicator=="excpo_nat" | indicator=="incnpo_nat"
@@ -1768,7 +1767,6 @@ replace partition = "pv_dc_0010" if partition=="pv_dc_00010"
 	
 append using `coverage_poortotal', force
 
-
 foreach t in context indicator category income povertyline partition pension {
 			dis "Merge with `t' file"
 			merge m:1 `t' using ``t''
@@ -1786,6 +1784,174 @@ foreach t in context indicator category income povertyline partition pension {
 		tempfile coverage_poor
 		save `coverage_poor'
 
+*===============================================================================
+**# H. Concentration Shares
+*===============================================================================
+
+di as result "Concentration Shares"
+di as result "---------------------------"
+sleep 500
+
+use `output', clear
+
+*===============================================================================
+* H.1. Poverty indicators
+*===============================================================================
+
+apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor_nat)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_li21) gen(poor_li21)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_lm21) gen(poor_lm21)
+apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_um21) gen(poor_um21)
+
+
+*===============================================================================
+* H.2. Concentration shares by decile
+*===============================================================================
+
+foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
+
+    foreach inc in yd "$pf" {
+
+        * Total amount
+        quietly summarize `instrument'_pc [aw=popweight] ///
+            if !missing(`inc'_pvdc), meanonly
+
+        local total = r(mean)
+
+        * Shares by decile
+        forvalues d = 1/10 {
+
+            quietly summarize `instrument'_pc [aw=popweight] ///
+                if `inc'_pvdc == `d', meanonly
+
+            local mean_d = r(mean)
+            local weight_d = r(sum_w)
+
+            quietly summarize popweight ///
+                if !missing(`instrument', `inc'_pvdc) & popweight > 0, meanonly
+
+            local weight_total = r(sum)
+
+            gen csd_`inc'_d`d'_`instrument' = ///
+                100 * (`mean_d' * `weight_d') / ///
+                (`total' * `weight_total') ///
+                if `total' != 0
+        }
+    }
+}
+
+
+*===============================================================================
+* H.3. Concentration shares by poor and non-poor
+*===============================================================================
+
+foreach instrument in `Directaxes' `Contributions' `DirectTransfers' ///
+    `Subsidies' `Indtaxes' `InKindTransfers' {
+
+    foreach pl in nat li21 lm21 um21 {
+
+        * Total amount
+        quietly summarize `instrument'_pc [aw=popweight] ///
+            if !missing(poor_`pl'1), meanonly
+
+        local total = r(mean)
+
+        * Shares by poverty status
+        foreach p in 0 1 {
+
+            quietly summarize `instrument'_pc [aw=popweight] ///
+                if poor_`pl'1 == `p', meanonly
+
+            local mean_p = r(mean)
+            local weight_p = r(sum_w)
+
+            quietly summarize popweight ///
+                if !missing(`instrument', poor_`pl'1) & popweight > 0, meanonly
+
+            local weight_total = r(sum)
+
+            gen csp_`pl'_p`p'_`instrument' = ///
+                100 * (`mean_p' * `weight_p') / ///
+                (`total' * `weight_total') ///
+                if `total' != 0
+        }
+    }
+}
+
+
+*===============================================================================
+* H.4. Prepare results
+*===============================================================================
+
+collapse (mean) csd_* csp_*
+
+gen i = 1
+
+reshape long ///
+    csd_yd_d1_ csd_yd_d2_ csd_yd_d3_ csd_yd_d4_ csd_yd_d5_ ///
+    csd_yd_d6_ csd_yd_d7_ csd_yd_d8_ csd_yd_d9_ csd_yd_d10_ ///
+    csd_yp_d1_ csd_yp_d2_ csd_yp_d3_ csd_yp_d4_ csd_yp_d5_ ///
+    csd_yp_d6_ csd_yp_d7_ csd_yp_d8_ csd_yp_d9_ csd_yp_d10_ ///
+    csp_nat_p0_ csp_nat_p1_ ///
+    csp_li21_p0_ csp_li21_p1_ ///
+    csp_lm21_p0_ csp_lm21_p1_ ///
+    csp_um21_p0_ csp_um21_p1_, ///
+    i(i) j(instrument) string
+
+// keeping only the value for poor, the non poor would be (1-poor)
+drop csp_nat_p0_ csp_li21_p0_ csp_lm21_p0_ csp_um21_p0_
+
+rename *_ value_*
+
+drop i
+
+reshape long value_, i(instrument) j(indicator) string
+
+gen partition=""
+	replace partition = "pv_dc_000" + substr(indicator, -1, 1) if substr(indicator,1,8)=="csd_yd_d" | substr(indicator,1,8)=="csd_${pf}_d" //deciles
+	replace partition = "pv_dc_0010" if partition=="pv_dc_0000" //deciles
+	replace partition = "PV_NA_NONE" if inlist(substr(indicator,1,8),"csp_li21", "csp_lm21", "csp_um21", "csp_nat_") //pobreza	
+
+gen income = ""
+		replace income="yd" if substr(indicator,1,8)=="csd_yd_d" //deciles
+		replace income="${pf}" if substr(indicator,1,8)=="csd_${pf}_d" //deciles
+		replace income="INC_NA" if inlist(substr(indicator,1,8),"csp_li21", "csp_lm21", "csp_um21", "csp_nat_") //pobreza
+		
+gen povertyline = ""
+		replace povertyline="PL_NONE_N" if inlist(substr(indicator,1,8), "csd_yd_d", "csd_${pf}_d") //deciles
+		replace povertyline="line_nat" if substr(indicator,1,8)=="csp_nat_"
+		replace povertyline="line_li21" if substr(indicator,1,8)=="csp_li21"
+		replace povertyline="line_lm21" if substr(indicator,1,8)=="csp_lm21"
+		replace povertyline="line_um21" if substr(indicator,1,8)=="csp_um21"
+		
+replace indicator="csd" if inlist(substr(indicator,1,3), "csd") //deciles
+replace indicator="csp" if inlist(substr(indicator,1,3), "csp") //poor
+		
+	gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "${file}"
+    gen category = "CAT_NA"
+	gen pension="pdi"
+	gen context="equity"
+	rename value_ value
+
+foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+	merge m:1 instrument using `correlative', nogen
+	
+	drop if INSTRUMENT_ID==""
+	sort INSTRUMENT_ID INDICATOR_ID 
+	gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+
+
+tempfile concentration_shares
+save `concentration_shares'
 
 *===============================================================================
 **# Exporting results
@@ -1800,6 +1966,7 @@ append using `marginal_contrib_21', force
 append using `distributional_ind', force
 append using `inclusion_exclusion', force
 append using `coverage_poor', force
+append using `concentration_shares', force
 
 
 order country ID_CONTEXT dataset value string INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
