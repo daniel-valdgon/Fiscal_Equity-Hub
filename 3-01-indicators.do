@@ -370,128 +370,174 @@ rename *_ *
 	save `info'
 
 *===============================================================================
-**# A. Total value
+**# A. Total value and Average Per Capita Value
 *===============================================================================
-di as result "Total value"
-di as result "---------------------------"
+di as result "Total value and Average Per Capita Value"
+di as result "----------------------------------------"
 sleep 500
 
-tempfile results total_temp ainc_temp national_temp
+tempfile results total_temp national_temp avg_temp avg_nat_temp
 local first = 1
 
-foreach inc in "${pf}" yd {
-    foreach p in dc pc {
+local instruments `Directaxes' `Contributions' `DirectTransfers' ///
+    `Subsidies' `Indtaxes' `InKindTransfers'
 
-        use `output', clear
-
-        local groupvar "`inc'_pv`p'"
-
-        *---------------------------------------
-        * 1. Agregar valores por grupo
-        *---------------------------------------
-        groupfunction [aw=hhweight], ///
-            sum(`Directaxes' `Contributions' `DirectTransfers' ///
-                `Subsidies' `Indtaxes' `InKindTransfers') ///
-            by(`groupvar')
-
-        rename * I_*
-        rename I_`groupvar' `groupvar'
-
-        reshape long I_, i(`groupvar') j(variable) string
-        rename I_ value
-
-        * Calcular total e incidencia absoluta
-        bysort variable: egen double total = total(value)
-        gen double share = value / total
-
-        * Crear identificador de partición
-        tostring `groupvar', gen(part) format(%04.0f)
-        gen partition = "pv_`p'_" + part
-
-        *---------------------------------------
-        * 2. Valor de cada política por grupo
-        *---------------------------------------
-        preserve
-            keep partition variable value
-
-            gen indicator = "total"
-            gen income = "`inc'"
-
-            save `total_temp', replace
-        restore
-
-        *---------------------------------------
-        * 3. Valor total de cada política
-        *    Solo una vez por ingreso
-        *---------------------------------------
-        if "`p'" == "dc" {
-
-            preserve
-                keep variable total
-                duplicates drop variable, force
-
-                rename total value
-                gen partition = "PV_NA_NONE"
-                gen indicator = "total"
-                gen income = "`inc'"
-
-                save `national_temp', replace
-            restore
-        }
-
-        *---------------------------------------
-        * 4. Unir indicadores
-        *---------------------------------------
-        use `total_temp', clear
-
-        if "`p'" == "dc" {
-            append using `national_temp'
-        }
-
-        * Acumular resultados de cada iteración
-        if `first' {
-            save `results', replace
-            local first = 0
-        }
-        else {
-            append using `results'
-            save `results', replace
-        }
-    }
+local pcvars
+foreach x of local instruments {
+    local pcvars `pcvars' `x'_pc
 }
 
-		*---------------------------------------
-		* 5. Base final
-		*---------------------------------------
-		use `results', clear
 
-		order income partition variable indicator value
-		sort income partition variable indicator
-			
-			gen category = "CAT_NA"
-			gen povertyline = "PL_NONE_N"
-			gen pension = "pdi"
-			gen country= "$country"
-			gen survey="$survey"
-			gen dataset = "$survey"
-			gen context = "equity"
+*---> A.1. Calculate indicators by income concept
+foreach inc in "${pf}" yd {
 
-		foreach t in context indicator category income povertyline partition pension {
-				dis "Merge with `t' file"
-				merge m:1 `t' using ``t''
-				keep if _merge==3
-				drop _merge 
-		}
-		rename variable instrument
+    use `output', clear
 
-	merge m:1 instrument using `correlative', nogen
-		
-		gl toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
-		order $toreport 
-		keep $toreport
+    local groupvar "`inc'_pvdc"
 
-	tempfile total_absoluteincidence
-	save `total_absoluteincidence'
+    * 1. Average Per Capita Value by decile
+    preserve
+        collapse (mean) `pcvars' [aw=popweight], by(`groupvar')
+
+        foreach x of local instruments {
+            rename `x'_pc avg_`x'
+        }
+
+        reshape long avg_, i(`groupvar') j(variable) string
+
+        rename avg_ value
+
+        tostring `groupvar', gen(part) format(%04.0f)
+        gen partition = "pv_dc_" + part
+
+        gen indicator = "avgpc"
+        gen income = "`inc'"
+
+        keep partition variable value indicator income
+
+        save `avg_temp', replace
+    restore
+
+    * 2. National Average Per Capita Value
+    preserve
+        collapse (mean) `pcvars' [aw=popweight]
+
+        foreach x of local instruments {
+            rename `x'_pc avg_`x'
+        }
+
+        gen n = 1
+        reshape long avg_, i(n) j(variable) string
+
+        rename avg_ value
+
+        gen partition = "PV_NA_NONE"
+        gen indicator = "avgpc"
+        gen income = "`inc'"
+
+        keep partition variable value indicator income
+
+        save `avg_nat_temp', replace
+    restore
+
+    * 3. Total Value by decile
+    groupfunction [aw=hhweight], ///
+        sum(`instruments') ///
+        by(`groupvar')
+
+    rename * I_*
+    rename I_`groupvar' `groupvar'
+
+    reshape long I_, i(`groupvar') j(variable) string
+    rename I_ value
+
+    bysort variable: egen double total = total(value)
+
+    tostring `groupvar', gen(part) format(%04.0f)
+    gen partition = "pv_dc_" + part
+
+    * 4. Total Value by decile
+    preserve
+
+        keep partition variable value
+
+        gen indicator = "total"
+        gen income = "`inc'"
+
+        save `total_temp', replace
+    restore
+
+    * 5. National Total Value
+    preserve
+        keep variable total
+        duplicates drop variable, force
+
+        rename total value
+
+        gen partition = "PV_NA_NONE"
+        gen indicator = "total"
+        gen income = "`inc'"
+
+        save `national_temp', replace
+    restore
+
+    * 6. Combine indicators
+    use `total_temp', clear
+
+    append using `avg_temp'
+    append using `national_temp'
+    append using `avg_nat_temp'
+
+    * Accumulate results
+    if `first' {
+        save `results', replace
+        local first = 0
+    }
+    else {
+        append using `results'
+        save `results', replace
+    }
+
+}
+
+
+*---> A.2. Prepare final database
+use `results', clear
+
+order income partition variable indicator value
+sort income partition variable indicator
+
+gen category = "CAT_NA"
+gen povertyline = "PL_NONE_N"
+gen pension = "pdi"
+gen country = "$country"
+gen survey = "$survey"
+gen dataset = "$survey"
+gen context = "equity"
+
+*---> A.3. Merge with metadata
+foreach t in context indicator category income povertyline partition pension {
+
+    di "Merge with `t' file"
+
+    merge m:1 `t' using ``t''
+    keep if _merge == 3
+    drop _merge
+}
+
+rename variable instrument
+
+merge m:1 instrument using `correlative', nogen
+
+global toreport ID_CONTEXT INDICATOR_ID SHORT_NAME CATEGORY_ID ///
+    INSTRUMENT_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID ///
+    PENSION_ID country dataset value
+
+order $toreport
+keep $toreport
+
+tempfile total_absoluteincidence
+save `total_absoluteincidence'
 
 *===============================================================================
 **# B. Netcash Position for ymp and yd.
