@@ -222,46 +222,53 @@ use `output', clear
 gen n=1
 sum n [iw=popweight]
 gen pop = `r(sum)'
-	* By deciles
-	preserve
-	collapse (sum) n [iw=popweight], by(${pf}_pvdc)
-	tempfile pop_${pf}
-	save `pop_${pf}', replace
-	restore
 	
-	preserve
-	collapse (sum) n [iw=popweight], by(yd_pvdc)
-	tempfile pop_yd
-	save `pop_yd', replace
-	restore
-	
-	preserve
-		use `pop_${pf}', clear
-		append using `pop_yd', force
-		gen income=""
-			replace income = "yd" if yd_pvdc!=.
-			replace income = "${pf}" if ${pf}_pvdc!=.
+* Population by decile for each income concept
+tempfile pop_deciles
+local first = 1
 
-		tostring ${pf}_pvdc, replace
-		tostring yd_pvdc, replace
-		gen partition=""
-			replace partition = "pv_dc_000" + ${pf}_pvdc if income == "${pf}"
-			replace partition = "pv_dc_000" + yd_pvdc if income == "yd"
-		replace partition = "pv_dc_0010" if partition=="pv_dc_00010"
-		
-		rename n value
-		gen indicator="pop"
-		gen category = "CAT_NA"
-		gen povertyline = "PL_NONE_N"
-		gen pension = "pdi"
-		gen country= "$country"
-		gen survey="$survey"
-		gen dataset = "$survey"
-		gen context = "equity"
-		drop *_pvdc
-			tempfile pop_deciles
-			save `pop_deciles', replace
-	restore
+preserve
+
+foreach inc in "${pf}" yn yd yc yf {
+
+    use `output', clear
+	gen n=1
+	
+    collapse (sum) n [iw=popweight], by(`inc'_pvdc)
+
+    rename `inc'_pvdc decile
+
+    gen income = "`inc'"
+    gen partition = "pv_dc_" + string(decile, "%04.0f")
+
+    rename n value
+
+    gen indicator = "pop"
+    gen category = "CAT_NA"
+    gen povertyline = "PL_NONE_N"
+    gen pension = "pdi"
+    gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "$survey"
+    gen context = "equity"
+
+    drop decile
+
+    if `first' {
+        save `pop_deciles', replace
+        local first = 0
+    }
+    else {
+        tempfile temp
+        save `temp'
+
+        use `pop_deciles', clear
+        append using `temp'
+        save `pop_deciles', replace
+    }
+}
+
+restore
 		
 * Hosueholds
 sum n [iw=hhweight]
@@ -368,7 +375,7 @@ rename *_ *
 	
 	tempfile info
 	save `info'
-
+	
 *===============================================================================
 **# A. Total value and Average Per Capita Value
 *===============================================================================
@@ -503,7 +510,6 @@ foreach inc in "${pf}" yd {
 
 *---> A.2. Prepare final database
 use `results', clear
-
 order income partition variable indicator value
 sort income partition variable indicator
 
@@ -550,7 +556,7 @@ sleep 500
 *Outline, 
 *Compute mean by partition
 
-*---> C.1  define indicators (by income in incidence), partitions 
+*---> B.1  define indicators (by income in incidence), partitions 
 * Indicator names should have the policyname, save in the local `x', at the very end so in the reshape that is the only thing in the name
 u `output', clear 
 
@@ -658,7 +664,7 @@ save `output_quantiles', replace
 			append using `_tf_total'
 
 
-*---> C.2 Generate decomposition by taxonomy items (3 levels)
+*---> B.2 Generate decomposition by taxonomy items (3 levels)
 * Stop here ABCD to check with Daniel the best way to call dataframes and link to identification variables 
 			
 			gen indicator = "`indic'"
@@ -683,7 +689,7 @@ save `output_quantiles', replace
 
 
 
-*---> C.3 Compiling and saving data 
+*---> B.3 Compiling and saving data 
 foreach indic in share uinc cinc cov  {
 	foreach y in "${pf}" yd {
 		local i = 1
@@ -929,7 +935,7 @@ di as result "---------------------------"
 sleep 500
 
 *---> Note: For now, only on the global loop
-*---> E.1 Preparing main output database 
+*---> D.1 Preparing main output database 
 local rank ${pf}_nat_pov
 		
 u `output', clear 
@@ -944,7 +950,7 @@ u `output', clear
 	save `output_a'
 
 	
-*---> E.2 groupfunction for concentration_coefficient taking main dofile	
+*--->  D.2 groupfunction for concentration_coefficient taking main dofile	
 
 	foreach x of local concs_pc{
 		covconc `x' [aw=popweight] , rank(`rank')	//gini and concentration coefficients
@@ -977,7 +983,7 @@ u `output', clear
 		}	
 	order ${pf}_pvpc, first
 	
-*---> E.3 Prepare dataset for Kakwani 	
+*--->  D.3 Prepare dataset for Kakwani 	
 	keep if ${pf}_pvpc==999
 	ds
 	local vars `r(varlist)'
@@ -1035,7 +1041,7 @@ u `output', clear
 		
 	restore
 	
-*---> E.4 reference for kakwani //pre fiscal incoem depending on the model
+*--->DE.4 reference for kakwani //pre fiscal incoem depending on the model
 	if ${cp_model}==1{ //PDI
 		sum value if varname=="yp_nat_pov_pc"	
 	}
@@ -1052,7 +1058,7 @@ u `output', clear
     g kakwani= -value + reference 
 	replace kakwani= value - reference if type=="Directaxes" |  type=="Indtaxes" |  type=="Contributions"
 
-*---> E.5 Preparing clean dataset
+*---> D.5 Preparing clean dataset
 
 	
 	g indicator="kakw"
@@ -1124,7 +1130,7 @@ sleep 500
 
 use `output', clear
 
-*--->  F.1 Prepare income concepts and fiscal instruments
+*---> E.1 Prepare income concepts and fiscal instruments
 
 foreach x in `income_concepts' {
     rename `x' `x'_pc
@@ -1140,7 +1146,7 @@ gen all = 1
 * Define fiscal instrument groups
 local policies `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'
 
-*--->  F.2 Estimate marginal contributions by income
+*--->  E.2 Estimate marginal contributions by income
 tempfile results_yp results_yn results_yd results_yc results_yf
 
 foreach inc in yp yn yd yc yf {
@@ -1293,12 +1299,12 @@ sleep 2000
     }
 
 
-*---> F.3 Estimate poverty and inequality
-		
+*---> E.3 Estimate poverty and inequality
+	
 		sp_groupfunction [aw=popweight], gini(`income_concepts_pc' `income3')  poverty(`income_concepts_pc' `income3') povertyline(line_nat)  by(all) 
 
 
-*---> F.4 Calculate marginal contributions
+*---> E.4 Calculate marginal contributions
     gen mc_p = .
 
     foreach t in gini fgt0 {
@@ -1320,7 +1326,7 @@ sleep 2000
     }
 
 
-*---> F.5 Prepare clean dataset
+*---> E.5 Prepare clean dataset
     keep if strpos(variable, "`inc'_inc_") == 1
 
     keep if inlist(measure, "gini", "fgt0")
@@ -1352,7 +1358,7 @@ sleep 2000
     restore
 }
 
-*---> F.7 Append all income concepts
+*---> E.7 Append all income concepts
 use `results_yp', clear
 
 append using `results_yn'
@@ -1399,7 +1405,7 @@ sort income instrument indicator
 *===============================================================================	
 use `output', clear
 
-*--->  F.1 Prepare income concepts and fiscal instruments
+*--->  E.1 Prepare income concepts and fiscal instruments
 
 foreach x in `income_concepts' {
     rename `x' `x'_pc
@@ -1416,7 +1422,7 @@ gen all = 1
 * Define fiscal instrument groups
 local policies `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers'
 
-*--->  F.2 Estimate marginal contributions by income
+*--->  E.2 Estimate marginal contributions by income
 tempfile results_yp results_yn results_yd results_yc results_yf
 
 foreach inc in yp yn yd yc yf {
@@ -1569,11 +1575,11 @@ sleep 2000
     }
 
 
-*---> F.3 Estimate poverty and inequality
+*---> E.3 Estimate poverty and inequality
 		
 		sp_groupfunction [aw=popweight], poverty(`inc'_inat_pov_2021_pc `income3') povertyline(line_li21 line_lm21 line_um21)  by(all) 
 
-*---> F.4 Calculate marginal contributions
+*---> E.4 Calculate marginal contributions
 gen mc_p = .
 
 foreach t in gini fgt0 {
@@ -1598,7 +1604,7 @@ foreach t in gini fgt0 {
     }
 }
 
-*---> F.5 Prepare clean dataset
+*---> E.5 Prepare clean dataset
     keep if strpos(variable, "`inc'_inc_") == 1
 
     keep if inlist(measure, "fgt0")
@@ -1620,13 +1626,13 @@ foreach t in gini fgt0 {
     rename mc_p value
 
 
-*---> F.6 Save results for current income
+*---> E.6 Save results for current income
     save `results_`inc'', replace
 
     restore
 }
 
-*---> F.7 Append all income concepts
+*---> E.7 Append all income concepts
 use `results_yp', clear
 
 append using `results_yn'
@@ -1681,9 +1687,7 @@ sleep 500
 
 use `output', clear
 
-*===============================================================================
-* 1. Poverty and decile indicators
-*===============================================================================
+*---> F.1. Poverty and decile indicators
 
 apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor_nat)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_li21) gen(poor_li21)
@@ -1704,9 +1708,7 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
     gen `instrument'1 = (`instrument'_pc != 0) if !missing(`instrument'_pc)
 }
 
-*===============================================================================
-* 2. Inclusion error: Nonpoor population, Top 10 and Top 20
-*===============================================================================
+*---> F.2. Inclusion error: Nonpoor population, Top 10 and Top 20
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
@@ -1750,9 +1752,7 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
 }
 
 
-*===============================================================================
-* 3. Exclusion error: Poor population, Bottom 10 and Bottom 20
-*===============================================================================
+*---> F.3. Exclusion error: Poor population, Bottom 10 and Bottom 20
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
@@ -1795,9 +1795,7 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
     }
 }
 
-*===============================================================================
-* 4. Reshape results
-*===============================================================================
+*---> F.4. Reshape results
 
 collapse (mean) incnpo_* inc10_* inc20_* excpo_* exc10_* exc20_*
 
@@ -1870,17 +1868,14 @@ sleep 500
 
 use `output', clear
 
-*===============================================================================
-* G.1 Poverty indicators
-*===============================================================================
+*---> G.1 Poverty indicators
 apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor_nat)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_li21) gen(poor_li21)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_lm21) gen(poor_lm21)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_um21) gen(poor_um21)
 
-*===============================================================================
-* G.2 Coverage of the poor by poverty line
-*===============================================================================
+*---> G.2 Coverage of the poor by poverty line
+
 foreach pl in nat li21 lm21 um21 {
 
     foreach x in `Directaxes' `Contributions' `DirectTransfers' ///
@@ -1892,10 +1887,7 @@ foreach pl in nat li21 lm21 um21 {
     }
 }
 
-*===============================================================================
-* G.3 Overall coverage of the poor
-*===============================================================================
-
+*---> G.3 Overall coverage of the poor
 tempfile coverage_poortotal
 
 preserve
@@ -1913,13 +1905,9 @@ preserve
 
     tempfile overall
     save `overall'
-
 restore
 
-*===============================================================================
-* G.4 Coverage of the poor by decile
-*===============================================================================
-
+*---> G.4 Coverage of the poor by decile
 collapse (mean) covpoor_* [iw=popweight], by(yd_pvdc)
 gen n = 1
 
@@ -1933,10 +1921,8 @@ gen income = "yd"
 gen partition = "pv_dc_" + string(yd_pvdc, "%04.0f")
 drop yd_pvdc
 
-*===============================================================================
-* G.5 Combine results
-*===============================================================================
 
+*---> G.5 Combine results
 append using `overall'
 
 * Poverty line identifiers
@@ -1960,12 +1946,8 @@ gen indicator = "covpoor"
 rename covpoor_ value
 
 
-*===============================================================================
-* G.6 Merge with metadata
-*===============================================================================
-
+*---> G.6 Merge with metadata
 foreach t in context indicator category income povertyline partition pension {
-
     di "Merge with `t' file"
 
     merge m:1 `t' using ``t''
@@ -1998,19 +1980,14 @@ sleep 500
 
 use `output', clear
 
-*===============================================================================
-* H.1. Poverty indicators
-*===============================================================================
-
+*---> H.1. Poverty indicators
 apoverty yd_nat_pov [aw=popweight], varpl(line_nat) gen(poor_nat)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_li21) gen(poor_li21)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_lm21) gen(poor_lm21)
 apoverty yd_inat_pov_2021 [aw=popweight], varpl(line_um21) gen(poor_um21)
 
 
-*===============================================================================
-* H.2. Concentration shares by decile
-*===============================================================================
+*---> H.2. Concentration shares by decile
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies' `Indtaxes' `InKindTransfers' {
 
@@ -2045,9 +2022,7 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' `Subsidies'
 }
 
 
-*===============================================================================
-* H.3. Concentration shares by poor and non-poor
-*===============================================================================
+*---> H.3. Concentration shares by poor and non-poor
 
 foreach instrument in `Directaxes' `Contributions' `DirectTransfers' ///
     `Subsidies' `Indtaxes' `InKindTransfers' {
@@ -2083,9 +2058,7 @@ foreach instrument in `Directaxes' `Contributions' `DirectTransfers' ///
 }
 
 
-*===============================================================================
-* H.4. Prepare results
-*===============================================================================
+*---> H.4. Prepare results
 
 collapse (mean) csd_* csp_*
 
@@ -2158,6 +2131,195 @@ tempfile concentration_shares
 save `concentration_shares'
 
 *===============================================================================
+**# I. Inequality indicators: 90/10 Ratio and Absolute Gini
+*===============================================================================
+
+di as result "90/10 Ratio and Absolute Gini"
+di as result "---------------------------"
+sleep 500
+
+use `output', clear
+
+foreach inc in "${pf}" yn yd yc yf {
+
+    * Calculate inequality indicators
+    quietly ineqdeco `inc'_nat_pov [aw=popweight]
+
+    gen r9010_`inc' = r(p90p10)
+    gen absgini_`inc' = r(gini)
+	dis "`r(gini)'"
+
+    * Absolute Gini = Gini * mean income
+    quietly summarize `inc'_nat_pov [aw=popweight]
+    replace absgini_`inc' = absgini_`inc' * r(mean)
+}
+
+* Prepare results
+collapse (mean) r9010_* absgini_*
+
+gen n = 1
+reshape long r9010_ absgini_, i(n) j(income) string
+
+rename (r9010_ absgini_) (value_r9010 value_absgini)
+reshape long value_, i(n income) j(indicator) string
+
+	gen partition = "PV_NA_NONE"
+	gen povertyline = "PL_NONE_N"
+	gen country = "$country"
+    gen survey = "$survey"
+    gen dataset = "${file}"
+    gen category = "CAT_NA"
+	gen pension="pdi"
+	gen context="equity"
+	rename value_ value
+	drop n
+
+foreach t in context indicator category income povertyline partition pension {
+			dis "Merge with `t' file"
+			merge m:1 `t' using ``t''
+			keep if _merge==3
+			drop _merge 
+	}
+	
+	sort INDICATOR_ID INCOME_ID
+	gl toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID country dataset country value  	    
+		order $toreport 
+		keep $toreport
+		
+tempfile ineq_ind
+save `ineq_ind'
+
+*===============================================================================
+**# J. Income by Decile and Share of Consumption by Decile
+*===============================================================================
+
+di as result "Income by Decile and Share of Consumption by Decile"
+di as result "------------------------------------------------"
+sleep 500
+
+tempfile results
+local first = 1
+
+*---> J.1. Calculate indicators by income concept
+
+foreach inc in "${pf}" yn yd yc yf {
+
+    use `output', clear
+
+    local incomevar "`inc'_pc"
+    local groupvar "`inc'_pvdc"
+
+    * Keep valid observations
+    keep if !missing(`incomevar', `groupvar', popweight) ///
+        & popweight > 0
+
+    * Weighted income and population
+    gen double income_w = `incomevar' * popweight
+    gen double pop_w = popweight
+
+    * Aggregate by decile
+    collapse (sum) income_w pop_w, by(`groupvar')
+
+    * National totals
+    quietly summarize income_w, meanonly
+    local total_income = r(sum)
+
+    *--------------------------------------------------
+    * National level
+    *--------------------------------------------------
+
+    preserve
+        collapse (sum) income_w pop_w
+
+        gen partition = "PV_NA_NONE"
+
+        tempfile national
+        save `national'
+    restore
+
+    *--------------------------------------------------
+    * Decile level
+    *--------------------------------------------------
+
+    gen partition = "pv_dc_" + string(`groupvar', "%04.0f")
+
+    append using `national'
+
+    *--------------------------------------------------
+    * Calculate indicators
+    *--------------------------------------------------
+
+    * Total income
+    gen double value_incdec = income_w
+
+    * Share of consumption/income by decile (%)
+    gen double value_sharecons = ///
+        100 * income_w / `total_income' if `total_income' > 0
+
+    *--------------------------------------------------
+    * Reshape results
+    *--------------------------------------------------
+
+    gen income = "`inc'"
+
+    keep income partition value_*
+
+    reshape long value_, i(income partition) j(indicator) string
+
+    rename value_ value
+
+    * Exclude national share (always 100%)
+    drop if indicator == "sharecons" & partition == "PV_NA_NONE"
+
+    *--------------------------------------------------
+    * Accumulate results
+    *--------------------------------------------------
+
+    if `first' {
+        save `results', replace
+        local first = 0
+    }
+    else {
+        append using `results'
+        save `results', replace
+    }
+
+}
+
+*---> J.2. Prepare final database
+
+use `results', clear
+
+gen category = "CAT_NA"
+gen povertyline = "PL_NONE_N"
+gen pension = "pdi"
+gen country = "$country"
+gen survey = "$survey"
+gen dataset = "${file}"
+gen context = "equity"
+
+*---> J.3. Merge with metadata
+
+foreach t in context indicator category income povertyline partition pension {
+
+    di "Merge with `t' file"
+
+    merge m:1 `t' using ``t''
+    keep if _merge == 3
+    drop _merge
+}
+
+global toreport ID_CONTEXT INDICATOR_ID CATEGORY_ID ///
+    INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID ///
+    PENSION_ID country dataset value
+
+order $toreport
+keep $toreport
+
+tempfile income_distribution
+save `income_distribution'
+
+*===============================================================================
 **# Exporting results
 *===============================================================================	
 use `info', clear
@@ -2171,6 +2333,8 @@ append using `distributional_ind', force
 append using `inclusion_exclusion', force
 append using `coverage_poor', force
 append using `concentration_shares', force
+append using `ineq_ind', force
+append using `income_distribution', force
 
 
 order country ID_CONTEXT dataset value string INDICATOR_ID CATEGORY_ID	INSTRUMENT_ID SHORT_NAME INCOME_ID POVERTY_LINE_ID PARTITION_VALUE_ID PENSION_ID
